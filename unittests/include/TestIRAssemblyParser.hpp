@@ -42,7 +42,7 @@ class TestIRAssemblyParser {
 public:
   TestIRAssemblyParser(bool shouldVerify = true,
                        llvm::StringRef dataDir = "./unittests/data/")
-      : TestModule{nullptr}, m_shouldVerify(shouldVerify),
+      : m_shouldVerify(shouldVerify), TestModule{nullptr},
         TestDataDir{dataDir} {
 #if (LLVM_VERSION_MAJOR >= 4) ||                                               \
     (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9)
@@ -79,11 +79,11 @@ protected:
     llvm::raw_string_ostream os(msg);
     TestDiagnostic.print("", os);
 
-    if (m_shouldVerify && llvm::verifyModule(*TestModule, &(llvm::errs())))
-      llvm::report_fatal_error("module verification failed\n");
-
     if (!TestModule)
       llvm::report_fatal_error(os.str().c_str());
+
+    if (m_shouldVerify && llvm::verifyModule(*TestModule, &(llvm::errs())))
+      llvm::report_fatal_error("module verification failed\n");
   }
 
 #if (LLVM_VERSION_MAJOR >= 4) ||                                               \
