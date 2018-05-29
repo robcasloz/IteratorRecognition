@@ -118,14 +118,14 @@ set(CMAKE_MODULE_LINKER_FLAGS
 
 # dependencies
 
-find_package(Foo CONFIG)
+find_package(Pedigree CONFIG)
 find_package(Sanitizers)
 
-if(Foo_FOUND)
-  set(${PRJ_NAME_UPPER}_USES_FOO 1)
+if(Pedigree_FOUND)
+  set(${PRJ_NAME_UPPER}_USES_PEDIGREE 1)
 else()
-  set(${PRJ_NAME_UPPER}_USES_FOO 0)
-  message(WARNING "package Foo was not found; skipping.")
+  set(${PRJ_NAME_UPPER}_USES_PEDIGREE 0)
+  message(FATAL_ERROR "package Pedigree was not found.")
 endif()
 
 #
@@ -162,10 +162,6 @@ foreach(PRJ_LIB ${PRJ_LIB_NAMES})
   target_compile_definitions(${PRJ_LIB}
     PRIVATE VERSION_STRING=${PRJ_VERSION})
 
-  if(Foo_FOUND)
-    target_link_libraries(${PRJ_LIB} PUBLIC Foo)
-  endif()
-
   target_include_directories(${PRJ_LIB} PUBLIC ${LLVM_INCLUDE_DIRS})
   target_include_directories(${PRJ_LIB} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
@@ -192,6 +188,10 @@ add_sanitizers(${OBJ_LIB_NAME})
 llvm_map_components_to_libnames(LLVM_LIBS core support analysis passes)
 
 target_link_libraries(${TEST_LIB_NAME} PUBLIC ${LLVM_LIBS})
+
+if(Pedigree_FOUND)
+  target_link_libraries(${TEST_LIB_NAME} PUBLIC Pedigree)
+endif()
 
 if(${LLVM_SHARED_MODE} STREQUAL "STATIC")
   target_link_libraries(${LIB_NAME} PUBLIC ${LLVM_LIBS})
@@ -234,7 +234,7 @@ set(PRJ_CMAKE_CONFIG_EXTRA_FILE "config-extra.cmake")
 
 set(DEPENDEE "")
 
-if(Foo_FOUND)
+if(Pedigree_FOUND)
   list(APPEND DEPENDEE ${FOO_LIB_DIR}${TRGT_PREFIX}${FOO_LIB}${TRGT_SUFFIX})
 endif()
 
