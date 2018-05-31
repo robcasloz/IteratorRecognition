@@ -195,9 +195,9 @@ llvm_map_components_to_libnames(LLVM_LIBS core support analysis passes)
 target_link_libraries(${TEST_LIB_NAME} PUBLIC ${LLVM_LIBS})
 
 if(Pedigree_FOUND)
-  target_link_libraries(${TEST_LIB_NAME} PUBLIC Pedigree)
+  target_link_libraries(${TEST_LIB_NAME} PUBLIC LLVMPedigreePass)
   # TODO not sure this is required yet
-  #target_link_libraries(${LIB_NAME} PUBLIC Pedigree)
+  #target_link_libraries(${LIB_NAME} PUBLIC LLVMPedigreePass)
 endif()
 
 if(${LLVM_SHARED_MODE} STREQUAL "STATIC")
