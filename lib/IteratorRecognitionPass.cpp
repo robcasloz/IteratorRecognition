@@ -8,6 +8,8 @@
 
 #include "Debug.hpp"
 
+#include "Analysis/Passes/PDGraphPass.hpp"
+
 #include "IteratorRecognitionPass.hpp"
 
 #include "llvm/Pass.h"
