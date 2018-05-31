@@ -169,6 +169,11 @@ foreach(PRJ_LIB ${PRJ_LIB_NAMES})
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>)
   target_include_directories(${PRJ_LIB} PUBLIC
     $<INSTALL_INTERFACE:include>)
+
+  if(Pedigree_FOUND)
+    target_include_directories(${PRJ_LIB} PUBLIC
+      $<TARGET_PROPERTY:LLVMPedigreePass,INTERFACE_INCLUDE_DIRECTORIES>)
+  endif()
 endforeach()
 
 # workaround for OBJECT libraries since they are not first class citizens
@@ -191,6 +196,8 @@ target_link_libraries(${TEST_LIB_NAME} PUBLIC ${LLVM_LIBS})
 
 if(Pedigree_FOUND)
   target_link_libraries(${TEST_LIB_NAME} PUBLIC Pedigree)
+  # TODO not sure this is required yet
+  #target_link_libraries(${LIB_NAME} PUBLIC Pedigree)
 endif()
 
 if(${LLVM_SHARED_MODE} STREQUAL "STATIC")
