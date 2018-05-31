@@ -18,6 +18,8 @@ include(GetGitVersion)
 add_clean_all_target()
 
 option(ITERATORRECOGNITION_SKIP_TESTS "Skip configuring the project tests" ON)
+option(ITERATORRECOGNITION_RPATH_LINK_DEPENDENCIES
+  "Link dependencies in RPATH" OFF)
 
 set(PRJ_DEBUG_VALUE 0)
 string(TOUPPER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE)
@@ -196,8 +198,10 @@ target_link_libraries(${TEST_LIB_NAME} PUBLIC ${LLVM_LIBS})
 
 if(Pedigree_FOUND)
   target_link_libraries(${TEST_LIB_NAME} PUBLIC LLVMPedigreePass)
-  # TODO not sure this is required yet
-  #target_link_libraries(${LIB_NAME} PUBLIC LLVMPedigreePass)
+
+  if(ITERATORRECOGNITION_RPATH_LINK_DEPENDENCIES)
+    target_link_libraries(${LIB_NAME} PUBLIC LLVMPedigreePass)
+  endif()
 endif()
 
 if(${LLVM_SHARED_MODE} STREQUAL "STATIC")
