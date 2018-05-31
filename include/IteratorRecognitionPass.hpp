@@ -5,6 +5,8 @@
 #ifndef ITR_ITRPASS_HPP
 #define ITR_ITRPASS_HPP
 
+#include "Config.hpp"
+
 #include "llvm/Pass.h"
 // using llvm::FunctionPass
 
@@ -18,6 +20,7 @@ class IteratorRecognitionPass : public llvm::FunctionPass {
 public:
   static char ID;
 
+  void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
   IteratorRecognitionPass() : llvm::FunctionPass(ID) {}
 
   bool runOnFunction(llvm::Function &CurFunc) override;

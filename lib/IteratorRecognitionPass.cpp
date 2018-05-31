@@ -105,6 +105,12 @@ static llvm::cl::opt<LogLevel, true> DebugLevel(
 
 namespace itr {
 
+void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.addRequired<pedigree::PDGraphPass>();
+
+  AU.setPreservesAll();
+}
+
 bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   auto ret_type = CurFunc.getReturnType();
 
