@@ -24,7 +24,7 @@ export CXX_FLAGS="${CXX_FLAGS} -stdlib=libc++"
 
 export LINKER_FLAGS=
 export LINKER_FLAGS="-Wl,-L$(${LLVMCONFIG} --libdir)"
-export LINKER_FLAGS="${LINKER_FLAGS} -lc++ -lc++abi"
+export LINKER_FLAGS="${LINKER_FLAGS} -lc++"
 
 export ITERATORRECOGNITION_SKIP_TESTS=OFF
 
