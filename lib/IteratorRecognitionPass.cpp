@@ -48,6 +48,9 @@
 // using DEBUG macro
 // using llvm::dbgs
 
+#include <memory>
+// using std::unique_ptr
+
 #define DEBUG_TYPE "iterator-recognition"
 
 // plugin registration for opt
@@ -118,6 +121,8 @@ void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 }
 
 bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
+  pedigree::PDGraph &Graph{getAnalysis<pedigree::PDGraphPass>().getGraph()};
+
   auto ret_type = CurFunc.getReturnType();
 
   for (auto bi = CurFunc.begin(); CurFunc.end() != bi; ++bi)
