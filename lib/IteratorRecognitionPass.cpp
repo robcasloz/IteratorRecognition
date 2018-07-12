@@ -97,7 +97,13 @@ static llvm::cl::opt<LogLevel, true> DebugLevel(
         clEnumValN(LogLevel::Notice, "Notice", "significant conditions"),
         clEnumValN(LogLevel::Warning, "Warning", "warning conditions"),
         clEnumValN(LogLevel::Error, "Error", "error conditions"),
-        clEnumValN(LogLevel::Debug, "Debug", "debug messages"), nullptr),
+        clEnumValN(LogLevel::Debug, "Debug", "debug messages")
+// clang-format off
+#if (LLVM_VERSION_MAJOR <= 3 && LLVM_VERSION_MINOR < 9)
+        , clEnumValEnd
+#endif
+        // clang-format on
+        ),
     llvm::cl::cat(IteratorRecognitionPassCategory));
 #endif // ITERATORRECOGNITION_DEBUG
 
