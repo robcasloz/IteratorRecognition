@@ -34,6 +34,13 @@
 // using llvm::PassManagerBuilder
 // using llvm::RegisterStandardPasses
 
+#include "llvm/ADT/SCCIterator.h"
+// using llvm::scc_begin
+// using llvm::scc_end
+
+#include "llvm/ADT/iterator_range.h"
+// using llvm::make_range
+
 #include "llvm/Support/CommandLine.h"
 // using llvm::cl::opt
 // using llvm::cl::desc
@@ -122,6 +129,9 @@ void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 
 bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   pedigree::PDGraph &Graph{getAnalysis<pedigree::PDGraphPass>().getGraph()};
+
+  for (auto scc = llvm::scc_begin(&Graph); !scc.isAtEnd(); ++scc)
+    ;
 
   auto ret_type = CurFunc.getReturnType();
 
