@@ -16,7 +16,8 @@ fi
 
 export BUILD_TYPE=Debug
 
-export GTEST_ROOT=/usr/local/gtest-libcxx
+#export GTEST_ROOT=/usr/local/gtest-libcxx
+export GTEST_ROOT=/bulk/workbench/thirdparty/gtest/install1-libcxx/
 
 export CXX_FLAGS=
 export CXX_FLAGS="${CXX_FLAGS} -O1"
@@ -24,7 +25,7 @@ export CXX_FLAGS="${CXX_FLAGS} -stdlib=libc++"
 
 export LINKER_FLAGS=
 export LINKER_FLAGS="-Wl,-L$(${LLVMCONFIG} --libdir)"
-export LINKER_FLAGS="${LINKER_FLAGS} -lc++"
+export LINKER_FLAGS="${LINKER_FLAGS} -lc++ -lc++abi"
 
 export ITERATORRECOGNITION_SKIP_TESTS=OFF
 
