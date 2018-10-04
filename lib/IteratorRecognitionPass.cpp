@@ -15,6 +15,11 @@
 #include "llvm/Pass.h"
 // using llvm::RegisterPass
 
+#include "llvm/Analysis/LoopInfo.h"
+// using llvm::Loop
+// using llvm::LoopInfo
+// using llvm::LoopInfoWrapperPass
+
 #include "llvm/IR/Type.h"
 // using llvm::Type
 
@@ -122,12 +127,21 @@ static llvm::cl::opt<LogLevel, true> DebugLevel(
 namespace itr {
 
 void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.addRequired<llvm::LoopInfoWrapperPass>();
   AU.addRequired<pedigree::PDGraphPass>();
 
   AU.setPreservesAll();
 }
 
 bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
+  bool hasChanged = false;
+
+  const auto *LI =
+      &getAnalysis<llvm::LoopInfoWrapperPass>(CurFunc).getLoopInfo();
+  if (LI->empty()) {
+    return hasChanged;
+  }
+
   pedigree::PDGraph &Graph{getAnalysis<pedigree::PDGraphPass>().getGraph()};
 
   for (auto scc = llvm::scc_begin(&Graph); !scc.isAtEnd(); ++scc)
@@ -145,7 +159,7 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
         auto v = use.get();
     }
 
-  return false;
+  return hasChanged;
 }
 
 } // namespace itr
