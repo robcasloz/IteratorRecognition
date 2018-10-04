@@ -136,8 +136,7 @@ void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
 
-  const auto *LI =
-      &getAnalysis<llvm::LoopInfoWrapperPass>(CurFunc).getLoopInfo();
+  const auto *LI = &getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
   if (LI->empty()) {
     return hasChanged;
   }
