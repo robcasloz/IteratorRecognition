@@ -8,6 +8,8 @@
 
 #include "Debug.hpp"
 
+#include "Analysis/Graphs/DependenceGraphs.hpp"
+
 #include "Analysis/Passes/PDGraphPass.hpp"
 
 #include "IteratorRecognitionPass.hpp"
@@ -62,6 +64,9 @@
 
 #include <memory>
 // using std::unique_ptr
+
+#include <vector>
+// using std::vector
 
 #define DEBUG_TYPE "iterator-recognition"
 
@@ -143,8 +148,18 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
 
   pedigree::PDGraph &Graph{getAnalysis<pedigree::PDGraphPass>().getGraph()};
 
-  for (auto scc = llvm::scc_begin(&Graph); !scc.isAtEnd(); ++scc)
-    ;
+  using SCC_type = std::vector<llvm::GraphTraits<decltype(&Graph)>::NodeRef>;
+  using const_SCC_type = const SCC_type;
+  using SCCs_type = std::vector<const_SCC_type>;
+  SCCs_type SCCs;
+
+  for (auto scc = llvm::scc_begin(&Graph); !scc.isAtEnd(); ++scc) {
+    SCCs.emplace_back(*scc);
+  }
+
+  for (auto &scc : SCCs) {
+    llvm::dbgs() << scc.size() << '\n';
+  }
 
   auto ret_type = CurFunc.getReturnType();
 
