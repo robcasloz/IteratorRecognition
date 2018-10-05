@@ -48,6 +48,9 @@
 #include "llvm/ADT/iterator_range.h"
 // using llvm::make_range
 
+#include "llvm/ADT/DenseMap.h"
+// using llvm::DenseMap
+
 #include "llvm/Support/CommandLine.h"
 // using llvm::cl::opt
 // using llvm::cl::desc
@@ -138,6 +141,29 @@ void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.setPreservesAll();
 }
 
+using SCC_type = std::vector<llvm::GraphTraits<pedigree::PDGraph *>::NodeRef>;
+using const_SCC_type = const SCC_type;
+using SCCs_type = std::vector<const_SCC_type>;
+
+void MapPDGSCCToLoop(const llvm::LoopInfo &LI, const pedigree::PDGraph &G,
+                     SCCs_type &SCCs, llvm::DenseMap<int, llvm::Loop *> &Map) {
+  for (auto i = 0; i < SCCs.size(); ++i) {
+    llvm::Loop *loop = nullptr;
+
+    for (auto j = 0; j < SCCs[i].size(); ++j) {
+      loop = LI.getLoopFor((SCCs[i][j]->unit())->getParent());
+      llvm::dbgs() << '-' << (SCCs[i][j]->unit())->getParent()->getName()
+                   << '\n';
+
+      if (loop) {
+        break;
+      }
+    }
+
+    Map.try_emplace(i, loop);
+  }
+}
+
 bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
 
@@ -147,31 +173,22 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   }
 
   pedigree::PDGraph &Graph{getAnalysis<pedigree::PDGraphPass>().getGraph()};
-
-  using SCC_type = std::vector<llvm::GraphTraits<decltype(&Graph)>::NodeRef>;
-  using const_SCC_type = const SCC_type;
-  using SCCs_type = std::vector<const_SCC_type>;
   SCCs_type SCCs;
 
   for (auto scc = llvm::scc_begin(&Graph); !scc.isAtEnd(); ++scc) {
     SCCs.emplace_back(*scc);
   }
 
-  for (auto &scc : SCCs) {
-    llvm::dbgs() << scc.size() << '\n';
-  }
+  llvm::DenseMap<int, llvm::Loop *> PDGSCCToLoop;
+  MapPDGSCCToLoop(*LI, Graph, SCCs, PDGSCCToLoop);
 
-  auto ret_type = CurFunc.getReturnType();
-
-  for (auto bi = CurFunc.begin(); CurFunc.end() != bi; ++bi)
-    for (auto ii = bi->begin(); bi->end() != ii; ++ii) {
-      for (auto user : ii->users())
-        if (auto user_inst = llvm::dyn_cast<llvm::Instruction>(user))
-          ;
-
-      for (auto &use : ii->operands())
-        auto v = use.get();
+  for (const auto &curLoop : *LI) {
+    for (const auto *curBlock : curLoop->getBlocks()) {
+      for (const auto &curInst : *curBlock) {
+        llvm::dbgs() << curInst << '\n';
+      }
     }
+  }
 
   return hasChanged;
 }
