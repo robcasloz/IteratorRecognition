@@ -145,6 +145,16 @@ using SCC_type = std::vector<llvm::GraphTraits<pedigree::PDGraph *>::NodeRef>;
 using const_SCC_type = const SCC_type;
 using SCCs_type = std::vector<const_SCC_type>;
 
+template <typename NodeRef> struct CondensationGraph {
+  using SCC_type = std::vector<NodeRef>;
+  using const_SCC_type = const SCC_type;
+  using SCCs_type = std::vector<const_SCC_type>;
+
+  const SCCs_type &Nodes;
+
+  CondensationGraph(const SCCs_type &Nodes) : Nodes(Nodes) {}
+};
+
 void MapPDGSCCToLoop(const llvm::LoopInfo &LI, const pedigree::PDGraph &G,
                      SCCs_type &SCCs, llvm::DenseMap<int, llvm::Loop *> &Map) {
   for (auto i = 0; i < SCCs.size(); ++i) {
@@ -178,6 +188,8 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   for (auto scc = llvm::scc_begin(&Graph); !scc.isAtEnd(); ++scc) {
     SCCs.emplace_back(*scc);
   }
+
+  CondensationGraph<SCC_type::value_type> CG{SCCs};
 
   llvm::DenseMap<int, llvm::Loop *> PDGSCCToLoop;
   MapPDGSCCToLoop(*LI, Graph, SCCs, PDGSCCToLoop);
