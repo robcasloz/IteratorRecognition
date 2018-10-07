@@ -71,6 +71,9 @@
 #include <vector>
 // using std::vector
 
+#include <type_traits>
+// using std::is_trivially_copyable
+
 #define DEBUG_TYPE "iterator-recognition"
 
 // plugin registration for opt
@@ -146,6 +149,9 @@ using const_SCC_type = const SCC_type;
 using SCCs_type = std::vector<const_SCC_type>;
 
 template <typename NodeRef> struct CondensationGraph {
+  static_assert(std::is_trivially_copyable<NodeRef>::value,
+                "NodeRef is not trivially copyable!");
+
   using SCC_type = std::vector<NodeRef>;
   using const_SCC_type = const SCC_type;
   using SCCs_type = std::vector<const_SCC_type>;
