@@ -51,6 +51,12 @@
 #include "llvm/ADT/DenseMap.h"
 // using llvm::DenseMap
 
+#include "llvm/ADT/EquivalenceClasses.h"
+// using llvm::EquivalenceClasses
+
+#include "llvm/ADT/iterator_range.h"
+// llvm::make_range
+
 #include "llvm/Support/CommandLine.h"
 // using llvm::cl::opt
 // using llvm::cl::desc
@@ -70,6 +76,10 @@
 
 #include <vector>
 // using std::vector
+
+#include <iterator>
+// using std::begin
+// using std::end
 
 #include <type_traits>
 // using std::is_trivially_copyable
@@ -152,13 +162,35 @@ template <typename NodeRef> struct CondensationGraph {
   static_assert(std::is_trivially_copyable<NodeRef>::value,
                 "NodeRef is not trivially copyable!");
 
-  using SCC_type = std::vector<NodeRef>;
-  using const_SCC_type = const SCC_type;
-  using SCCs_type = std::vector<const_SCC_type>;
+  llvm::EquivalenceClasses<NodeRef> Nodes;
+  llvm::DenseMap<NodeRef, NodeRef> Edges;
 
-  const SCCs_type &Nodes;
+  explicit CondensationGraph() = default;
+  CondensationGraph(const CondensationGraph &G) = default;
 
-  CondensationGraph(const SCCs_type &Nodes) : Nodes(Nodes) {}
+  // TODO limit iterator type
+  template <typename IteratorT>
+  void addCondensedNode(IteratorT Begin, IteratorT End) {
+    if (Begin == End)
+      return;
+
+    for (auto it = Begin; it != End; ++it)
+      Nodes.unionSets(*Begin, *it);
+
+    auto currentIt = Nodes.findLeader(*Begin);
+
+    for (auto &n : llvm::make_range(Begin, End)) {
+      for (const auto &e : n->nodes()) {
+        auto adjacentIt = Nodes.findLeader(e);
+
+        if (adjacentIt == Nodes.member_end() || adjacentIt == currentIt) {
+          continue;
+        }
+
+        Edges.try_emplace(*currentIt, *adjacentIt);
+      }
+    }
+  }
 };
 
 void MapPDGSCCToLoop(const llvm::LoopInfo &LI, const pedigree::PDGraph &G,
@@ -191,11 +223,12 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   pedigree::PDGraph &Graph{getAnalysis<pedigree::PDGraphPass>().getGraph()};
   SCCs_type SCCs;
 
+  CondensationGraph<SCC_type::value_type> CG;
+
   for (auto scc = llvm::scc_begin(&Graph); !scc.isAtEnd(); ++scc) {
     SCCs.emplace_back(*scc);
+    CG.addCondensedNode(std::begin(*scc), std::end(*scc));
   }
-
-  CondensationGraph<SCC_type::value_type> CG{SCCs};
 
   llvm::DenseMap<int, llvm::Loop *> PDGSCCToLoop;
   MapPDGSCCToLoop(*LI, Graph, SCCs, PDGSCCToLoop);
