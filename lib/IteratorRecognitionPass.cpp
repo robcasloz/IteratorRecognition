@@ -148,16 +148,33 @@ static llvm::cl::opt<LogLevel, true> DebugLevel(
 
 namespace itr {
 
+using SCC_type = std::vector<llvm::GraphTraits<pedigree::PDGraph *>::NodeRef>;
+using const_SCC_type = const SCC_type;
+using SCCs_type = std::vector<const_SCC_type>;
+
+template <typename NodeRef> struct CondensationGraph;
+
+} // namespace itr
+
+namespace llvm {
+
+template <>
+struct llvm::GraphTraits<itr::CondensationGraph<itr::SCC_type::value_type>> {
+  using GraphType = itr::CondensationGraph<iter : SCC_type::value_type>;
+
+  using NodeRef = itr::SCC_type::value_type;
+};
+
+} // namespace llvm
+
+namespace itr {
+
 void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.addRequired<llvm::LoopInfoWrapperPass>();
   AU.addRequired<pedigree::PDGraphPass>();
 
   AU.setPreservesAll();
 }
-
-using SCC_type = std::vector<llvm::GraphTraits<pedigree::PDGraph *>::NodeRef>;
-using const_SCC_type = const SCC_type;
-using SCCs_type = std::vector<const_SCC_type>;
 
 template <typename NodeRef> struct CondensationGraph {
   static_assert(std::is_trivially_copyable<NodeRef>::value,
@@ -193,7 +210,7 @@ template <typename NodeRef> struct CondensationGraph {
     }
   }
 
-  decltype(auto) size() const  {
+  decltype(auto) size() const {
     return std::distance(Nodes.begin(), Nodes.end());
   }
 };
