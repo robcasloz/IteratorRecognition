@@ -80,6 +80,7 @@
 #include <iterator>
 // using std::begin
 // using std::end
+// using std::distance
 
 #include <type_traits>
 // using std::is_trivially_copyable
@@ -190,6 +191,10 @@ template <typename NodeRef> struct CondensationGraph {
         Edges.try_emplace(*currentIt, *adjacentIt);
       }
     }
+  }
+
+  decltype(auto) size() const  {
+    return std::distance(Nodes.begin(), Nodes.end());
   }
 };
 
