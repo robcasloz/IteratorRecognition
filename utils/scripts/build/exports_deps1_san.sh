@@ -18,6 +18,9 @@ export BUILD_TYPE=Debug
 
 export GTEST_ROOT=/usr/local/gtest-libcxx
 
+#export BOOST_ROOT=/bulk/workbench/boost/015900/install/
+export BOOST_ROOT=/bulk/workbench/thirdparty/boost/016800/install1/
+
 export CXX_FLAGS=
 export CXX_FLAGS="${CXX_FLAGS} -O1"
 export CXX_FLAGS="${CXX_FLAGS} -stdlib=libc++"
@@ -43,6 +46,7 @@ ${LLVMCONFIG} --cmakedir &> /dev/null
 
 CMAKE_OPTIONS="-DLLVM_DIR=${LLVM_DIR}"
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DGTEST_ROOT=${GTEST_ROOT}"
+CMAKE_OPTIONS="${CMAKE_OPTIONS} -DBOOST_ROOT=${BOOST_ROOT}"
 CMAKE_OPTIONS="${CMAKE_OPTIONS} -DITERATORRECOGNITION_SKIP_TESTS=${ITERATORRECOGNITION_SKIP_TESTS}"
 CMAKE_OPTIONS="${CMAKE_OPTIONS} ${SANITIZER_OPTIONS}"
 

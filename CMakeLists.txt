@@ -121,6 +121,7 @@ set(CMAKE_MODULE_LINKER_FLAGS
 # dependencies
 
 find_package(Pedigree CONFIG)
+find_package(Boost REQUIRED)
 find_package(Sanitizers)
 
 if(Pedigree_FOUND)
@@ -164,7 +165,12 @@ foreach(PRJ_LIB ${PRJ_LIB_NAMES})
   target_compile_definitions(${PRJ_LIB}
     PRIVATE VERSION_STRING=${PRJ_VERSION})
 
+  if(NOT LLVM_ENABLE_EH)
+    target_compile_definitions(${PRJ_LIB} PUBLIC BOOST_NO_EXCEPTIONS)
+  endif()
+
   target_include_directories(${PRJ_LIB} PUBLIC ${LLVM_INCLUDE_DIRS})
+  target_include_directories(${PRJ_LIB} PUBLIC ${Boost_INCLUDE_DIRS})
   target_include_directories(${PRJ_LIB} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
   target_include_directories(${PRJ_LIB} PUBLIC
