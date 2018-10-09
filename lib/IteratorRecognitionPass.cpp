@@ -71,6 +71,11 @@
 // using DEBUG macro
 // using llvm::dbgs
 
+#include <boost/iterator/iterator_facade.hpp>
+// using boost::iterator_facade
+// using boost::bidirectional_traversal_tag
+// using boost::iterator_core_access
+
 #include <memory>
 // using std::unique_ptr
 
@@ -197,6 +202,38 @@ struct CondensationGraph {
   decltype(auto) size() const {
     return std::distance(Nodes.begin(), Nodes.end());
   }
+
+  class CondensationGraphIterator
+      : public boost::iterator_facade<CondensationGraphIterator, const NodeRef,
+                                      boost::bidirectional_traversal_tag> {
+  public:
+    using base_iterator = typename decltype(Nodes)::iterator;
+
+    const CondensationGraph *CurrentCG;
+    base_iterator CurrentIt;
+
+    CondensationGraphIterator() : CurrentCG(nullptr) {}
+    CondensationGraphIterator(const CondensationGraph &CG)
+        : CurrentCG(&CG), CurrentIt(CG.Nodes.begin()) {}
+
+  private:
+    friend class boost::iterator_core_access;
+
+    void increment() { ++CurrentIt; };
+    void decrement() { --CurrentIt; };
+    bool equal(const CondensationGraphIterator &Other) const {
+      return CurrentCG == Other.CurrentCG && CurrentIt == Other.CurrentIt;
+    }
+
+    const NodeRef &dereference() const {
+      return *CurrentCG->Nodes.findLeader(CurrentIt);
+    }
+  };
+
+  using nodes_iterator = CondensationGraphIterator;
+
+  decltype(auto) nodes_begin() const { return nodes_iterator(*this); }
+  decltype(auto) nodes_end() const { return nodes_iterator(); }
 };
 
 } // namespace itr
@@ -217,9 +254,9 @@ struct llvm::GraphTraits<itr::CondensationGraph<itr::SCC_type::value_type>> {
   static decltype(auto) child_begin(NodeRef G) { return G->nodes_begin(); }
   static decltype(auto) child_end(NodeRef G) { return G->nodes_end(); }
 
-  //using nodes_iterator = GraphType::nodes_iterator;
-  //static decltype(auto) nodes_begin(GraphType *G) { return G->nodes_begin(); }
-  //static decltype(auto) nodes_end(GraphType *G) { return G->nodes_end(); }
+  using nodes_iterator = GraphType::nodes_iterator;
+  static decltype(auto) nodes_begin(GraphType *G) { return G->nodes_begin(); }
+  static decltype(auto) nodes_end(GraphType *G) { return G->nodes_end(); }
 };
 
 } // namespace llvm
@@ -269,6 +306,9 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
     SCCs.emplace_back(*scc);
     CG.addCondensedNode(std::begin(*scc), std::end(*scc));
   }
+
+  auto b = llvm::GraphTraits<decltype(CG)>::nodes_begin(&CG);
+  llvm::dbgs() << ">>>" << *((*b)->unit()) << '\n';
 
   llvm::DenseMap<int, llvm::Loop *> PDGSCCToLoop;
   MapPDGSCCToLoop(*LI, Graph, SCCs, PDGSCCToLoop);
