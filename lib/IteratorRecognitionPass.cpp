@@ -152,33 +152,13 @@ using SCC_type = std::vector<llvm::GraphTraits<pedigree::PDGraph *>::NodeRef>;
 using const_SCC_type = const SCC_type;
 using SCCs_type = std::vector<const_SCC_type>;
 
-template <typename NodeRef> struct CondensationGraph;
-
-} // namespace itr
-
-namespace llvm {
-
-template <>
-struct llvm::GraphTraits<itr::CondensationGraph<itr::SCC_type::value_type>> {
-  using GraphType = itr::CondensationGraph<iter : SCC_type::value_type>;
-
-  using NodeRef = itr::SCC_type::value_type;
-};
-
-} // namespace llvm
-
-namespace itr {
-
-void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-  AU.addRequired<llvm::LoopInfoWrapperPass>();
-  AU.addRequired<pedigree::PDGraphPass>();
-
-  AU.setPreservesAll();
-}
-
-template <typename NodeRef> struct CondensationGraph {
-  static_assert(std::is_trivially_copyable<NodeRef>::value,
+template <typename NodeRefT, typename NodeT = std::remove_pointer_t<NodeRefT>>
+struct CondensationGraph {
+  static_assert(std::is_trivially_copyable<NodeRefT>::value,
                 "NodeRef is not trivially copyable!");
+
+  using NodeType = NodeT;
+  using NodeRef = NodeRefT;
 
   llvm::EquivalenceClasses<NodeRef> Nodes;
   llvm::DenseMap<NodeRef, NodeRef> Edges;
@@ -210,10 +190,48 @@ template <typename NodeRef> struct CondensationGraph {
     }
   }
 
+  decltype(auto) getEntryNode() const {
+    return *(Nodes.member_begin(Nodes.begin()));
+  }
+
   decltype(auto) size() const {
     return std::distance(Nodes.begin(), Nodes.end());
   }
 };
+
+} // namespace itr
+
+namespace llvm {
+
+template <>
+struct llvm::GraphTraits<itr::CondensationGraph<itr::SCC_type::value_type>> {
+  using GraphType = itr::CondensationGraph<itr::SCC_type::value_type>;
+  using NodeType = GraphType::NodeType;
+
+  using NodeRef = GraphType::NodeRef;
+
+  static NodeRef getEntryNode(GraphType *G) { return G->getEntryNode(); }
+  static unsigned size(GraphType *G) { return G->size(); }
+
+  using ChildIteratorType = NodeType::nodes_iterator;
+  static decltype(auto) child_begin(NodeRef G) { return G->nodes_begin(); }
+  static decltype(auto) child_end(NodeRef G) { return G->nodes_end(); }
+
+  //using nodes_iterator = GraphType::nodes_iterator;
+  //static decltype(auto) nodes_begin(GraphType *G) { return G->nodes_begin(); }
+  //static decltype(auto) nodes_end(GraphType *G) { return G->nodes_end(); }
+};
+
+} // namespace llvm
+
+namespace itr {
+
+void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.addRequired<llvm::LoopInfoWrapperPass>();
+  AU.addRequired<pedigree::PDGraphPass>();
+
+  AU.setPreservesAll();
+}
 
 void MapPDGSCCToLoop(const llvm::LoopInfo &LI, const pedigree::PDGraph &G,
                      SCCs_type &SCCs, llvm::DenseMap<int, llvm::Loop *> &Map) {
