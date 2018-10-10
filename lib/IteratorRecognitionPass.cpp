@@ -86,7 +86,6 @@
 // using std::iterator_traits
 // using std::begin
 // using std::end
-// using std::distance
 
 #include <type_traits>
 // using std::is_trivially_copyable
@@ -200,9 +199,7 @@ struct CondensationGraph {
     return *(Nodes.member_begin(Nodes.begin()));
   }
 
-  decltype(auto) size() const {
-    return std::distance(Nodes.begin(), Nodes.end());
-  }
+  decltype(auto) size() const { return Nodes.getNumClasses(); }
 
   class CondensationGraphIterator
       : public boost::iterator_facade<
