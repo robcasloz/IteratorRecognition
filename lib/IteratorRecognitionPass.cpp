@@ -200,6 +200,7 @@ struct CondensationGraph {
   }
 
   decltype(auto) size() const { return Nodes.getNumClasses(); }
+  bool empty() const { return Nodes.empty(); }
 
   class CondensationGraphIterator
       : public boost::iterator_facade<
