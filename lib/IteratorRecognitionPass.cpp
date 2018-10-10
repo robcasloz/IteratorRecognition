@@ -83,6 +83,7 @@
 // using std::vector
 
 #include <iterator>
+// using std::iterator_traits
 // using std::begin
 // using std::end
 // using std::distance
@@ -204,8 +205,10 @@ struct CondensationGraph {
   }
 
   class CondensationGraphIterator
-      : public boost::iterator_facade<CondensationGraphIterator, const NodeRef,
-                                      boost::bidirectional_traversal_tag> {
+      : public boost::iterator_facade<
+            CondensationGraphIterator, const NodeRef,
+            typename std::iterator_traits<typename decltype(
+                Nodes)::iterator>::iterator_category> {
   public:
     using base_iterator = typename decltype(Nodes)::iterator;
 
