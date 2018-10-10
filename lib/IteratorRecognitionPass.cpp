@@ -235,6 +235,18 @@ struct CondensationGraph {
 
   decltype(auto) nodes_begin() const { return nodes_iterator(*this); }
   decltype(auto) nodes_end() const { return nodes_iterator(); }
+
+  using scc_member_iterator = typename decltype(Nodes)::member_iterator;
+
+  decltype(auto) scc_member_begin(nodes_iterator It) {
+    return Nodes.member_begin(Nodes.findLeader(It));
+  }
+
+  decltype(auto) scc_member_begin(NodeRef Elem) {
+    return Nodes.member_begin(Nodes.findLeader(Elem));
+  }
+
+  decltype(auto) scc_member_end() { return Nodes.member_end(); }
 };
 
 } // namespace itr
