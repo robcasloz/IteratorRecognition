@@ -249,7 +249,7 @@ struct CondensationGraph {
   }
 
   decltype(auto) scc_member_begin(NodeRef Elem) {
-    return Nodes.member_begin(Nodes.findLeader(Elem));
+    return Nodes.findLeader(Elem);
   }
 
   decltype(auto) scc_member_end() { return Nodes.member_end(); }
@@ -328,8 +328,13 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
 
   using CondensationGT = llvm::GraphTraits<decltype(CG)>;
   for (auto &n : llvm::make_range(CondensationGT::nodes_begin(&CG),
-                                  CondensationGT::nodes_end(&CG)))
+                                  CondensationGT::nodes_end(&CG))) {
     llvm::dbgs() << ">>>" << *(n->unit()) << '\n';
+    for (auto &m :
+         llvm::make_range(CG.scc_member_begin(n), CG.scc_member_end())) {
+      llvm::dbgs() << ">>>>>" << *(m->unit()) << '\n';
+    }
+  }
 
   llvm::DenseMap<int, llvm::Loop *> PDGSCCToLoop;
   MapPDGSCCToLoop(*LI, Graph, SCCs, PDGSCCToLoop);
