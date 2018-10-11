@@ -89,6 +89,7 @@
 
 #include <type_traits>
 // using std::is_trivially_copyable
+// using std::is_same
 
 #define DEBUG_TYPE "iterator-recognition"
 
@@ -171,9 +172,14 @@ struct CondensationGraph {
   explicit CondensationGraph() = default;
   CondensationGraph(const CondensationGraph &G) = default;
 
-  // TODO limit iterator type
   template <typename IteratorT>
   void addCondensedNode(IteratorT Begin, IteratorT End) {
+    // TODO this might be required to accommodate implicit conversions
+    static_assert(
+        std::is_same<typename std::iterator_traits<IteratorT>::value_type,
+                     NodeRef>::value,
+        "Iterator type cannot be dereferenced to the expected value!");
+
     if (Begin == End)
       return;
 
