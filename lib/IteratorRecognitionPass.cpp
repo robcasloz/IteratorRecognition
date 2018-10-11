@@ -219,9 +219,9 @@ struct CondensationGraph {
     const CondensationGraph *CurrentCG;
     base_iterator CurrentIt;
 
-    CondensationGraphIterator() : CurrentCG(nullptr) {}
-    CondensationGraphIterator(const CondensationGraph &CG)
-        : CurrentCG(&CG), CurrentIt(CG.Nodes.begin()) {}
+    CondensationGraphIterator(const CondensationGraph &CG, bool IsEnd = false)
+        : CurrentCG(&CG), CurrentIt(IsEnd ? CG.Nodes.end() : CG.Nodes.begin()) {
+    }
 
   private:
     friend class boost::iterator_core_access;
@@ -240,7 +240,7 @@ struct CondensationGraph {
   using nodes_iterator = CondensationGraphIterator;
 
   decltype(auto) nodes_begin() const { return nodes_iterator(*this); }
-  decltype(auto) nodes_end() const { return nodes_iterator(); }
+  decltype(auto) nodes_end() const { return nodes_iterator(*this, true); }
 
   using scc_member_iterator = typename decltype(Nodes)::member_iterator;
 
@@ -326,8 +326,10 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
     CG.addCondensedNode(std::begin(*scc), std::end(*scc));
   }
 
-  auto b = llvm::GraphTraits<decltype(CG)>::nodes_begin(&CG);
-  llvm::dbgs() << ">>>" << *((*b)->unit()) << '\n';
+  using CondensationGT = llvm::GraphTraits<decltype(CG)>;
+  for (auto &n : llvm::make_range(CondensationGT::nodes_begin(&CG),
+                                  CondensationGT::nodes_end(&CG)))
+    llvm::dbgs() << ">>>" << *(n->unit()) << '\n';
 
   llvm::DenseMap<int, llvm::Loop *> PDGSCCToLoop;
   MapPDGSCCToLoop(*LI, Graph, SCCs, PDGSCCToLoop);
