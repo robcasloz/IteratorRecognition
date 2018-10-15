@@ -319,25 +319,42 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   pedigree::PDGraph &Graph{getAnalysis<pedigree::PDGraphPass>().getGraph()};
   SCCs_type SCCs;
 
+  Graph.connectRootNode();
+
+  llvm::dbgs() << "+++ " << Graph.numEdges() << '\n';
+
   CondensationGraph<SCC_type::value_type> CG;
 
   for (auto scc = llvm::scc_begin(&Graph); !scc.isAtEnd(); ++scc) {
     SCCs.emplace_back(*scc);
+    llvm::dbgs() << "*\n";
+
+    for (auto &e : *scc)
+      if (e->unit())
+        llvm::dbgs() << *e->unit();
+
     CG.addCondensedNode(std::begin(*scc), std::end(*scc));
   }
 
+  size_t sccs_found = 0;
   using CondensationGT = llvm::GraphTraits<decltype(CG)>;
   for (auto &n : llvm::make_range(CondensationGT::nodes_begin(&CG),
                                   CondensationGT::nodes_end(&CG))) {
-    llvm::dbgs() << ">>>" << *(n->unit()) << '\n';
-    for (auto &m :
-         llvm::make_range(CG.scc_member_begin(n), CG.scc_member_end())) {
-      llvm::dbgs() << ">>>>>" << *(m->unit()) << '\n';
+    ++sccs_found;
+    if (n->unit()) {
+      llvm::dbgs() << ">>>" << *(n->unit()) << '\n';
+      for (auto &m :
+           llvm::make_range(CG.scc_member_begin(n), CG.scc_member_end())) {
+        if (m->unit())
+          llvm::dbgs() << ">>>>>" << *(m->unit()) << '\n';
+      }
     }
   }
 
+  llvm::dbgs() << "SCCs found: " << sccs_found << '\n';
+
   llvm::DenseMap<int, llvm::Loop *> PDGSCCToLoop;
-  MapPDGSCCToLoop(*LI, Graph, SCCs, PDGSCCToLoop);
+  //MapPDGSCCToLoop(*LI, Graph, SCCs, PDGSCCToLoop);
 
   for (const auto &curLoop : *LI) {
     for (const auto *curBlock : curLoop->getBlocks()) {
