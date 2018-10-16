@@ -325,7 +325,7 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
 
   Graph.connectRootNode();
 
-  llvm::dbgs() << "+++ " << Graph.numEdges() << '\n';
+  llvm::dbgs() << "+++ " << Graph.numOutEdges() << '\n';
 
   CondensationGraph<SCC_type::value_type> CG;
 
