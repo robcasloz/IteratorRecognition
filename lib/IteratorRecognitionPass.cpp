@@ -295,6 +295,10 @@ void MapPDGSCCToLoop(const llvm::LoopInfo &LI, const pedigree::PDGraph &G,
     llvm::Loop *loop = nullptr;
 
     for (auto j = 0; j < SCCs[i].size(); ++j) {
+      if (!SCCs[i][j]->unit()) {
+        continue;
+      }
+
       loop = LI.getLoopFor((SCCs[i][j]->unit())->getParent());
       llvm::dbgs() << '-' << (SCCs[i][j]->unit())->getParent()->getName()
                    << '\n';
@@ -354,7 +358,7 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   llvm::dbgs() << "SCCs found: " << sccs_found << '\n';
 
   llvm::DenseMap<int, llvm::Loop *> PDGSCCToLoop;
-  //MapPDGSCCToLoop(*LI, Graph, SCCs, PDGSCCToLoop);
+  MapPDGSCCToLoop(*LI, Graph, SCCs, PDGSCCToLoop);
 
   for (const auto &curLoop : *LI) {
     for (const auto *curBlock : curLoop->getBlocks()) {
