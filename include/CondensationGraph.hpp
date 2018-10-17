@@ -6,13 +6,19 @@
 
 #include "Debug.hpp"
 
-#include "Analysis/Graphs/DependenceGraphs.hpp"
+#include "Analysis/Graphs/PDGraph.hpp"
 
 #include "llvm/ADT/DenseMap.h"
 // using llvm::DenseMap
 
 #include "llvm/ADT/EquivalenceClasses.h"
 // using llvm::EquivalenceClasses
+
+#include "llvm/ADT/iterator_range.h"
+// using llvm::make_range
+
+#include "llvm/ADT/GraphTraits.h"
+// using llvm::GraphTraits
 
 #include <boost/iterator/iterator_facade.hpp>
 // using boost::iterator_facade
@@ -28,6 +34,9 @@
 #include <type_traits>
 // using std::is_trivially_copyable
 // using std::is_same
+
+#include <utility>
+// using std::forward
 
 #ifndef ITR_CONDENSATIONGRAPH_HPP
 #define ITR_CONDENSATIONGRAPH_HPP
@@ -122,17 +131,26 @@ struct CondensationGraph {
   decltype(auto) nodes_begin() const { return nodes_iterator(*this); }
   decltype(auto) nodes_end() const { return nodes_iterator(*this, true); }
 
-  using scc_member_iterator = typename decltype(Nodes)::member_iterator;
+  decltype(auto) nodes() const {
+    return llvm::make_range(nodes_begin(), nodes_end());
+  }
 
-  decltype(auto) scc_member_begin(nodes_iterator It) {
+  using scc_members_iterator = typename decltype(Nodes)::member_iterator;
+
+  decltype(auto) scc_members_begin(nodes_iterator It) {
     return Nodes.member_begin(Nodes.findLeader(It));
   }
 
-  decltype(auto) scc_member_begin(NodeRef Elem) {
+  decltype(auto) scc_members_begin(NodeRef Elem) {
     return Nodes.findLeader(Elem);
   }
 
-  decltype(auto) scc_member_end() { return Nodes.member_end(); }
+  decltype(auto) scc_members_end() { return Nodes.member_end(); }
+
+  template <typename T> decltype(auto) scc_members(T &&E) {
+    return llvm::make_range(scc_members_begin(std::forward<T>(E)),
+                            scc_members_end());
+  }
 };
 
 } // namespace itr

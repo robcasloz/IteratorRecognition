@@ -41,9 +41,6 @@
 // using llvm::scc_begin
 // using llvm::scc_end
 
-#include "llvm/ADT/iterator_range.h"
-// using llvm::make_range
-
 #include "llvm/ADT/DenseMap.h"
 // using llvm::DenseMap
 
@@ -187,14 +184,11 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   }
 
   size_t sccs_found = 0;
-  using CondensationGT = llvm::GraphTraits<decltype(CG)>;
-  for (auto &n : llvm::make_range(CondensationGT::nodes_begin(&CG),
-                                  CondensationGT::nodes_end(&CG))) {
+  for (auto &n : CG.nodes()) {
     ++sccs_found;
     if (n->unit()) {
       llvm::dbgs() << ">>>" << *(n->unit()) << '\n';
-      for (auto &m :
-           llvm::make_range(CG.scc_member_begin(n), CG.scc_member_end())) {
+      for (auto &m : CG.scc_members(n)) {
         if (m->unit())
           llvm::dbgs() << ">>>>>" << *(m->unit()) << '\n';
       }
