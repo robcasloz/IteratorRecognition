@@ -133,18 +133,18 @@ void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 }
 
 void MapPDGSCCToLoop(const llvm::LoopInfo &LI, const pedigree::PDGraph &G,
-                     SCCs_type &SCCs, llvm::DenseMap<int, llvm::Loop *> &Map) {
-  for (auto i = 0; i < SCCs.size(); ++i) {
+                     ConstCondensationVector &CV,
+                     llvm::DenseMap<int, llvm::Loop *> &Map) {
+  for (auto i = 0; i < CV.size(); ++i) {
     llvm::Loop *loop = nullptr;
 
-    for (auto j = 0; j < SCCs[i].size(); ++j) {
-      if (!SCCs[i][j]->unit()) {
+    for (auto j = 0; j < CV[i].size(); ++j) {
+      if (!CV[i][j]->unit()) {
         continue;
       }
 
-      loop = LI.getLoopFor((SCCs[i][j]->unit())->getParent());
-      llvm::dbgs() << '-' << (SCCs[i][j]->unit())->getParent()->getName()
-                   << '\n';
+      loop = LI.getLoopFor((CV[i][j]->unit())->getParent());
+      llvm::dbgs() << '-' << (CV[i][j]->unit())->getParent()->getName() << '\n';
 
       if (loop) {
         break;
@@ -164,16 +164,16 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   }
 
   pedigree::PDGraph &Graph{getAnalysis<pedigree::PDGraphPass>().getGraph()};
-  SCCs_type SCCs;
+  ConstCondensationVector CV;
 
   Graph.connectRootNode();
 
   llvm::dbgs() << "+++ " << Graph.numOutEdges() << '\n';
 
-  CondensationGraph<SCC_type::value_type> CG;
+  CondensationGraph<CondensationType::value_type> CG;
 
   for (auto scc = llvm::scc_begin(&Graph); !scc.isAtEnd(); ++scc) {
-    SCCs.emplace_back(*scc);
+    CV.emplace_back(*scc);
     llvm::dbgs() << "*\n";
 
     for (auto &e : *scc)
@@ -183,9 +183,7 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
     CG.addCondensedNode(std::begin(*scc), std::end(*scc));
   }
 
-  size_t sccs_found = 0;
   for (auto &n : CG.nodes()) {
-    ++sccs_found;
     if (n->unit()) {
       llvm::dbgs() << ">>>" << *(n->unit()) << '\n';
       for (auto &m : CG.scc_members(n)) {
@@ -195,10 +193,10 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
     }
   }
 
-  llvm::dbgs() << "SCCs found: " << sccs_found << '\n';
+  llvm::dbgs() << "condensations found: " << CG.size() << '\n';
 
   llvm::DenseMap<int, llvm::Loop *> PDGSCCToLoop;
-  MapPDGSCCToLoop(*LI, Graph, SCCs, PDGSCCToLoop);
+  MapPDGSCCToLoop(*LI, Graph, CV, PDGSCCToLoop);
 
   for (const auto &curLoop : *LI) {
     for (const auto *curBlock : curLoop->getBlocks()) {

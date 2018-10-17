@@ -43,9 +43,9 @@
 
 namespace itr {
 
-using SCC_type = std::vector<llvm::GraphTraits<pedigree::PDGraph *>::NodeRef>;
-using const_SCC_type = const SCC_type;
-using SCCs_type = std::vector<const_SCC_type>;
+using CondensationType =
+    std::vector<llvm::GraphTraits<pedigree::PDGraph *>::NodeRef>;
+using ConstCondensationVector = std::vector<const CondensationType>;
 
 template <typename NodeRefT, typename NodeT = std::remove_pointer_t<NodeRefT>>
 struct CondensationGraph {
@@ -158,8 +158,9 @@ struct CondensationGraph {
 namespace llvm {
 
 template <>
-struct llvm::GraphTraits<itr::CondensationGraph<itr::SCC_type::value_type>> {
-  using GraphType = itr::CondensationGraph<itr::SCC_type::value_type>;
+struct llvm::GraphTraits<
+    itr::CondensationGraph<itr::CondensationType::value_type>> {
+  using GraphType = itr::CondensationGraph<itr::CondensationType::value_type>;
   using NodeType = GraphType::NodeType;
 
   using NodeRef = GraphType::NodeRef;
