@@ -74,20 +74,6 @@ struct CondensationGraph {
 
     for (auto it = Begin; it != End; ++it)
       Nodes.unionSets(*Begin, *it);
-
-    auto currentIt = Nodes.findLeader(*Begin);
-
-    for (auto &n : llvm::make_range(Begin, End)) {
-      for (const auto &e : n->nodes()) {
-        auto adjacentIt = Nodes.findLeader(e);
-
-        if (adjacentIt == Nodes.member_end() || adjacentIt == currentIt) {
-          continue;
-        }
-
-        Edges.try_emplace(*currentIt, *adjacentIt);
-      }
-    }
   }
 
   decltype(auto) getEntryNode() const {
