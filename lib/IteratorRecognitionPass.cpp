@@ -44,6 +44,9 @@
 #include "llvm/ADT/DenseMap.h"
 // using llvm::DenseMap
 
+#include "llvm/ADT/iterator_range.h"
+// using llvm::make_range
+
 #include "llvm/Support/CommandLine.h"
 // using llvm::cl::opt
 // using llvm::cl::desc
@@ -172,15 +175,16 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
 
   CondensationGraph<CondensationType::value_type> CG;
 
-  for (auto scc = llvm::scc_begin(&Graph); !scc.isAtEnd(); ++scc) {
-    CV.emplace_back(*scc);
+  for (auto &scc :
+       llvm::make_range(llvm::scc_begin(&Graph), llvm::scc_end(&Graph))) {
+    CV.emplace_back(scc);
     llvm::dbgs() << "*\n";
 
-    for (auto &e : *scc)
+    for (auto &e : scc)
       if (e->unit())
         llvm::dbgs() << *e->unit();
 
-    CG.addCondensedNode(std::begin(*scc), std::end(*scc));
+    CG.addCondensedNode(std::begin(scc), std::end(scc));
   }
 
   for (auto &n : CG.nodes()) {
@@ -198,13 +202,13 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   llvm::DenseMap<int, llvm::Loop *> PDGSCCToLoop;
   MapPDGSCCToLoop(*LI, Graph, CV, PDGSCCToLoop);
 
-  for (const auto &curLoop : *LI) {
-    for (const auto *curBlock : curLoop->getBlocks()) {
-      for (const auto &curInst : *curBlock) {
-        llvm::dbgs() << curInst << '\n';
-      }
-    }
-  }
+  // for (const auto &curLoop : *LI) {
+  // for (const auto *curBlock : curLoop->getBlocks()) {
+  // for (const auto &curInst : *curBlock) {
+  // llvm::dbgs() << curInst << '\n';
+  //}
+  //}
+  //}
 
   return hasChanged;
 }
