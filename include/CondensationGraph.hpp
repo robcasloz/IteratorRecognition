@@ -48,18 +48,46 @@ using CondensationType =
 using ConstCondensationVector = std::vector<const CondensationType>;
 
 template <typename NodeRefT, typename NodeT = std::remove_pointer_t<NodeRefT>>
-struct CondensationGraph {
+class CondensationGraph {
   static_assert(std::is_trivially_copyable<NodeRefT>::value,
                 "NodeRef is not trivially copyable!");
 
+public:
   using NodeType = NodeT;
   using NodeRef = NodeRefT;
 
+private:
   llvm::EquivalenceClasses<NodeRef> Nodes;
   llvm::DenseMap<NodeRef, std::vector<NodeRef>> OutEdges;
 
-  explicit CondensationGraph() = default;
-  CondensationGraph(const CondensationGraph &G) = default;
+  class CondensationGraphIterator
+      : public boost::iterator_facade<
+            CondensationGraphIterator, const NodeRef,
+            typename std::iterator_traits<typename decltype(
+                Nodes)::iterator>::iterator_category> {
+  public:
+    using base_iterator = typename decltype(Nodes)::iterator;
+
+    const CondensationGraph *CurrentCG;
+    base_iterator CurrentIt;
+
+    CondensationGraphIterator(const CondensationGraph &CG, bool IsEnd = false)
+        : CurrentCG(&CG), CurrentIt(IsEnd ? CG.Nodes.end() : CG.Nodes.begin()) {
+    }
+
+  private:
+    friend class boost::iterator_core_access;
+
+    void increment() { ++CurrentIt; };
+    void decrement() { --CurrentIt; };
+    bool equal(const CondensationGraphIterator &Other) const {
+      return CurrentCG == Other.CurrentCG && CurrentIt == Other.CurrentIt;
+    }
+
+    const NodeRef &dereference() const {
+      return *CurrentCG->Nodes.findLeader(CurrentIt);
+    }
+  };
 
   template <typename IteratorT>
   void addCondensedNode(IteratorT Begin, IteratorT End) {
@@ -98,41 +126,30 @@ struct CondensationGraph {
     }
   }
 
+public:
+  explicit CondensationGraph() = default;
+
+  template <typename IteratorT>
+  explicit CondensationGraph(IteratorT Begin, IteratorT End) {
+    if (Begin == End) {
+      return;
+    }
+
+    for (auto &scc : llvm::make_range(Begin, End)) {
+      addCondensedNode(std::begin(scc), std::end(scc));
+    }
+
+    connectEdges();
+  }
+
+  CondensationGraph(const CondensationGraph &G) = default;
+
   decltype(auto) getEntryNode() const {
     return *(Nodes.member_begin(Nodes.begin()));
   }
 
   decltype(auto) size() const { return Nodes.getNumClasses(); }
   bool empty() const { return Nodes.empty(); }
-
-  class CondensationGraphIterator
-      : public boost::iterator_facade<
-            CondensationGraphIterator, const NodeRef,
-            typename std::iterator_traits<typename decltype(
-                Nodes)::iterator>::iterator_category> {
-  public:
-    using base_iterator = typename decltype(Nodes)::iterator;
-
-    const CondensationGraph *CurrentCG;
-    base_iterator CurrentIt;
-
-    CondensationGraphIterator(const CondensationGraph &CG, bool IsEnd = false)
-        : CurrentCG(&CG), CurrentIt(IsEnd ? CG.Nodes.end() : CG.Nodes.begin()) {
-    }
-
-  private:
-    friend class boost::iterator_core_access;
-
-    void increment() { ++CurrentIt; };
-    void decrement() { --CurrentIt; };
-    bool equal(const CondensationGraphIterator &Other) const {
-      return CurrentCG == Other.CurrentCG && CurrentIt == Other.CurrentIt;
-    }
-
-    const NodeRef &dereference() const {
-      return *CurrentCG->Nodes.findLeader(CurrentIt);
-    }
-  };
 
   using nodes_iterator = CondensationGraphIterator;
 

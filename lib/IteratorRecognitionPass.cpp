@@ -173,8 +173,6 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
 
   llvm::dbgs() << "+++ " << Graph.numOutEdges() << '\n';
 
-  CondensationGraph<CondensationType::value_type> CG;
-
   for (auto &scc :
        llvm::make_range(llvm::scc_begin(&Graph), llvm::scc_end(&Graph))) {
     CV.emplace_back(scc);
@@ -183,11 +181,10 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
     for (auto &e : scc)
       if (e->unit())
         llvm::dbgs() << *e->unit();
-
-    CG.addCondensedNode(std::begin(scc), std::end(scc));
   }
 
-  CG.connectEdges();
+  CondensationGraph<CondensationType::value_type> CG{llvm::scc_begin(&Graph),
+                                                     llvm::scc_end(&Graph)};
 
   for (auto &n : CG.nodes()) {
     if (n->unit()) {
