@@ -1,0 +1,15 @@
+digraph G {
+  // SCC clusters
+  subgraph cluster_scc0 { label="SCC0" 0 -> 1 -> 2 -> 0;}
+  subgraph cluster_scc1 { label="SCC1" 3 -> 4 -> 3;}
+  subgraph cluster_scc2 { label="SCC2" 5;}
+
+  // inter SCC edges
+  0 -> 5;
+  1 -> 5;
+
+  2 -> 3;
+
+  3 -> 5;
+  4 -> 5;
+}
