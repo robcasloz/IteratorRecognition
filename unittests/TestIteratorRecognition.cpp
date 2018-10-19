@@ -2,15 +2,15 @@
 //
 //
 
+#include "TestCommon.hpp"
+
+#include "TestIRAssemblyParser.hpp"
+
 #include "gtest/gtest.h"
 // using testing::Test
 
 #include <array>
 // using std::array
-
-#include "TestIRAssemblyParser.hpp"
-
-#include "TestCommon.hpp"
 
 namespace itr {
 namespace testing {
