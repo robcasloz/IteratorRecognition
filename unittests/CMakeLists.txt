@@ -27,7 +27,9 @@ add_custom_target(unittests)
 
 set(PRJ_TEST_NAME Test${PRJ_NAME})
 
-set(TEST_SOURCES TestIteratorRecognition.cpp)
+set(TEST_SOURCES
+  TestIteratorRecognition.cpp
+  CondensationGraphTests.cpp)
 
 add_executable(${PRJ_TEST_NAME} ${TEST_SOURCES})
 add_sanitizers(${PRJ_TEST_NAME})
