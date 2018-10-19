@@ -56,7 +56,7 @@ struct CondensationGraph {
   using NodeRef = NodeRefT;
 
   llvm::EquivalenceClasses<NodeRef> Nodes;
-  llvm::DenseMap<NodeRef, NodeRef> Edges;
+  llvm::DenseMap<NodeRef, std::vector<NodeRef>> OutEdges;
 
   explicit CondensationGraph() = default;
   CondensationGraph(const CondensationGraph &G) = default;
@@ -74,6 +74,28 @@ struct CondensationGraph {
 
     for (auto it = Begin; it != End; ++it)
       Nodes.unionSets(*Begin, *it);
+  }
+
+  void connectEdges() {
+    llvm::DenseSet<NodeRef> dstLeaders;
+
+    for (auto &srcLeader : nodes()) {
+      dstLeaders.clear();
+
+      for (auto &m : scc_members(srcLeader)) {
+        for (const auto &n : m->nodes()) {
+          auto &dstLeader = *Nodes.findLeader(n);
+
+          if (dstLeader == srcLeader || dstLeaders.count(dstLeader)) {
+            continue;
+          }
+
+          dstLeaders.insert(dstLeader);
+        }
+
+        OutEdges.try_emplace(srcLeader, dstLeaders.begin(), dstLeaders.end());
+      }
+    }
   }
 
   decltype(auto) getEntryNode() const {

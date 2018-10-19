@@ -187,6 +187,8 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
     CG.addCondensedNode(std::begin(scc), std::end(scc));
   }
 
+  CG.connectEdges();
+
   for (auto &n : CG.nodes()) {
     if (n->unit()) {
       llvm::dbgs() << ">>>" << *(n->unit()) << '\n';
