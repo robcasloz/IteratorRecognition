@@ -178,29 +178,43 @@ public:
   }
 };
 
+//
+
+} // namespace itr
+
+namespace itr {
+
+// generic base for easing the task of creating graph traits for graphs
+
+template <typename GraphT> struct LLVMCondensationGraphTraitsHelperBase {
+  using NodeType = typename GraphT::NodeType;
+  using NodeRef = typename GraphT::NodeRef;
+
+  static NodeRef getEntryNode(GraphT *G) { return G->getEntryNode(); }
+  static unsigned size(GraphT *G) { return G->size(); }
+
+  using ChildIteratorType = typename NodeType::nodes_iterator;
+  static decltype(auto) child_begin(NodeRef G) { return G->nodes_begin(); }
+  static decltype(auto) child_end(NodeRef G) { return G->nodes_end(); }
+
+  static decltype(auto) children(NodeRef G) { return G->nodes(); }
+
+  using nodes_iterator = typename GraphT::nodes_iterator;
+  static decltype(auto) nodes_begin(GraphT *G) { return G->nodes_begin(); }
+  static decltype(auto) nodes_end(GraphT *G) { return G->nodes_end(); }
+
+  static decltype(auto) nodes(GraphT *G) { return G->nodes(); }
+};
+
 } // namespace itr
 
 namespace llvm {
 
 template <>
 struct llvm::GraphTraits<
-    itr::CondensationGraph<itr::CondensationType::value_type>> {
-  using GraphType = itr::CondensationGraph<itr::CondensationType::value_type>;
-  using NodeType = GraphType::NodeType;
-
-  using NodeRef = GraphType::NodeRef;
-
-  static NodeRef getEntryNode(GraphType *G) { return G->getEntryNode(); }
-  static unsigned size(GraphType *G) { return G->size(); }
-
-  using ChildIteratorType = NodeType::nodes_iterator;
-  static decltype(auto) child_begin(NodeRef G) { return G->nodes_begin(); }
-  static decltype(auto) child_end(NodeRef G) { return G->nodes_end(); }
-
-  using nodes_iterator = GraphType::nodes_iterator;
-  static decltype(auto) nodes_begin(GraphType *G) { return G->nodes_begin(); }
-  static decltype(auto) nodes_end(GraphType *G) { return G->nodes_end(); }
-};
+    itr::CondensationGraph<itr::CondensationType::value_type>>
+    : public itr::LLVMCondensationGraphTraitsHelperBase<
+          itr::CondensationGraph<itr::CondensationType::value_type>> {};
 
 } // namespace llvm
 
