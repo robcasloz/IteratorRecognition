@@ -24,10 +24,33 @@ namespace itr {
 namespace testing {
 namespace {
 
+using TestNodeTy = pedigree::GenericDependenceNode<int>;
+
+} // unnamed namespace
+} // namespace testing
+} // namespace itr
+
+namespace llvm {
+
+template <>
+struct GraphTraits<pedigree::GenericDependenceGraph<itr::testing::TestNodeTy> *>
+    : public pedigree::LLVMDependenceGraphTraitsHelperBase<
+          pedigree::GenericDependenceGraph<itr::testing::TestNodeTy> *> {};
+
+template <>
+struct llvm::GraphTraits<itr::CondensationGraph<itr::testing::TestNodeTy *>>
+    : public itr::LLVMCondensationGraphTraitsHelperBase<
+          itr::CondensationGraph<itr::testing::TestNodeTy *>> {};
+
+} // namespace llvm
+
+namespace itr {
+namespace testing {
+namespace {
+
 //
 
 struct CondensationGraphTest : public ::testing::Test {
-  using TestNodeTy = pedigree::GenericDependenceNode<int>;
   std::array<int, 6> TestNodes{{0, 1, 2, 3, 4, 5}};
 
   std::vector<TestNodeTy *> DepNodes1;
@@ -67,7 +90,7 @@ struct CondensationGraphTest : public ::testing::Test {
 //
 
 TEST_F(CondensationGraphTest, NodeComparison) {
-  // CondensationGraph<int> CG{llvm::scc_begin(&G1), llvm::scc_end(&G1)};
+  CondensationGraph<TestNodeTy *> CG{llvm::scc_begin(&G1), llvm::scc_end(&G1)};
 
   // EXPECT_EQ(true, DepNodes1[0]->compare(*DepNodes2[0]));
   // EXPECT_EQ(false, *DepNodes1[0] == *DepNodes2[0]);
