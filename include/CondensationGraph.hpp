@@ -43,9 +43,15 @@
 
 namespace itr {
 
+template <typename GraphT>
 using CondensationType =
-    std::vector<llvm::GraphTraits<pedigree::PDGraph *>::NodeRef>;
-using ConstCondensationVector = std::vector<const CondensationType>;
+    std::vector<typename llvm::GraphTraits<GraphT>::NodeRef>;
+
+template <typename GraphT>
+using CondensationVectorType = std::vector<CondensationType<GraphT>>;
+
+template <typename GraphT>
+using ConstCondensationVectorType = std::vector<const CondensationType<GraphT>>;
 
 template <typename NodeRefT, typename NodeT = std::remove_pointer_t<NodeRefT>>
 class CondensationGraph {
@@ -207,15 +213,5 @@ template <typename GraphT> struct LLVMCondensationGraphTraitsHelperBase {
 };
 
 } // namespace itr
-
-namespace llvm {
-
-template <>
-struct llvm::GraphTraits<
-    itr::CondensationGraph<itr::CondensationType::value_type>>
-    : public itr::LLVMCondensationGraphTraitsHelperBase<
-          itr::CondensationGraph<itr::CondensationType::value_type>> {};
-
-} // namespace llvm
 
 #endif // header

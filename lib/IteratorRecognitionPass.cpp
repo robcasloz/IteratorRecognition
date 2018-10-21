@@ -128,6 +128,24 @@ static llvm::cl::opt<LogLevel, true> DebugLevel(
 
 namespace itr {
 
+using PDGCondensationType = CondensationType<pedigree::PDGraph *>;
+
+using ConstPDGCondensationVector =
+    ConstCondensationVectorType<pedigree::PDGraph *>;
+} // namespace itr
+
+namespace llvm {
+
+template <>
+struct llvm::GraphTraits<
+    itr::CondensationGraph<itr::PDGCondensationType::value_type>>
+    : public itr::LLVMCondensationGraphTraitsHelperBase<
+          itr::CondensationGraph<itr::PDGCondensationType::value_type>> {};
+
+} // namespace llvm
+
+namespace itr {
+
 void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.addRequired<llvm::LoopInfoWrapperPass>();
   AU.addRequired<pedigree::PDGraphPass>();
@@ -136,7 +154,7 @@ void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 }
 
 void MapPDGSCCToLoop(const llvm::LoopInfo &LI, const pedigree::PDGraph &G,
-                     ConstCondensationVector &CV,
+                     ConstPDGCondensationVector &CV,
                      llvm::DenseMap<int, llvm::Loop *> &Map) {
   for (auto i = 0; i < CV.size(); ++i) {
     llvm::Loop *loop = nullptr;
@@ -167,7 +185,7 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   }
 
   pedigree::PDGraph &Graph{getAnalysis<pedigree::PDGraphPass>().getGraph()};
-  ConstCondensationVector CV;
+  ConstPDGCondensationVector CV;
 
   Graph.connectRootNode();
 
@@ -183,8 +201,8 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
         llvm::dbgs() << *e->unit();
   }
 
-  CondensationGraph<CondensationType::value_type> CG{llvm::scc_begin(&Graph),
-                                                     llvm::scc_end(&Graph)};
+  CondensationGraph<PDGCondensationType::value_type> CG{llvm::scc_begin(&Graph),
+                                                        llvm::scc_end(&Graph)};
 
   for (auto &n : CG.nodes()) {
     if (n->unit()) {
