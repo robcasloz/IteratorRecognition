@@ -55,7 +55,7 @@ struct CondensationGraphTest : public ::testing::Test {
   std::array<int, 6> TestNodes{{0, 1, 2, 3, 4, 5}};
 
   std::vector<TestNodeTy *> DepNodes1;
-  pedigree::GenericDependenceGraph<TestNodeTy> G1;
+  TestGraphTy G1;
 
   void SetUp() override {
     for (auto &e : TestNodes) {
@@ -90,13 +90,11 @@ struct CondensationGraphTest : public ::testing::Test {
 
 //
 
-TEST_F(CondensationGraphTest, NodeComparison) {
+TEST_F(CondensationGraphTest, CondensationsCount) {
+  G1.connectRootNode();
   CondensationGraph<TestGraphTy *> CG{llvm::scc_begin(&G1), llvm::scc_end(&G1)};
 
-  // EXPECT_EQ(true, DepNodes1[0]->compare(*DepNodes2[0]));
-  // EXPECT_EQ(false, *DepNodes1[0] == *DepNodes2[0]);
-  // EXPECT_EQ(false, DepNodes1[1]->compare(*DepNodes2[1]));
-  // EXPECT_EQ(true, *DepNodes1[1] == *DepNodes2[1]);
+  EXPECT_EQ(3 + 1, CG.size());
 }
 
 } // unnamed namespace
