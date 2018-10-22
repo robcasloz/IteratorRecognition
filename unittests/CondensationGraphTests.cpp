@@ -20,6 +20,9 @@
 #include <array>
 // using std::array
 
+#include <iterator>
+// using std::distance
+
 namespace itr {
 namespace testing {
 namespace {
@@ -85,16 +88,33 @@ struct CondensationGraphTest : public ::testing::Test {
     // SCC 1 to 2
     DepNodes1[3]->addDependentNode(DepNodes1[5]);
     DepNodes1[4]->addDependentNode(DepNodes1[5]);
+
+    G1.connectRootNode();
   }
 };
 
 //
 
 TEST_F(CondensationGraphTest, CondensationsCount) {
-  G1.connectRootNode();
   CondensationGraph<TestGraphTy *> CG{llvm::scc_begin(&G1), llvm::scc_end(&G1)};
 
   EXPECT_EQ(3 + 1, CG.size());
+}
+
+TEST_F(CondensationGraphTest, CondensationMemberCount) {
+  CondensationGraph<TestGraphTy *> CG{llvm::scc_begin(&G1), llvm::scc_end(&G1)};
+  auto SCC0Count =
+      std::distance(CG.scc_members_begin(DepNodes1[0]), CG.scc_members_end());
+
+  auto SCC1Count =
+      std::distance(CG.scc_members_begin(DepNodes1[3]), CG.scc_members_end());
+
+  auto SCC2Count =
+      std::distance(CG.scc_members_begin(DepNodes1[5]), CG.scc_members_end());
+
+  EXPECT_EQ(3, SCC0Count);
+  EXPECT_EQ(2, SCC1Count);
+  EXPECT_EQ(1, SCC2Count);
 }
 
 } // unnamed namespace
