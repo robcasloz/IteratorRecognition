@@ -58,12 +58,13 @@ using CondensationVectorType = std::vector<CondensationType<GraphT>>;
 template <typename GraphT>
 using ConstCondensationVectorType = std::vector<const CondensationType<GraphT>>;
 
-template <typename NodeRefT> class CondensationGraph {
-  static_assert(std::is_trivially_copyable<NodeRefT>::value,
-                "NodeRef is not trivially copyable!");
-
+template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
+class CondensationGraph {
 public:
-  using NodeRef = NodeRefT;
+  using NodeRef = typename GT::NodeRef;
+
+  static_assert(std::is_trivially_copyable<NodeRef>::value,
+                "NodeRef is not trivially copyable!");
 
 private:
   llvm::EquivalenceClasses<NodeRef> Nodes;

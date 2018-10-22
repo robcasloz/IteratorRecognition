@@ -25,6 +25,7 @@ namespace testing {
 namespace {
 
 using TestNodeTy = pedigree::GenericDependenceNode<int>;
+using TestGraphTy = pedigree::GenericDependenceGraph<TestNodeTy>;
 
 } // unnamed namespace
 } // namespace testing
@@ -33,14 +34,14 @@ using TestNodeTy = pedigree::GenericDependenceNode<int>;
 namespace llvm {
 
 template <>
-struct GraphTraits<pedigree::GenericDependenceGraph<itr::testing::TestNodeTy> *>
+struct GraphTraits<itr::testing::TestGraphTy *>
     : public pedigree::LLVMDependenceGraphTraitsHelperBase<
-          pedigree::GenericDependenceGraph<itr::testing::TestNodeTy> *> {};
+          itr::testing::TestGraphTy *> {};
 
 template <>
-struct llvm::GraphTraits<itr::CondensationGraph<itr::testing::TestNodeTy *>>
+struct llvm::GraphTraits<itr::CondensationGraph<itr::testing::TestGraphTy *>>
     : public itr::LLVMCondensationGraphTraitsHelperBase<
-          itr::CondensationGraph<itr::testing::TestNodeTy *>> {};
+          itr::CondensationGraph<itr::testing::TestGraphTy *>> {};
 
 } // namespace llvm
 
@@ -90,7 +91,7 @@ struct CondensationGraphTest : public ::testing::Test {
 //
 
 TEST_F(CondensationGraphTest, NodeComparison) {
-  CondensationGraph<TestNodeTy *> CG{llvm::scc_begin(&G1), llvm::scc_end(&G1)};
+  CondensationGraph<TestGraphTy *> CG{llvm::scc_begin(&G1), llvm::scc_end(&G1)};
 
   // EXPECT_EQ(true, DepNodes1[0]->compare(*DepNodes2[0]));
   // EXPECT_EQ(false, *DepNodes1[0] == *DepNodes2[0]);
