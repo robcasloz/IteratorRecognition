@@ -34,6 +34,11 @@
 #include <type_traits>
 // using std::is_trivially_copyable
 // using std::is_same
+// using std::conditional_t
+// using std::is_pointer
+// using std::remove_pointer_t
+// using std::remove_reference_t
+// using std::is_class
 
 #include <utility>
 // using std::forward
@@ -53,13 +58,11 @@ using CondensationVectorType = std::vector<CondensationType<GraphT>>;
 template <typename GraphT>
 using ConstCondensationVectorType = std::vector<const CondensationType<GraphT>>;
 
-template <typename NodeRefT, typename NodeT = std::remove_pointer_t<NodeRefT>>
-class CondensationGraph {
+template <typename NodeRefT> class CondensationGraph {
   static_assert(std::is_trivially_copyable<NodeRefT>::value,
                 "NodeRef is not trivially copyable!");
 
 public:
-  using NodeType = NodeT;
   using NodeRef = NodeRefT;
 
 private:
@@ -193,8 +196,14 @@ namespace itr {
 // generic base for easing the task of creating graph traits for graphs
 
 template <typename GraphT> struct LLVMCondensationGraphTraitsHelperBase {
-  using NodeType = typename GraphT::NodeType;
   using NodeRef = typename GraphT::NodeRef;
+  using NodeType =
+      typename std::conditional_t<std::is_pointer<NodeRef>::value,
+                                  std::remove_pointer_t<NodeRef>,
+                                  std::remove_reference_t<NodeRef>>;
+
+  static_assert(std::is_class<NodeType>::value,
+                "NodeType is not a class type!");
 
   static NodeRef getEntryNode(GraphT *G) { return G->getEntryNode(); }
   static unsigned size(GraphT *G) { return G->size(); }
