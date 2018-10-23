@@ -60,15 +60,21 @@ using ConstCondensationVectorType = std::vector<const CondensationType<GraphT>>;
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
 class CondensationGraph {
+  using EdgesContainerType =
+      llvm::DenseMap<typename GT::NodeRef,
+                     typename std::vector<typename GT::NodeRef>>;
+
 public:
   using NodeRef = typename GT::NodeRef;
+  using EdgeIteratorType = typename EdgesContainerType::iterator;
+  using EdgeRef = typename std::iterator_traits<EdgeIteratorType>::reference;
 
   static_assert(std::is_trivially_copyable<NodeRef>::value,
                 "NodeRef is not trivially copyable!");
 
 private:
   llvm::EquivalenceClasses<NodeRef> Nodes;
-  llvm::DenseMap<NodeRef, std::vector<NodeRef>> OutEdges;
+  EdgesContainerType OutEdges;
 
   class CondensationGraphIterator
       : public boost::iterator_facade<
@@ -203,6 +209,8 @@ template <typename GraphT> struct LLVMCondensationGraphTraitsHelperBase {
                                   std::remove_pointer_t<NodeRef>,
                                   std::remove_reference_t<NodeRef>>;
 
+  using EdgeRef = typename GraphT::EdgeRef;
+
   static_assert(std::is_class<NodeType>::value,
                 "NodeType is not a class type!");
 
@@ -220,6 +228,11 @@ template <typename GraphT> struct LLVMCondensationGraphTraitsHelperBase {
   static decltype(auto) nodes_end(GraphT *G) { return G->nodes_end(); }
 
   static decltype(auto) nodes(GraphT *G) { return G->nodes(); }
+
+  // TODO these require the graph nodes to be a separate object
+  // using ChildEdgeIteratorType = int;
+  // static ChildEdgeIteratorType child_edge_begin(NodeRef G) { return 0; }
+  // static ChildEdgeIteratorType child_edge_end(NodeRef G) { return 0; }
 };
 
 } // namespace itr
