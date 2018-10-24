@@ -101,20 +101,36 @@ TEST_F(CondensationGraphTest, CondensationsCount) {
   EXPECT_EQ(3 + 1, CG.size());
 }
 
-TEST_F(CondensationGraphTest, CondensationMemberCount) {
+TEST_F(CondensationGraphTest, CondensationNodesCount) {
   CondensationGraph<TestGraphTy *> CG{llvm::scc_begin(&G1), llvm::scc_end(&G1)};
-  auto SCC0Count =
+  auto SCC0NodesCount =
       std::distance(CG.scc_members_begin(DepNodes1[0]), CG.scc_members_end());
 
-  auto SCC1Count =
+  auto SCC1NodesCount =
       std::distance(CG.scc_members_begin(DepNodes1[3]), CG.scc_members_end());
 
-  auto SCC2Count =
+  auto SCC2NodesCount =
       std::distance(CG.scc_members_begin(DepNodes1[5]), CG.scc_members_end());
 
-  EXPECT_EQ(3, SCC0Count);
-  EXPECT_EQ(2, SCC1Count);
-  EXPECT_EQ(1, SCC2Count);
+  EXPECT_EQ(3, SCC0NodesCount);
+  EXPECT_EQ(2, SCC1NodesCount);
+  EXPECT_EQ(1, SCC2NodesCount);
+}
+
+TEST_F(CondensationGraphTest, CondensationEdgesCount) {
+  CondensationGraph<TestGraphTy *> CG{llvm::scc_begin(&G1), llvm::scc_end(&G1)};
+  auto SCC0EdgesCount = std::distance(CG.child_edge_begin(DepNodes1[1]),
+                                      CG.child_edge_end(DepNodes1[1]));
+
+  auto SCC1EdgesCount = std::distance(CG.child_edge_begin(DepNodes1[3]),
+                                      CG.child_edge_end(DepNodes1[3]));
+
+  auto SCC2EdgesCount = std::distance(CG.child_edge_begin(DepNodes1[5]),
+                                      CG.child_edge_end(DepNodes1[5]));
+
+  EXPECT_EQ(2, SCC0EdgesCount);
+  EXPECT_EQ(1, SCC1EdgesCount);
+  EXPECT_EQ(0, SCC2EdgesCount);
 }
 
 } // unnamed namespace
