@@ -214,11 +214,26 @@ public:
   EdgeIteratorType child_edge_begin(NodeRef N) {
     return OutEdges[*Nodes.findLeader(N)].begin();
   }
+
   EdgeIteratorType child_edge_end(NodeRef N) {
     return OutEdges[*Nodes.findLeader(N)].end();
   }
+
   decltype(auto) children_edges(NodeRef N) {
     return llvm::make_range(child_edge_begin(N), child_edge_end(N));
+  }
+
+  EdgeIteratorType inverse_child_edge_begin(NodeRef N) {
+    return InEdges[*Nodes.findLeader(N)].begin();
+  }
+
+  EdgeIteratorType inverse_child_edge_end(NodeRef N) {
+    return InEdges[*Nodes.findLeader(N)].end();
+  }
+
+  decltype(auto) inverse_children_edges(NodeRef N) {
+    return llvm::make_range(inverse_child_edge_begin(N),
+                            inverse_child_edge_end(N));
   }
 };
 
