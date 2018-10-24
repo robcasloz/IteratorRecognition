@@ -98,6 +98,7 @@ struct CondensationGraphTest : public ::testing::Test {
 TEST_F(CondensationGraphTest, CondensationsCount) {
   CondensationGraph<TestGraphTy *> CG{llvm::scc_begin(&G1), llvm::scc_end(&G1)};
 
+  // add 1 for virtual root
   EXPECT_EQ(3 + 1, CG.size());
 }
 
@@ -117,7 +118,7 @@ TEST_F(CondensationGraphTest, CondensationNodesCount) {
   EXPECT_EQ(1, SCC2NodesCount);
 }
 
-TEST_F(CondensationGraphTest, CondensationEdgesCount) {
+TEST_F(CondensationGraphTest, CondensationOutEdgesCount) {
   CondensationGraph<TestGraphTy *> CG{llvm::scc_begin(&G1), llvm::scc_end(&G1)};
   auto SCC0EdgesCount = std::distance(CG.child_edge_begin(DepNodes1[1]),
                                       CG.child_edge_end(DepNodes1[1]));
@@ -131,6 +132,23 @@ TEST_F(CondensationGraphTest, CondensationEdgesCount) {
   EXPECT_EQ(2, SCC0EdgesCount);
   EXPECT_EQ(1, SCC1EdgesCount);
   EXPECT_EQ(0, SCC2EdgesCount);
+}
+
+TEST_F(CondensationGraphTest, CondensationInEdgesCount) {
+  CondensationGraph<TestGraphTy *> CG{llvm::scc_begin(&G1), llvm::scc_end(&G1)};
+  auto SCC0EdgesCount = std::distance(CG.inverse_child_edge_begin(DepNodes1[1]),
+                                      CG.inverse_child_edge_end(DepNodes1[1]));
+
+  auto SCC1EdgesCount = std::distance(CG.inverse_child_edge_begin(DepNodes1[3]),
+                                      CG.inverse_child_edge_end(DepNodes1[3]));
+
+  auto SCC2EdgesCount = std::distance(CG.inverse_child_edge_begin(DepNodes1[5]),
+                                      CG.inverse_child_edge_end(DepNodes1[5]));
+
+  // add 1 for virtual root
+  EXPECT_EQ(0 + 1, SCC0EdgesCount);
+  EXPECT_EQ(1 + 1, SCC1EdgesCount);
+  EXPECT_EQ(2 + 1, SCC2EdgesCount);
 }
 
 } // unnamed namespace
