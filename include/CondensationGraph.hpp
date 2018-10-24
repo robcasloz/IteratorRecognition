@@ -52,6 +52,8 @@
 
 namespace itr {
 
+// TODO wrap this in a node type for the sake of graph traits
+
 template <typename GraphT>
 using CondensationType =
     std::vector<typename llvm::GraphTraits<GraphT>::NodeRef>;
@@ -214,6 +216,8 @@ public:
 namespace itr {
 
 // generic base for easing the task of creating graph traits for graphs
+
+// TODO add const variant of traits helper
 
 template <typename GraphT> struct LLVMCondensationGraphTraitsHelperBase {
   using NodeRef = typename GraphT::NodeRef;
