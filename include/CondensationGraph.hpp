@@ -81,6 +81,7 @@ public:
 private:
   llvm::EquivalenceClasses<NodeRef> Nodes;
   EdgesContainerType OutEdges;
+  EdgesContainerType InEdges;
 
   class CondensationGraphIterator
       : public boost::iterator_facade<
@@ -127,14 +128,25 @@ private:
   }
 
   void connectEdges() {
-    for (auto &srcLeader : nodes()) {
-      llvm::DenseSet<NodeRef> dstLeaders;
+    for (auto &curLeader : nodes()) {
+      llvm::DenseSet<NodeRef> srcLeaders, dstLeaders;
 
-      for (auto &m : scc_members(srcLeader)) {
+      for (auto &m : scc_members(curLeader)) {
+        // TODO refactor these two inner loops since they are basically the same
+        for (const auto &n : m->pred_nodes()) {
+          auto &srcLeader = *Nodes.findLeader(n);
+
+          if (srcLeader == curLeader || srcLeaders.count(srcLeader)) {
+            continue;
+          }
+
+          srcLeaders.insert(srcLeader);
+        }
+
         for (const auto &n : m->nodes()) {
           auto &dstLeader = *Nodes.findLeader(n);
 
-          if (dstLeader == srcLeader || dstLeaders.count(dstLeader)) {
+          if (dstLeader == curLeader || dstLeaders.count(dstLeader)) {
             continue;
           }
 
@@ -142,7 +154,8 @@ private:
         }
       }
 
-      OutEdges.try_emplace(srcLeader, dstLeaders.begin(), dstLeaders.end());
+      InEdges.try_emplace(curLeader, srcLeaders.begin(), srcLeaders.end());
+      OutEdges.try_emplace(curLeader, dstLeaders.begin(), dstLeaders.end());
     }
   }
 
