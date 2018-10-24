@@ -20,6 +20,10 @@
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
 
+// TODO remove
+#include "llvm/Support/Debug.h"
+// using llvm::dbgs
+
 #include <boost/iterator/iterator_facade.hpp>
 // using boost::iterator_facade
 // using boost::bidirectional_traversal_tag
@@ -66,7 +70,7 @@ class CondensationGraph {
 
 public:
   using NodeRef = typename GT::NodeRef;
-  using EdgeIteratorType = typename EdgesContainerType::iterator;
+  using EdgeIteratorType = typename EdgesContainerType::mapped_type::iterator;
   using EdgeRef = typename std::iterator_traits<EdgeIteratorType>::reference;
 
   static_assert(std::is_trivially_copyable<NodeRef>::value,
@@ -191,6 +195,17 @@ public:
   template <typename T> decltype(auto) scc_members(T &&E) {
     return llvm::make_range(scc_members_begin(std::forward<T>(E)),
                             scc_members_end());
+  }
+
+  // TODO these need to be moved to a node type or associated traits class
+  EdgeIteratorType child_edge_begin(NodeRef N) {
+    return OutEdges[*Nodes.findLeader(N)].begin();
+  }
+  EdgeIteratorType child_edge_end(NodeRef N) {
+    return OutEdges[*Nodes.findLeader(N)].end();
+  }
+  decltype(auto) children_edges(NodeRef N) {
+    return llvm::make_range(child_edge_begin(N), child_edge_end(N));
   }
 };
 
