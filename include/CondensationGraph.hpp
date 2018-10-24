@@ -125,10 +125,8 @@ private:
   }
 
   void connectEdges() {
-    llvm::DenseSet<NodeRef> dstLeaders;
-
     for (auto &srcLeader : nodes()) {
-      dstLeaders.clear();
+      llvm::DenseSet<NodeRef> dstLeaders;
 
       for (auto &m : scc_members(srcLeader)) {
         for (const auto &n : m->nodes()) {
@@ -140,9 +138,9 @@ private:
 
           dstLeaders.insert(dstLeader);
         }
-
-        OutEdges.try_emplace(srcLeader, dstLeaders.begin(), dstLeaders.end());
       }
+
+      OutEdges.try_emplace(srcLeader, dstLeaders.begin(), dstLeaders.end());
     }
   }
 
