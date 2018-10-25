@@ -159,6 +159,20 @@ void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 }
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
+void CheckCondensationToLoopMapping(GraphT &G, const llvm::LoopInfo &LI) {
+  llvm::DenseSet<llvm::Loop *> loops;
+
+  for (auto &n : G.nodes()) {
+    std::for_each(G.scc_members_begin(n), G.scc_members_end(),
+                  [&](const auto &m) {
+                    if (m->unit()) {
+                      loops.insert(LI.getLoopFor(m->unit()->getParent()));
+                    }
+                  });
+  }
+}
+
+template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
 void MapCondensationToLoop(
     GraphT &G, const llvm::LoopInfo &LI,
     llvm::DenseMap<typename GT::NodeRef, llvm::Loop *> &Map) {
@@ -210,6 +224,11 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
                  llvm::Loop *>
       CondensationToLoop;
   MapCondensationToLoop(CG, *LI, CondensationToLoop);
+
+  llvm::dbgs() << "mappings: " << CondensationToLoop.size() << '\n';
+  for (auto &e : CondensationToLoop) {
+    llvm::dbgs() << e.getFirst()->unit() << ':' << e.getSecond() << '\n';
+  }
 
   // for (const auto &curLoop : *LI) {
   // for (const auto *curBlock : curLoop->getBlocks()) {
