@@ -47,6 +47,9 @@
 #include "llvm/ADT/iterator_range.h"
 // using llvm::make_range
 
+#include "llvm/ADT/GraphTraits.h"
+// using llvm::GraphTraits
+
 #include "llvm/Support/CommandLine.h"
 // using llvm::cl::opt
 // using llvm::cl::desc
@@ -152,26 +155,24 @@ void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.setPreservesAll();
 }
 
-void MapPDGSCCToLoop(const llvm::LoopInfo &LI, const pedigree::PDGraph &G,
-                     ConstPDGCondensationVector &CV,
-                     llvm::DenseMap<int, llvm::Loop *> &Map) {
-  for (auto i = 0; i < CV.size(); ++i) {
+template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
+void MapCondensationToLoop(
+    GraphT &G, const llvm::LoopInfo &LI,
+    llvm::DenseMap<typename GT::NodeRef, llvm::Loop *> &Map) {
+  for (auto &n : G.nodes()) {
     llvm::Loop *loop = nullptr;
 
-    for (auto j = 0; j < CV[i].size(); ++j) {
-      if (!CV[i][j]->unit()) {
-        continue;
-      }
+    for (auto &m : G.scc_members(n)) {
+      if (m->unit()) {
+        loop = LI.getLoopFor(m->unit()->getParent());
 
-      loop = LI.getLoopFor((CV[i][j]->unit())->getParent());
-      llvm::dbgs() << '-' << (CV[i][j]->unit())->getParent()->getName() << '\n';
-
-      if (loop) {
-        break;
+        if (loop) {
+          break;
+        }
       }
     }
 
-    Map.try_emplace(i, loop);
+    Map.try_emplace(n, loop);
   }
 }
 
@@ -190,18 +191,8 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
 
   llvm::dbgs() << "+++ " << Graph.numOutEdges() << '\n';
 
-  for (auto &scc :
-       llvm::make_range(llvm::scc_begin(&Graph), llvm::scc_end(&Graph))) {
-    CV.emplace_back(scc);
-    llvm::dbgs() << "*\n";
-
-    for (auto &e : scc)
-      if (e->unit())
-        llvm::dbgs() << *e->unit();
-  }
-
-  CondensationGraph<PDGCondensationType::value_type> CG{llvm::scc_begin(&Graph),
-                                                        llvm::scc_end(&Graph)};
+  CondensationGraph<pedigree::PDGraph *> CG{llvm::scc_begin(&Graph),
+                                            llvm::scc_end(&Graph)};
 
   for (auto &n : CG.nodes()) {
     if (n->unit()) {
@@ -215,8 +206,10 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
 
   llvm::dbgs() << "condensations found: " << CG.size() << '\n';
 
-  llvm::DenseMap<int, llvm::Loop *> PDGSCCToLoop;
-  MapPDGSCCToLoop(*LI, Graph, CV, PDGSCCToLoop);
+  llvm::DenseMap<typename llvm::GraphTraits<decltype(CG)>::NodeRef,
+                 llvm::Loop *>
+      CondensationToLoop;
+  MapCondensationToLoop(CG, *LI, CondensationToLoop);
 
   // for (const auto &curLoop : *LI) {
   // for (const auto *curBlock : curLoop->getBlocks()) {
