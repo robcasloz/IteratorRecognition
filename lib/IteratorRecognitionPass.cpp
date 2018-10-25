@@ -64,6 +64,9 @@
 // using DEBUG macro
 // using llvm::dbgs
 
+#include <algorithm>
+// using std::any_of
+
 #include <iterator>
 // using std::begin
 // using std::end
@@ -160,19 +163,16 @@ void MapCondensationToLoop(
     GraphT &G, const llvm::LoopInfo &LI,
     llvm::DenseMap<typename GT::NodeRef, llvm::Loop *> &Map) {
   for (auto &n : G.nodes()) {
-    llvm::Loop *loop = nullptr;
+    llvm::Loop *loop;
 
-    for (auto &m : G.scc_members(n)) {
-      if (m->unit()) {
-        loop = LI.getLoopFor(m->unit()->getParent());
-
-        if (loop) {
-          break;
-        }
-      }
+    if (std::any_of(G.scc_members_begin(n), G.scc_members_end(),
+                    [&](const auto &m) {
+                      loop = nullptr;
+                      return m->unit() &&
+                             (loop = LI.getLoopFor(m->unit()->getParent()));
+                    })) {
+      Map.try_emplace(n, loop);
     }
-
-    Map.try_emplace(n, loop);
   }
 }
 
