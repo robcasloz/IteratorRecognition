@@ -106,6 +106,10 @@ static llvm::cl::OptionCategory
     IteratorRecognitionPassCategory("Iterator Recognition Pass",
                                     "Options for Iterator Recognition pass");
 
+static llvm::cl::opt<bool> SanityCheck(
+    "itr-sanity-check", llvm::cl::desc("apply various sanity checks"),
+    llvm::cl::init(false), llvm::cl::cat(IteratorRecognitionPassCategory));
+
 #if ITERATORRECOGNITION_DEBUG
 static llvm::cl::opt<bool, true>
     Debug("itr-debug", llvm::cl::desc("debug iterator recognition pass"),
@@ -229,6 +233,10 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   }
 
   llvm::dbgs() << "condensations found: " << CG.size() << '\n';
+
+  if (SanityCheck) {
+    CheckCondensationToLoopMapping(CG, *LI);
+  }
 
   llvm::DenseMap<typename llvm::GraphTraits<decltype(CG)>::NodeRef,
                  llvm::Loop *>
