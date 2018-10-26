@@ -63,6 +63,7 @@
 #include "llvm/Support/Debug.h"
 // using DEBUG macro
 // using llvm::dbgs
+// using llvm::errs
 
 #include <algorithm>
 // using std::any_of
@@ -160,15 +161,24 @@ void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
 void CheckCondensationToLoopMapping(GraphT &G, const llvm::LoopInfo &LI) {
-  llvm::DenseSet<llvm::Loop *> loops;
 
   for (auto &n : G.nodes()) {
+    if (!n->unit()) {
+      continue;
+    }
+
+    llvm::DenseSet<llvm::Loop *> loops;
+
     std::for_each(G.scc_members_begin(n), G.scc_members_end(),
                   [&](const auto &m) {
                     if (m->unit()) {
                       loops.insert(LI.getLoopFor(m->unit()->getParent()));
                     }
                   });
+    loops.erase(nullptr);
+
+    llvm::errs() << "condensation of node: " << *n->unit() << " contributes to "
+                 << loops.size() << " loops\n";
   }
 }
 
