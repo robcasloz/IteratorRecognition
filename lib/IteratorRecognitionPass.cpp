@@ -263,6 +263,10 @@ void MapCondensationToLoop(
   }
 }
 
+template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>,
+          typename IGT = llvm::GraphTraits<llvm::Inverse<GraphT>>>
+void RecognizeIterator(GraphT &G) {}
+
 bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
 
@@ -306,6 +310,8 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   for (auto &e : CondensationToLoop) {
     llvm::dbgs() << e.getFirst()->unit() << ':' << e.getSecond() << '\n';
   }
+
+  RecognizeIterator(CG);
 
   // for (const auto &curLoop : *LI) {
   // for (const auto *curBlock : curLoop->getBlocks()) {
