@@ -50,6 +50,17 @@
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
 
+#include "llvm/Support/JSON.h"
+// using json::Value
+// using json::Object
+// using json::Array
+
+#include "llvm/Support/FileSystem.h"
+// using llvm::sys::fs::F_Text
+
+#include "llvm/Support/ToolOutputFile.h"
+// using llvm::ToolOutputFile
+
 #include "llvm/Support/CommandLine.h"
 // using llvm::cl::opt
 // using llvm::cl::desc
@@ -59,18 +70,32 @@
 
 #include "llvm/Support/raw_ostream.h"
 // using llvm::raw_ostream
+// using llvm::raw_string_ostream
 
 #include "llvm/Support/Debug.h"
 // using DEBUG macro
 // using llvm::dbgs
 // using llvm::errs
 
+#include <string>
+// using std::string
+
 #include <algorithm>
 // using std::any_of
+// using std::for_each
 
 #include <iterator>
 // using std::begin
 // using std::end
+
+#include <utility>
+// using std::move
+
+#include <system_error>
+// using std::error_code
+
+#include <cassert>
+// using assert
 
 #define DEBUG_TYPE "iterator-recognition"
 
@@ -165,6 +190,11 @@ void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
 void CheckCondensationToLoopMapping(GraphT &G, const llvm::LoopInfo &LI) {
+  llvm::json::Object root;
+  llvm::json::Array condensations;
+
+  assert(LI.begin() != LI.end() && "No loops found!");
+  const auto &functionName = (*LI.begin())->getHeader()->getParent()->getName();
 
   for (auto &n : G.nodes()) {
     if (!n->unit()) {
@@ -181,8 +211,32 @@ void CheckCondensationToLoopMapping(GraphT &G, const llvm::LoopInfo &LI) {
                   });
     loops.erase(nullptr);
 
-    llvm::errs() << "condensation of node: " << *n->unit() << " contributes to "
-                 << loops.size() << " loops\n";
+    llvm::json::Object mapping;
+    std::string outs;
+    llvm::raw_string_ostream ss(outs);
+    ss << *n->unit();
+    mapping["condensation"] = ss.str();
+    mapping["loops"] = loops.size();
+
+    condensations.push_back(std::move(mapping));
+  }
+
+  root["condensations"] = std::move(condensations);
+
+  std::error_code ec;
+  llvm::ToolOutputFile of("itr_" + functionName.str() + ".json", ec,
+                          llvm::sys::fs::F_Text);
+
+  if (ec) {
+    llvm::errs() << "error opening file for writing!\n";
+    of.os().clear_error();
+  }
+
+  of.os() << llvm::json::Value(std::move(root));
+  of.os().close();
+
+  if (!of.os().has_error()) {
+    of.keep();
   }
 }
 
