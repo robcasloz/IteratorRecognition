@@ -280,6 +280,39 @@ template <typename GraphT> struct LLVMCondensationGraphTraitsHelperBase {
   // static ChildEdgeIteratorType child_edge_end(NodeRef G) { return 0; }
 };
 
+template <typename GraphT> struct LLVMCondensationInverseGraphTraitsHelperBase {
+  using NodeRef = typename GraphT::NodeRef;
+  using NodeType =
+      typename std::conditional_t<std::is_pointer<NodeRef>::value,
+                                  std::remove_pointer_t<NodeRef>,
+                                  std::remove_reference_t<NodeRef>>;
+
+  using EdgeRef = typename GraphT::EdgeRef;
+
+  static_assert(std::is_class<NodeType>::value,
+                "NodeType is not a class type!");
+
+  static NodeRef getEntryNode(GraphT *G) { return G->getEntryNode(); }
+  static unsigned size(GraphT *G) { return G->size(); }
+
+  using ChildIteratorType = typename NodeType::nodes_iterator;
+  static decltype(auto) child_begin(NodeRef G) { return G->pred_nodes_begin(); }
+  static decltype(auto) child_end(NodeRef G) { return G->pred_nodes_end(); }
+
+  static decltype(auto) children(NodeRef G) { return G->pred_nodes(); }
+
+  using nodes_iterator = typename GraphT::nodes_iterator;
+  static decltype(auto) nodes_begin(GraphT *G) { return G->nodes_begin(); }
+  static decltype(auto) nodes_end(GraphT *G) { return G->nodes_end(); }
+
+  static decltype(auto) nodes(GraphT *G) { return G->nodes(); }
+
+  // TODO these require the graph nodes to be a separate object
+  // using ChildEdgeIteratorType = int;
+  // static ChildEdgeIteratorType child_edge_begin(NodeRef G) { return 0; }
+  // static ChildEdgeIteratorType child_edge_end(NodeRef G) { return 0; }
+};
+
 } // namespace itr
 
 #endif // header

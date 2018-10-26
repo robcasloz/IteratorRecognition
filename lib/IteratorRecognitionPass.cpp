@@ -173,8 +173,13 @@ using ConstPDGCondensationVector =
 namespace llvm {
 
 template <>
-struct llvm::GraphTraits<itr::CondensationGraph<pedigree::PDGraph *>>
+struct GraphTraits<itr::CondensationGraph<pedigree::PDGraph *>>
     : public itr::LLVMCondensationGraphTraitsHelperBase<
+          itr::CondensationGraph<pedigree::PDGraph *>> {};
+
+template <>
+struct GraphTraits<Inverse<itr::CondensationGraph<pedigree::PDGraph *>>>
+    : public itr::LLVMCondensationInverseGraphTraitsHelperBase<
           itr::CondensationGraph<pedigree::PDGraph *>> {};
 
 } // namespace llvm
