@@ -133,7 +133,7 @@ private:
 
       for (auto &m : scc_members(curLeader)) {
         // TODO refactor these two inner loops since they are basically the same
-        for (const auto &n : m->pred_nodes()) {
+        for (const auto &n : m->inverse_nodes()) {
           auto &srcLeader = *Nodes.findLeader(n);
 
           if (srcLeader == curLeader || srcLeaders.count(srcLeader)) {
@@ -296,10 +296,14 @@ template <typename GraphT> struct LLVMCondensationInverseGraphTraitsHelperBase {
   static unsigned size(GraphT *G) { return G->size(); }
 
   using ChildIteratorType = typename NodeType::nodes_iterator;
-  static decltype(auto) child_begin(NodeRef G) { return G->pred_nodes_begin(); }
-  static decltype(auto) child_end(NodeRef G) { return G->pred_nodes_end(); }
 
-  static decltype(auto) children(NodeRef G) { return G->pred_nodes(); }
+  static decltype(auto) child_begin(NodeRef G) {
+    return G->inverse_nodes_begin();
+  }
+
+  static decltype(auto) child_end(NodeRef G) { return G->inverse_nodes_end(); }
+
+  static decltype(auto) children(NodeRef G) { return G->inverse_nodes(); }
 
   using nodes_iterator = typename GraphT::nodes_iterator;
   static decltype(auto) nodes_begin(GraphT *G) { return G->nodes_begin(); }
