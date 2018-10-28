@@ -83,10 +83,12 @@
 #include <algorithm>
 // using std::any_of
 // using std::for_each
+// using std::transform
 
 #include <iterator>
 // using std::begin
 // using std::end
+// using std::back_inserter
 
 #include <utility>
 // using std::move
@@ -219,9 +221,19 @@ void CheckCondensationToLoopMapping(GraphT &G, const llvm::LoopInfo &LI) {
     llvm::json::Object mapping;
     std::string outs;
     llvm::raw_string_ostream ss(outs);
+
     ss << *n->unit();
     mapping["condensation"] = ss.str();
-    mapping["loops"] = loops.size();
+
+    outs.clear();
+
+    llvm::json::Array loopsArray;
+    std::transform(loops.begin(), loops.end(), std::back_inserter(loopsArray),
+                   [&](const auto &e) {
+                     ss << *e->getLoopLatch()->getTerminator();
+                     return ss.str();
+                   });
+    mapping["loops"] = std::move(loopsArray);
 
     condensations.push_back(std::move(mapping));
   }
