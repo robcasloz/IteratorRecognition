@@ -249,7 +249,7 @@ void CheckCondensationToLoopMapping(GraphT &G, const llvm::LoopInfo &LI) {
     of.os().clear_error();
   }
 
-  of.os() << llvm::json::Value(std::move(root));
+  of.os() << llvm::formatv("{0:2}", llvm::json::Value(std::move(root)));
   of.os().close();
 
   if (!of.os().has_error()) {
