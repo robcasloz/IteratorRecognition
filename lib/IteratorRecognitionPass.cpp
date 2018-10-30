@@ -81,7 +81,6 @@
 // using std::string
 
 #include <algorithm>
-// using std::any_of
 // using std::for_each
 // using std::transform
 
@@ -170,6 +169,7 @@ using PDGCondensationType = CondensationType<pedigree::PDGraph *>;
 
 using ConstPDGCondensationVector =
     ConstCondensationVectorType<pedigree::PDGraph *>;
+
 } // namespace itr
 
 namespace llvm {
@@ -196,33 +196,52 @@ void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 }
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
-void ExportCondensationToLoopMapping(GraphT &G, const llvm::LoopInfo &LI) {
-  llvm::json::Object root;
-  llvm::json::Array condensations;
-
-  assert(LI.begin() != LI.end() && "No loops found!");
-  const auto &functionName = (*LI.begin())->getHeader()->getParent()->getName();
-
+void MapCondensationToLoop(
+    GraphT &G, const llvm::LoopInfo &LI,
+    llvm::DenseMap<typename GT::NodeRef, llvm::DenseSet<llvm::Loop *>> &Map) {
   for (auto &n : G.nodes()) {
-    if (!n->unit()) {
-      continue;
-    }
-
-    llvm::DenseSet<llvm::Loop *> loops;
+    typename std::remove_reference_t<decltype(Map)>::mapped_type loops;
+    bool skipInsertion = false;
 
     std::for_each(G.scc_members_begin(n), G.scc_members_end(),
                   [&](const auto &m) {
-                    if (m->unit()) {
-                      loops.insert(LI.getLoopFor(m->unit()->getParent()));
+                    if (!m->unit()) {
+                      skipInsertion = true;
+                      return;
+                    }
+
+                    const auto &loop = LI.getLoopFor(m->unit()->getParent());
+                    if (loop) {
+                      loops.insert(loop);
                     }
                   });
-    loops.erase(nullptr);
+
+    if (!skipInsertion) {
+      Map.try_emplace(n, loops);
+    }
+  }
+}
+
+template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>,
+          typename IGT = llvm::GraphTraits<llvm::Inverse<GraphT>>>
+void RecognizeIterator(GraphT &G) {}
+
+template <typename NodeRef>
+void ExportCondensationToLoopMapping(
+    const llvm::DenseMap<NodeRef, llvm::DenseSet<llvm::Loop *>> &Map,
+    llvm::StringRef FilenamePart) {
+  llvm::json::Object root;
+  llvm::json::Array condensations;
+
+  for (auto &e : Map) {
+    const auto &key = e.getFirst();
+    const auto &loops = e.getSecond();
 
     llvm::json::Object mapping;
     std::string outs;
     llvm::raw_string_ostream ss(outs);
 
-    ss << *n->unit();
+    ss << *key->unit();
     mapping["condensation"] = ss.str();
 
     outs.clear();
@@ -241,7 +260,7 @@ void ExportCondensationToLoopMapping(GraphT &G, const llvm::LoopInfo &LI) {
   root["condensations"] = std::move(condensations);
 
   std::error_code ec;
-  llvm::ToolOutputFile of("itr_" + functionName.str() + ".json", ec,
+  llvm::ToolOutputFile of("itr_" + FilenamePart.str() + ".json", ec,
                           llvm::sys::fs::F_Text);
 
   if (ec) {
@@ -256,28 +275,6 @@ void ExportCondensationToLoopMapping(GraphT &G, const llvm::LoopInfo &LI) {
     of.keep();
   }
 }
-
-template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
-void MapCondensationToLoop(
-    GraphT &G, const llvm::LoopInfo &LI,
-    llvm::DenseMap<typename GT::NodeRef, llvm::Loop *> &Map) {
-  for (auto &n : G.nodes()) {
-    llvm::Loop *loop;
-
-    if (std::any_of(G.scc_members_begin(n), G.scc_members_end(),
-                    [&](const auto &m) {
-                      loop = nullptr;
-                      return m->unit() &&
-                             (loop = LI.getLoopFor(m->unit()->getParent()));
-                    })) {
-      Map.try_emplace(n, loop);
-    }
-  }
-}
-
-template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>,
-          typename IGT = llvm::GraphTraits<llvm::Inverse<GraphT>>>
-void RecognizeIterator(GraphT &G) {}
 
 bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
@@ -309,18 +306,13 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
 
   llvm::dbgs() << "condensations found: " << CG.size() << '\n';
 
-  if (ExportMapping) {
-    ExportCondensationToLoopMapping(CG, *LI);
-  }
-
   llvm::DenseMap<typename llvm::GraphTraits<decltype(CG)>::NodeRef,
-                 llvm::Loop *>
+                 llvm::DenseSet<llvm::Loop *>>
       CondensationToLoop;
   MapCondensationToLoop(CG, *LI, CondensationToLoop);
 
-  llvm::dbgs() << "mappings: " << CondensationToLoop.size() << '\n';
-  for (auto &e : CondensationToLoop) {
-    llvm::dbgs() << e.getFirst()->unit() << ':' << e.getSecond() << '\n';
+  if (ExportMapping) {
+    ExportCondensationToLoopMapping(CondensationToLoop, CurFunc.getName());
   }
 
   RecognizeIterator(CG);
