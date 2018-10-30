@@ -133,8 +133,8 @@ static llvm::cl::OptionCategory
     IteratorRecognitionPassCategory("Iterator Recognition Pass",
                                     "Options for Iterator Recognition pass");
 
-static llvm::cl::opt<bool> SanityCheck(
-    "itr-sanity-check", llvm::cl::desc("apply various sanity checks"),
+static llvm::cl::opt<bool> ExportMapping(
+    "itr-export-mapping", llvm::cl::desc("export condensation to loop mapping"),
     llvm::cl::init(false), llvm::cl::cat(IteratorRecognitionPassCategory));
 
 #if ITERATORRECOGNITION_DEBUG
@@ -196,7 +196,7 @@ void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 }
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
-void CheckCondensationToLoopMapping(GraphT &G, const llvm::LoopInfo &LI) {
+void ExportCondensationToLoopMapping(GraphT &G, const llvm::LoopInfo &LI) {
   llvm::json::Object root;
   llvm::json::Array condensations;
 
@@ -309,8 +309,8 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
 
   llvm::dbgs() << "condensations found: " << CG.size() << '\n';
 
-  if (SanityCheck) {
-    CheckCondensationToLoopMapping(CG, *LI);
+  if (ExportMapping) {
+    ExportCondensationToLoopMapping(CG, *LI);
   }
 
   llvm::DenseMap<typename llvm::GraphTraits<decltype(CG)>::NodeRef,
