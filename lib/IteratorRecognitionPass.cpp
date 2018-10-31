@@ -224,7 +224,20 @@ void MapCondensationToLoop(
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>,
           typename IGT = llvm::GraphTraits<llvm::Inverse<GraphT>>>
-void RecognizeIterator(GraphT &G) {}
+void RecognizeIterator(
+    GraphT &G,
+    llvm::DenseMap<typename GT::NodeRef, llvm::DenseSet<llvm::Loop *>> &Map) {
+  for (const auto &e : Map) {
+    const auto &key = e.getFirst();
+    const auto &loops = e.getSecond();
+
+    if (!loops.size()) {
+      continue;
+    }
+
+    auto it = IGT::child_begin(key);
+  }
+}
 
 template <typename NodeRef>
 void ExportCondensationToLoopMapping(
@@ -294,36 +307,26 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   CondensationGraph<pedigree::PDGraph *> CG{llvm::scc_begin(&Graph),
                                             llvm::scc_end(&Graph)};
 
-  for (auto &n : CG.nodes()) {
-    if (n->unit()) {
-      llvm::dbgs() << ">>>" << *(n->unit()) << '\n';
-      for (auto &m : CG.scc_members(n)) {
-        if (m->unit())
-          llvm::dbgs() << ">>>>>" << *(m->unit()) << '\n';
-      }
+  for (auto &n : CG) {
+    for (auto &m : n) {
+      if (m->unit())
+        llvm::dbgs() << "> " << *(m->unit()) << '\n';
     }
+    llvm::dbgs() << "+++\n";
   }
 
   llvm::dbgs() << "condensations found: " << CG.size() << '\n';
 
-  llvm::DenseMap<typename llvm::GraphTraits<decltype(CG)>::NodeRef,
-                 llvm::DenseSet<llvm::Loop *>>
-      CondensationToLoop;
-  MapCondensationToLoop(CG, *LI, CondensationToLoop);
+  //llvm::DenseMap<typename llvm::GraphTraits<decltype(CG)>::NodeRef,
+                 //llvm::DenseSet<llvm::Loop *>>
+      //CondensationToLoop;
+  //MapCondensationToLoop(CG, *LI, CondensationToLoop);
 
-  if (ExportMapping) {
-    ExportCondensationToLoopMapping(CondensationToLoop, CurFunc.getName());
-  }
+  // if (ExportMapping) {
+  // ExportCondensationToLoopMapping(CondensationToLoop, CurFunc.getName());
+  //}
 
-  RecognizeIterator(CG);
-
-  // for (const auto &curLoop : *LI) {
-  // for (const auto *curBlock : curLoop->getBlocks()) {
-  // for (const auto &curInst : *curBlock) {
-  // llvm::dbgs() << curInst << '\n';
-  //}
-  //}
-  //}
+  // RecognizeIterator(CG, CondensationToLoop);
 
   return hasChanged;
 }
