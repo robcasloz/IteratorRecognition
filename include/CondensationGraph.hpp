@@ -79,6 +79,16 @@ class CondensationGraphNode {
   mutable EdgesContainerType OutEdges;
   mutable EdgesContainerType InEdges;
 
+  template <typename IteratorT>
+  explicit CondensationGraphNode(IteratorT Begin, IteratorT End) {
+    static_assert(
+        std::is_same<typename std::iterator_traits<IteratorT>::value_type,
+                     MemberNodeRef>::value,
+        "Iterator type cannot be dereferenced to the expected value!");
+
+    std::copy(Begin, End, std::back_inserter(Nodes));
+  }
+
 public:
   using iterator = typename decltype(Nodes)::iterator;
   using const_iterator = typename decltype(Nodes)::const_iterator;
@@ -90,17 +100,6 @@ public:
   CondensationGraphNode &operator=(const CondensationGraphNode &) = delete;
 
   CondensationGraphNode(CondensationGraphNode &&) = default;
-
-  // TODO consider making this ctor private
-  template <typename IteratorT>
-  explicit CondensationGraphNode(IteratorT Begin, IteratorT End) {
-    static_assert(
-        std::is_same<typename std::iterator_traits<IteratorT>::value_type,
-                     MemberNodeRef>::value,
-        "Iterator type cannot be dereferenced to the expected value!");
-
-    std::copy(Begin, End, std::back_inserter(Nodes));
-  }
 
   iterator begin() { return Nodes.begin(); }
   iterator end() { return Nodes.end(); }
