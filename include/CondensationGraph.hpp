@@ -94,6 +94,7 @@ public:
   using const_iterator = typename decltype(Nodes)::const_iterator;
 
   using EdgesIteratorType = typename EdgesContainerType::iterator;
+  using ConstEdgesIteratorType = typename EdgesContainerType::const_iterator;
 
   CondensationGraphNode() = delete;
   CondensationGraphNode(const CondensationGraphNode &) = delete;
@@ -113,14 +114,14 @@ public:
   EdgesIteratorType edge_begin() { return OutEdges.begin(); }
   EdgesIteratorType edge_end() { return OutEdges.end(); }
 
-  EdgesIteratorType edge_begin() const { return OutEdges.begin(); }
-  EdgesIteratorType edge_end() const { return OutEdges.end(); }
+  ConstEdgesIteratorType edge_begin() const { return OutEdges.begin(); }
+  ConstEdgesIteratorType edge_end() const { return OutEdges.end(); }
 
   EdgesIteratorType inverse_edge_begin() { return InEdges.begin(); }
   EdgesIteratorType inverse_edge_end() { return InEdges.end(); }
 
-  EdgesIteratorType inverse_edge_begin() const { return InEdges.begin(); }
-  EdgesIteratorType inverse_edge_end() const { return InEdges.end(); }
+  ConstEdgesIteratorType inverse_edge_begin() const { return InEdges.begin(); }
+  ConstEdgesIteratorType inverse_edge_end() const { return InEdges.end(); }
 
   iterator find(const MemberNodeRef &Node) {
     return std::find(begin(), end(), Node);
