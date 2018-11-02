@@ -180,9 +180,30 @@ struct GraphTraits<itr::CondensationGraph<pedigree::PDGraph *>>
           itr::CondensationGraph<pedigree::PDGraph *>> {};
 
 template <>
+struct GraphTraits<const itr::CondensationGraph<pedigree::PDGraph *>>
+    : public itr::LLVMCondensationGraphTraitsHelperBase<
+          const itr::CondensationGraph<pedigree::PDGraph *>> {};
+
+template <>
+struct GraphTraits<const itr::CondensationGraph<const pedigree::PDGraph *>>
+    : public itr::LLVMCondensationGraphTraitsHelperBase<
+          const itr::CondensationGraph<const pedigree::PDGraph *>> {};
+
+template <>
 struct GraphTraits<Inverse<itr::CondensationGraph<pedigree::PDGraph *>>>
     : public itr::LLVMCondensationInverseGraphTraitsHelperBase<
           itr::CondensationGraph<pedigree::PDGraph *>> {};
+
+template <>
+struct GraphTraits<Inverse<const itr::CondensationGraph<pedigree::PDGraph *>>>
+    : public itr::LLVMCondensationInverseGraphTraitsHelperBase<
+          const itr::CondensationGraph<pedigree::PDGraph *>> {};
+
+template <>
+struct GraphTraits<
+    Inverse<const itr::CondensationGraph<const pedigree::PDGraph *>>>
+    : public itr::LLVMCondensationInverseGraphTraitsHelperBase<
+          const itr::CondensationGraph<const pedigree::PDGraph *>> {};
 
 } // namespace llvm
 
