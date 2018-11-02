@@ -44,6 +44,9 @@
 #include "llvm/ADT/DenseMap.h"
 // using llvm::DenseMap
 
+#include "llvm/ADT/DenseSet.h"
+// using llvm::DenseSet
+
 #include "llvm/ADT/iterator_range.h"
 // using llvm::make_range
 
@@ -239,6 +242,19 @@ void MapCondensationToLoop(
   }
 }
 
+template <typename ValueT, typename ValueInfoT>
+bool operator==(const llvm::DenseSet<ValueT, ValueInfoT> &LHS,
+                const llvm::DenseSet<ValueT, ValueInfoT> &RHS) {
+  if (LHS.size() != RHS.size())
+    return false;
+
+  for (auto &E : LHS)
+    if (!RHS.count(E))
+      return false;
+
+  return true;
+}
+
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>,
           typename IGT = llvm::GraphTraits<llvm::Inverse<GraphT>>>
 void RecognizeIterator(
@@ -247,12 +263,35 @@ void RecognizeIterator(
   for (const auto &e : Map) {
     const auto &key = e.getFirst();
     const auto &loops = e.getSecond();
+    bool workFound = false;
 
     if (!loops.size()) {
       continue;
     }
 
-    auto it = IGT::child_begin(key);
+    for (auto &cn : IGT::children(key)) {
+      auto found = Map.find(cn);
+
+      if (found != Map.end()) {
+        continue;
+      }
+
+      const auto &cnLoops = found->getSecond();
+
+      if (cnLoops.empty()) {
+        continue;
+      }
+
+      if (cnLoops == loops) {
+        llvm::dbgs() << "work\n";
+        workFound = true;
+        break;
+      }
+    }
+
+    if (!workFound) {
+      llvm::dbgs() << "iterator\n";
+    }
   }
 }
 
@@ -328,10 +367,10 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   CondensationGraph<pedigree::PDGraph *> CG{llvm::scc_begin(&Graph),
                                             llvm::scc_end(&Graph)};
 
-  for (auto &n : CG) {
-    for (auto &m : n) {
-      if (m->unit())
-        llvm::dbgs() << "> " << *(m->unit()) << '\n';
+  for (auto &cn : CG) {
+    for (auto &n : cn) {
+      if (n->unit())
+        llvm::dbgs() << "> " << *(n->unit()) << '\n';
     }
     llvm::dbgs() << "+++\n";
   }
@@ -347,7 +386,7 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
     ExportCondensationToLoopMapping(CondensationToLoop, CurFunc.getName());
   }
 
-  // RecognizeIterator(CG, CondensationToLoop);
+  RecognizeIterator(CG, CondensationToLoop);
 
   return hasChanged;
 }
