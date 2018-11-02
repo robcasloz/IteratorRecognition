@@ -200,6 +200,8 @@ private:
   }
 
 public:
+  // TODO the iterator dereferences to a reference type and not a pointer as
+  // denoted by NodeRef, which might create confusion and incompatibilities
   using iterator = typename decltype(Nodes)::iterator;
   using const_iterator = typename decltype(Nodes)::const_iterator;
 
