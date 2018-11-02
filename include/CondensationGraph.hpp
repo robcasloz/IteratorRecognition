@@ -40,11 +40,12 @@
 
 #include <type_traits>
 // using std::is_same
+// using std::is_const
 // using std::conditional_t
-// using std::is_pointer
 // using std::remove_pointer_t
-// using std::remove_reference_t
-// using std::is_class
+
+#include <utility>
+// using std::forward
 
 #ifndef ITR_CONDENSATIONGRAPH_HPP
 #define ITR_CONDENSATIONGRAPH_HPP
@@ -238,18 +239,19 @@ namespace itr {
 
 template <typename GraphT> struct LLVMCondensationGraphTraitsHelperBase {
   using NodeRef = typename GraphT::NodeRef;
-  using NodeType =
-      typename std::conditional_t<std::is_pointer<NodeRef>::value,
-                                  std::remove_pointer_t<NodeRef>,
-                                  std::remove_reference_t<NodeRef>>;
+  using NodeType = std::remove_pointer_t<NodeRef>;
 
-  // TODO what if NodeRef is a reference_wrapper?
-  static_assert(std::is_class<NodeType>::value,
-                "NodeType is not a class type!");
-
-  using nodes_iterator = typename GraphT::iterator;
-  using ChildIteratorType = typename NodeType::EdgesIteratorType;
-  using ChildEdgeIteratorType = typename NodeType::EdgesIteratorType;
+  using nodes_iterator = std::conditional_t<std::is_const<GraphT>::value,
+                                            typename GraphT::const_iterator,
+                                            typename GraphT::iterator>;
+  using ChildIteratorType =
+      std::conditional_t<std::is_const<GraphT>::value,
+                         typename NodeType::ConstEdgesIteratorType,
+                         typename NodeType::EdgesIteratorType>;
+  using ChildEdgeIteratorType =
+      std::conditional_t<std::is_const<GraphT>::value,
+                         typename NodeType::ConstEdgesIteratorType,
+                         typename NodeType::EdgesIteratorType>;
 
   using EdgeRef =
       typename std::iterator_traits<ChildEdgeIteratorType>::reference;
@@ -261,28 +263,45 @@ template <typename GraphT> struct LLVMCondensationGraphTraitsHelperBase {
 
   static decltype(auto) nodes_begin(GraphT *G) { return G->begin(); }
   static decltype(auto) nodes_end(GraphT *G) { return G->end(); }
+
+  static decltype(auto) nodes_begin(GraphT &G) { return G.begin(); }
+  static decltype(auto) nodes_end(GraphT &G) { return G.end(); }
+
+  template <typename T> static decltype(auto) nodes(T &&G) {
+    return llvm::make_range(nodes_begin(std::forward<T>(G)),
+                            nodes_end(std::forward<T>(G)));
+  }
 
   static decltype(auto) child_begin(NodeRef N) { return N->edge_begin(); }
   static decltype(auto) child_end(NodeRef N) { return N->edge_end(); }
 
+  static decltype(auto) children(NodeRef N) {
+    return llvm::make_range(child_begin(N), child_end(N));
+  }
+
   static decltype(auto) child_edge_begin(NodeRef N) { return N->edge_begin(); }
   static decltype(auto) child_edge_end(NodeRef N) { return N->edge_end(); }
+
+  static decltype(auto) children_edges(NodeRef N) {
+    return llvm::make_range(child_edge_begin(N), child_edge_end(N));
+  }
 };
 
 template <typename GraphT> struct LLVMCondensationInverseGraphTraitsHelperBase {
   using NodeRef = typename GraphT::NodeRef;
-  using NodeType =
-      typename std::conditional_t<std::is_pointer<NodeRef>::value,
-                                  std::remove_pointer_t<NodeRef>,
-                                  std::remove_reference_t<NodeRef>>;
+  using NodeType = std::remove_pointer_t<NodeRef>;
 
-  // TODO what if NodeRef is a reference_wrapper?
-  static_assert(std::is_class<NodeType>::value,
-                "NodeType is not a class type!");
-
-  using nodes_iterator = typename GraphT::iterator;
-  using ChildIteratorType = typename NodeType::EdgesIteratorType;
-  using ChildEdgeIteratorType = typename NodeType::EdgesIteratorType;
+  using nodes_iterator = std::conditional_t<std::is_const<GraphT>::value,
+                                            typename GraphT::const_iterator,
+                                            typename GraphT::iterator>;
+  using ChildIteratorType =
+      std::conditional_t<std::is_const<GraphT>::value,
+                         typename NodeType::ConstEdgesIteratorType,
+                         typename NodeType::EdgesIteratorType>;
+  using ChildEdgeIteratorType =
+      std::conditional_t<std::is_const<GraphT>::value,
+                         typename NodeType::ConstEdgesIteratorType,
+                         typename NodeType::EdgesIteratorType>;
 
   using EdgeRef =
       typename std::iterator_traits<ChildEdgeIteratorType>::reference;
@@ -294,17 +313,33 @@ template <typename GraphT> struct LLVMCondensationInverseGraphTraitsHelperBase {
 
   static decltype(auto) nodes_begin(GraphT *G) { return G->begin(); }
   static decltype(auto) nodes_end(GraphT *G) { return G->end(); }
+
+  static decltype(auto) nodes_begin(GraphT &G) { return G.begin(); }
+  static decltype(auto) nodes_end(GraphT &G) { return G.end(); }
+
+  template <typename T> static decltype(auto) nodes(T &&G) {
+    return llvm::make_range(nodes_begin(std::forward<T>(G)),
+                            nodes_end(std::forward<T>(G)));
+  }
 
   static decltype(auto) child_begin(NodeRef N) {
     return N->inverse_edge_begin();
   }
   static decltype(auto) child_end(NodeRef N) { return N->inverse_edge_end(); }
 
+  static decltype(auto) children(NodeRef N) {
+    return llvm::make_range(child_begin(N), child_end(N));
+  }
+
   static decltype(auto) child_edge_begin(NodeRef N) {
     return N->inverse_edge_begin();
   }
   static decltype(auto) child_edge_end(NodeRef N) {
     return N->inverse_edge_end();
+  }
+
+  static decltype(auto) children_edges(NodeRef N) {
+    return llvm::make_range(child_edge_begin(N), child_edge_end(N));
   }
 };
 
