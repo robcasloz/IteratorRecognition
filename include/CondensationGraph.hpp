@@ -148,7 +148,7 @@ public:
 
 private:
   std::vector<NodeType> Nodes;
-  NodeRef EntryNode;
+  mutable NodeRef EntryNode;
 
   void populateCondensedEdges() const {
     std::map<MemberNodeRef, ConstNodeRef> nodeToCondensation;
@@ -156,6 +156,10 @@ private:
     for (const auto &cn : *this) {
       for (const auto &n : cn) {
         nodeToCondensation.emplace(n, std::addressof(cn));
+
+        if (!n->unit()) {
+          EntryNode = const_cast<NodeRef>(std::addressof(cn));
+        }
       }
     }
 
