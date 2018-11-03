@@ -231,6 +231,16 @@ public:
   NodeRef getEntryNode() { return EntryNode; }
   decltype(auto) size() const { return Nodes.size(); }
   bool empty() const { return Nodes.empty(); }
+
+  iterator find(const MemberNodeRef &Node) {
+    return std::find_if(begin(), end(),
+                        [&](const auto &e) { return e.find(Node) != e.end(); });
+  }
+
+  const_iterator find(const MemberNodeRef &Node) const {
+    return std::find_if(begin(), end(),
+                        [&](const auto &e) { return e.find(Node) != e.end(); });
+  }
 };
 
 //
@@ -240,8 +250,6 @@ public:
 namespace itr {
 
 // generic base for easing the task of creating graph traits for graphs
-
-// TODO add const variant of traits helper
 
 template <typename GraphT> struct LLVMCondensationGraphTraitsHelperBase {
   using NodeRef = typename GraphT::NodeRef;
