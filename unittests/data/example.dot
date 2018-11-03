@@ -1,4 +1,4 @@
-graph G {
+digraph G {
   VR [style=dotted color=gray fontcolor=gray]
 
   // SCC clusters
