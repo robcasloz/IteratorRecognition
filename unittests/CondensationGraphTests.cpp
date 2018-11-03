@@ -46,6 +46,12 @@ struct llvm::GraphTraits<itr::CondensationGraph<itr::testing::TestGraphTy *>>
     : public itr::LLVMCondensationGraphTraitsHelperBase<
           itr::CondensationGraph<itr::testing::TestGraphTy *>> {};
 
+template <>
+struct llvm::GraphTraits<
+    llvm::Inverse<itr::CondensationGraph<itr::testing::TestGraphTy *>>>
+    : public itr::LLVMCondensationInverseGraphTraitsHelperBase<
+          itr::CondensationGraph<itr::testing::TestGraphTy *>> {};
+
 } // namespace llvm
 
 namespace itr {
@@ -104,14 +110,14 @@ TEST_F(CondensationGraphTest, CondensationsCount) {
 
 TEST_F(CondensationGraphTest, CondensationNodesCount) {
   CondensationGraph<TestGraphTy *> CG{llvm::scc_begin(&G1), llvm::scc_end(&G1)};
-  auto SCC0NodesCount =
-      std::distance(CG.scc_members_begin(DepNodes1[0]), CG.scc_members_end());
+  auto found0 = CG.find(DepNodes1[0]);
+  auto SCC0NodesCount = std::distance(found0->begin(), found0->end());
 
-  auto SCC1NodesCount =
-      std::distance(CG.scc_members_begin(DepNodes1[3]), CG.scc_members_end());
+  auto found1 = CG.find(DepNodes1[3]);
+  auto SCC1NodesCount = std::distance(found1->begin(), found1->end());
 
-  auto SCC2NodesCount =
-      std::distance(CG.scc_members_begin(DepNodes1[5]), CG.scc_members_end());
+  auto found2 = CG.find(DepNodes1[5]);
+  auto SCC2NodesCount = std::distance(found2->begin(), found2->end());
 
   EXPECT_EQ(3, SCC0NodesCount);
   EXPECT_EQ(2, SCC1NodesCount);
@@ -120,14 +126,19 @@ TEST_F(CondensationGraphTest, CondensationNodesCount) {
 
 TEST_F(CondensationGraphTest, CondensationOutEdgesCount) {
   CondensationGraph<TestGraphTy *> CG{llvm::scc_begin(&G1), llvm::scc_end(&G1)};
-  auto SCC0EdgesCount = std::distance(CG.child_edge_begin(DepNodes1[1]),
-                                      CG.child_edge_end(DepNodes1[1]));
+  using GT = llvm::GraphTraits<decltype(CG)>;
 
-  auto SCC1EdgesCount = std::distance(CG.child_edge_begin(DepNodes1[3]),
-                                      CG.child_edge_end(DepNodes1[3]));
+  auto found0 = CG.find(DepNodes1[0]);
+  auto SCC0EdgesCount = std::distance(GT::child_edge_begin(&*found0),
+                                      GT::child_edge_end(&*found0));
 
-  auto SCC2EdgesCount = std::distance(CG.child_edge_begin(DepNodes1[5]),
-                                      CG.child_edge_end(DepNodes1[5]));
+  auto found1 = CG.find(DepNodes1[3]);
+  auto SCC1EdgesCount = std::distance(GT::child_edge_begin(&*found1),
+                                      GT::child_edge_end(&*found1));
+
+  auto found2 = CG.find(DepNodes1[5]);
+  auto SCC2EdgesCount = std::distance(GT::child_edge_begin(&*found2),
+                                      GT::child_edge_end(&*found2));
 
   EXPECT_EQ(2, SCC0EdgesCount);
   EXPECT_EQ(1, SCC1EdgesCount);
@@ -136,14 +147,19 @@ TEST_F(CondensationGraphTest, CondensationOutEdgesCount) {
 
 TEST_F(CondensationGraphTest, CondensationInEdgesCount) {
   CondensationGraph<TestGraphTy *> CG{llvm::scc_begin(&G1), llvm::scc_end(&G1)};
-  auto SCC0EdgesCount = std::distance(CG.inverse_child_edge_begin(DepNodes1[1]),
-                                      CG.inverse_child_edge_end(DepNodes1[1]));
+  using IGT = llvm::GraphTraits<llvm::Inverse<decltype(CG)>>;
 
-  auto SCC1EdgesCount = std::distance(CG.inverse_child_edge_begin(DepNodes1[3]),
-                                      CG.inverse_child_edge_end(DepNodes1[3]));
+  auto found0 = CG.find(DepNodes1[1]);
+  auto SCC0EdgesCount = std::distance(IGT::child_edge_begin(&*found0),
+                                      IGT::child_edge_end(&*found0));
 
-  auto SCC2EdgesCount = std::distance(CG.inverse_child_edge_begin(DepNodes1[5]),
-                                      CG.inverse_child_edge_end(DepNodes1[5]));
+  auto found1 = CG.find(DepNodes1[3]);
+  auto SCC1EdgesCount = std::distance(IGT::child_edge_begin(&*found1),
+                                      IGT::child_edge_end(&*found1));
+
+  auto found2 = CG.find(DepNodes1[5]);
+  auto SCC2EdgesCount = std::distance(IGT::child_edge_begin(&*found2),
+                                      IGT::child_edge_end(&*found2));
 
   // add 1 for virtual root
   EXPECT_EQ(0 + 1, SCC0EdgesCount);
