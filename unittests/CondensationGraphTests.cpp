@@ -71,16 +71,16 @@ struct CondensationGraphTest : public ::testing::Test {
       DepNodes1.emplace_back(G1.getOrInsertNode(&e));
     }
 
-    // SCC 1
+    // SCC 0
     DepNodes1[0]->addDependentNode(DepNodes1[1]);
     DepNodes1[1]->addDependentNode(DepNodes1[2]);
     DepNodes1[2]->addDependentNode(DepNodes1[0]);
 
-    // SCC 2
+    // SCC 1
     DepNodes1[3]->addDependentNode(DepNodes1[4]);
     DepNodes1[4]->addDependentNode(DepNodes1[3]);
 
-    // SCC 3
+    // SCC 2
     // just node[5]
 
     // inter-SCC edges

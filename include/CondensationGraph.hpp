@@ -163,43 +163,45 @@ private:
       }
     }
 
+    auto sue = [](auto &Vec) {
+      std::sort(Vec.begin(), Vec.end());
+      Vec.erase(std::unique(Vec.begin(), Vec.end()), Vec.end());
+    };
+
     for (const auto &cn : *this) {
-      llvm::DenseSet<MemberNodeRef> curNodes, outNodes, inNodes;
-      std::vector<MemberNodeRef> inNodesDiff, outNodesDiff;
+      std::vector<MemberNodeRef> outNodes, inNodes, inNodesDiff, outNodesDiff,
+          curNodes;
 
       for (const auto &n : cn) {
-        curNodes.insert(n);
+        curNodes.push_back(n);
 
         std::for_each(n->nodes_begin(), n->nodes_end(),
-                      [&](const auto &e) { outNodes.insert(e); });
+                      [&](const auto &e) { outNodes.push_back(e); });
 
         std::for_each(n->inverse_nodes_begin(), n->inverse_nodes_end(),
-                      [&](const auto &e) { inNodes.insert(e); });
+                      [&](const auto &e) { inNodes.push_back(e); });
       }
+
+      sue(curNodes);
+      sue(outNodes);
+      sue(inNodes);
 
       std::set_difference(outNodes.begin(), outNodes.end(), curNodes.begin(),
                           curNodes.end(), std::back_inserter(outNodesDiff));
       std::set_difference(inNodes.begin(), inNodes.end(), curNodes.begin(),
                           curNodes.end(), std::back_inserter(inNodesDiff));
 
-      std::sort(outNodesDiff.begin(), outNodesDiff.end());
-      std::sort(inNodesDiff.begin(), inNodesDiff.end());
-
-      auto outLast = std::unique(outNodesDiff.begin(), outNodesDiff.end());
-      outNodesDiff.erase(outLast, outNodesDiff.end());
-
-      auto inLast = std::unique(inNodesDiff.begin(), inNodesDiff.end());
-      inNodesDiff.erase(inLast, inNodesDiff.end());
-
       std::for_each(outNodesDiff.begin(), outNodesDiff.end(),
                     [&](const auto &e) {
                       cn.OutEdges.push_back(
                           const_cast<NodeRef>(nodeToCondensation.at(e)));
                     });
+      sue(cn.OutEdges);
 
       std::for_each(inNodesDiff.begin(), inNodesDiff.end(), [&](const auto &e) {
         cn.InEdges.push_back(const_cast<NodeRef>(nodeToCondensation.at(e)));
       });
+      sue(cn.InEdges);
     }
   }
 
