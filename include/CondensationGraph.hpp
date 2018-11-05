@@ -64,7 +64,8 @@ using ConstCondensationVectorType = std::vector<const CondensationType<GraphT>>;
 
 // forward declaration
 
-template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
+template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>,
+          typename IGT = llvm::GraphTraits<llvm::Inverse<GraphT>>>
 class CondensationGraph;
 
 //
@@ -138,8 +139,7 @@ public:
 };
 
 //
-
-template <typename GraphT, typename GT> class CondensationGraph {
+template <typename GraphT, typename GT, typename IGT> class CondensationGraph {
 public:
   using MemberNodeRef = typename GT::NodeRef;
   using NodeType = CondensationGraphNode<GraphT, GT>;
@@ -149,13 +149,45 @@ public:
 private:
   std::vector<NodeType> Nodes;
   mutable NodeRef EntryNode;
+  using NodeToCondensationMap = std::map<MemberNodeRef, ConstNodeRef>;
+
+  template <typename TraversalGT = GT>
+  void findCondensationExternalEdges(
+      const NodeType &CondensationNode, const NodeToCondensationMap &Map,
+      typename NodeType::EdgesContainerType &Dst) const {
+    std::vector<MemberNodeRef> current, reachable, external;
+
+    auto sue = [](auto &Vec) {
+      std::sort(Vec.begin(), Vec.end());
+      Vec.erase(std::unique(Vec.begin(), Vec.end()), Vec.end());
+    };
+
+    for (const auto &n : CondensationNode) {
+      current.push_back(n);
+
+      std::for_each(GT::child_begin(n), GT::child_end(n),
+                    [&](const auto &e) { reachable.push_back(e); });
+    }
+
+    sue(current);
+    sue(reachable);
+
+    std::set_difference(reachable.begin(), reachable.end(), current.begin(),
+                        current.end(), std::back_inserter(external));
+
+    std::for_each(external.begin(), external.end(), [&](const auto &e) {
+      Dst.push_back(const_cast<NodeRef>(Map.at(e)));
+    });
+
+    sue(Dst);
+  }
 
   void populateCondensedEdges() const {
-    std::map<MemberNodeRef, ConstNodeRef> nodeToCondensation;
+    NodeToCondensationMap n2c;
 
     for (const auto &cn : *this) {
       for (const auto &n : cn) {
-        nodeToCondensation.emplace(n, std::addressof(cn));
+        n2c.emplace(n, std::addressof(cn));
 
         if (!n->unit()) {
           EntryNode = const_cast<NodeRef>(std::addressof(cn));
@@ -169,39 +201,8 @@ private:
     };
 
     for (const auto &cn : *this) {
-      std::vector<MemberNodeRef> outNodes, inNodes, inNodesDiff, outNodesDiff,
-          curNodes;
-
-      for (const auto &n : cn) {
-        curNodes.push_back(n);
-
-        std::for_each(n->nodes_begin(), n->nodes_end(),
-                      [&](const auto &e) { outNodes.push_back(e); });
-
-        std::for_each(n->inverse_nodes_begin(), n->inverse_nodes_end(),
-                      [&](const auto &e) { inNodes.push_back(e); });
-      }
-
-      sue(curNodes);
-      sue(outNodes);
-      sue(inNodes);
-
-      std::set_difference(outNodes.begin(), outNodes.end(), curNodes.begin(),
-                          curNodes.end(), std::back_inserter(outNodesDiff));
-      std::set_difference(inNodes.begin(), inNodes.end(), curNodes.begin(),
-                          curNodes.end(), std::back_inserter(inNodesDiff));
-
-      std::for_each(outNodesDiff.begin(), outNodesDiff.end(),
-                    [&](const auto &e) {
-                      cn.OutEdges.push_back(
-                          const_cast<NodeRef>(nodeToCondensation.at(e)));
-                    });
-      sue(cn.OutEdges);
-
-      std::for_each(inNodesDiff.begin(), inNodesDiff.end(), [&](const auto &e) {
-        cn.InEdges.push_back(const_cast<NodeRef>(nodeToCondensation.at(e)));
-      });
-      sue(cn.InEdges);
+      findCondensationExternalEdges(cn, n2c, cn.OutEdges);
+      findCondensationExternalEdges<IGT>(cn, n2c, cn.InEdges);
     }
   }
 

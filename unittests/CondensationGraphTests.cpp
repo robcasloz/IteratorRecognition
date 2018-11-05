@@ -161,10 +161,9 @@ TEST_F(CondensationGraphTest, CondensationInEdgesCount) {
   auto SCC2EdgesCount = std::distance(IGT::child_edge_begin(&*found2),
                                       IGT::child_edge_end(&*found2));
 
-  // add 1 for virtual root
-  EXPECT_EQ(0 + 1, SCC0EdgesCount);
-  EXPECT_EQ(1 + 1, SCC1EdgesCount);
-  EXPECT_EQ(2 + 1, SCC2EdgesCount);
+  EXPECT_EQ(2, SCC0EdgesCount);
+  EXPECT_EQ(1, SCC1EdgesCount);
+  EXPECT_EQ(0, SCC2EdgesCount);
 }
 
 } // unnamed namespace
