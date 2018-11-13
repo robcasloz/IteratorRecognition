@@ -258,8 +258,9 @@ bool operator==(const llvm::DenseSet<ValueT, ValueInfoT> &LHS,
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>,
           typename IGT = llvm::GraphTraits<llvm::Inverse<GraphT>>>
 void RecognizeIterator(
-    GraphT &G,
-    llvm::DenseMap<typename GT::NodeRef, llvm::DenseSet<llvm::Loop *>> &Map) {
+    const GraphT &G,
+    const llvm::DenseMap<typename GT::NodeRef, llvm::DenseSet<llvm::Loop *>>
+        &Map) {
   for (const auto &e : Map) {
     const auto &key = e.getFirst();
     const auto &loops = e.getSecond();
