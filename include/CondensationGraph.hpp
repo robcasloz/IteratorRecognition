@@ -165,7 +165,7 @@ private:
     for (const auto &n : CondensationNode) {
       current.push_back(n);
 
-      std::for_each(GT::child_begin(n), GT::child_end(n),
+      std::for_each(TraversalGT::child_begin(n), TraversalGT::child_end(n),
                     [&](const auto &e) { reachable.push_back(e); });
     }
 
