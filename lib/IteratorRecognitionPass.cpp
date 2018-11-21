@@ -138,6 +138,11 @@ static llvm::cl::OptionCategory
     IteratorRecognitionPassCategory("Iterator Recognition Pass",
                                     "Options for Iterator Recognition pass");
 
+static llvm::cl::opt<bool>
+    ExportSCC("itr-export-scc", llvm::cl::desc("export condensations"),
+              llvm::cl::init(false),
+              llvm::cl::cat(IteratorRecognitionPassCategory));
+
 static llvm::cl::opt<bool> ExportMapping(
     "itr-export-mapping", llvm::cl::desc("export condensation to loop mapping"),
     llvm::cl::init(false), llvm::cl::cat(IteratorRecognitionPassCategory));
@@ -300,6 +305,9 @@ void RecognizeIterator(
   }
 }
 
+template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
+void ExportCondensations(const GraphT &G, llvm::StringRef FilenamePart) {}
+
 template <typename NodeRef>
 void ExportCondensationToLoopMapping(
     const llvm::DenseMap<NodeRef, llvm::DenseSet<llvm::Loop *>> &Map,
@@ -370,12 +378,8 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   CondensationGraph<pedigree::PDGraph *> CG{llvm::scc_begin(&Graph),
                                             llvm::scc_end(&Graph)};
 
-  for (auto &cn : CG) {
-    for (auto &n : cn) {
-      if (n->unit())
-        llvm::dbgs() << "> " << *(n->unit()) << '\n';
-    }
-    llvm::dbgs() << "+++\n";
+  if (ExportSCC) {
+    ExportCondensations(CG, CurFunc.getName());
   }
 
   llvm::DenseMap<typename llvm::GraphTraits<decltype(CG)>::NodeRef,
