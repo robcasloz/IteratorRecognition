@@ -273,7 +273,7 @@ void RecognizeIterator(
     for (auto &cn : IGT::children(key)) {
       auto found = Map.find(cn);
 
-      if (found != Map.end()) {
+      if (found == Map.end()) {
         continue;
       }
 
