@@ -306,7 +306,47 @@ void RecognizeIterator(
 }
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
-void ExportCondensations(const GraphT &G, llvm::StringRef FilenamePart) {}
+void ExportCondensations(const GraphT &G, llvm::StringRef FilenamePart) {
+  llvm::json::Object root;
+  llvm::json::Array condensations;
+
+  for (auto &cn : G) {
+    llvm::json::Object mapping;
+    std::string outs;
+    llvm::raw_string_ostream ss(outs);
+
+    llvm::json::Array condensationsArray;
+    std::transform(cn.begin(), cn.end(), std::back_inserter(condensationsArray),
+                   [&](const auto &e) {
+                     if (e->unit()) {
+                       ss << *e->unit();
+                     }
+                     return ss.str();
+                   });
+    mapping["condensation"] = std::move(condensationsArray);
+    outs.clear();
+
+    condensations.push_back(std::move(mapping));
+  }
+
+  root["condensations"] = std::move(condensations);
+
+  std::error_code ec;
+  llvm::ToolOutputFile of("itr.scc." + FilenamePart.str() + ".json", ec,
+                          llvm::sys::fs::F_Text);
+
+  if (ec) {
+    llvm::errs() << "error opening file for writing!\n";
+    of.os().clear_error();
+  }
+
+  of.os() << llvm::formatv("{0:2}", llvm::json::Value(std::move(root)));
+  of.os().close();
+
+  if (!of.os().has_error()) {
+    of.keep();
+  }
+}
 
 template <typename NodeRef>
 void ExportCondensationToLoopMapping(
