@@ -260,7 +260,8 @@ template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>,
 void RecognizeIterator(
     const GraphT &G,
     const llvm::DenseMap<typename GT::NodeRef, llvm::DenseSet<llvm::Loop *>>
-        &Map) {
+        &Map,
+    llvm::DenseSet<typename GraphT::MemberNodeRef> &Iterator) {
   for (const auto &e : Map) {
     const auto &key = e.getFirst();
     const auto &loops = e.getSecond();
@@ -284,14 +285,17 @@ void RecognizeIterator(
       }
 
       if (cnLoops == loops) {
-        llvm::dbgs() << "work\n";
         workFound = true;
         break;
       }
     }
 
     if (!workFound) {
-      llvm::dbgs() << "iterator\n";
+      for (const auto &e : *key) {
+        if (e->unit()) {
+          Iterator.insert(e);
+        }
+      }
     }
   }
 }
@@ -363,8 +367,6 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
 
   Graph.connectRootNode();
 
-  llvm::dbgs() << "+++ " << Graph.numOutEdges() << '\n';
-
   CondensationGraph<pedigree::PDGraph *> CG{llvm::scc_begin(&Graph),
                                             llvm::scc_end(&Graph)};
 
@@ -376,8 +378,6 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
     llvm::dbgs() << "+++\n";
   }
 
-  llvm::dbgs() << "condensations found: " << CG.size() << '\n';
-
   llvm::DenseMap<typename llvm::GraphTraits<decltype(CG)>::NodeRef,
                  llvm::DenseSet<llvm::Loop *>>
       CondensationToLoop;
@@ -387,7 +387,8 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
     ExportCondensationToLoopMapping(CondensationToLoop, CurFunc.getName());
   }
 
-  RecognizeIterator(CG, CondensationToLoop);
+  llvm::DenseSet<typename decltype(CG)::MemberNodeRef> iterator;
+  RecognizeIterator(CG, CondensationToLoop, iterator);
 
   return hasChanged;
 }
