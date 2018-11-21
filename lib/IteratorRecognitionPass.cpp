@@ -329,7 +329,6 @@ void ExportCondensationToLoopMapping(
       ss << *firstUnit;
     }
     mapping["condensation"] = ss.str();
-
     outs.clear();
 
     llvm::json::Array loopsArray;
@@ -339,6 +338,7 @@ void ExportCondensationToLoopMapping(
                      return ss.str();
                    });
     mapping["loops"] = std::move(loopsArray);
+    outs.clear();
 
     condensations.push_back(std::move(mapping));
   }
@@ -346,7 +346,7 @@ void ExportCondensationToLoopMapping(
   root["condensations"] = std::move(condensations);
 
   std::error_code ec;
-  llvm::ToolOutputFile of("itr_" + FilenamePart.str() + ".json", ec,
+  llvm::ToolOutputFile of("itr.scc2loop." + FilenamePart.str() + ".json", ec,
                           llvm::sys::fs::F_Text);
 
   if (ec) {
