@@ -186,7 +186,10 @@ endforeach()
 
 # workaround for OBJECT libraries since they are not first class citizens
 # should be able to use target_link_libraries() against an INTERFACE library
-target_include_directories(${OBJ_LIB_NAME} PUBLIC
+#target_include_directories(${OBJ_LIB_NAME} PUBLIC
+#  $<TARGET_PROPERTY:foo-interface-lib,INTERFACE_INCLUDE_DIRECTORIES>)
+
+target_include_directories(${LIB_NAME} PUBLIC
   $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${PATH_PREFIX}/include>)
 
 if(SANITIZE_MEMORY)
