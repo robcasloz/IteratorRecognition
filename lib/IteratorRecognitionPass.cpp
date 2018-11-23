@@ -80,11 +80,16 @@
 // using llvm::dbgs
 // using llvm::errs
 
+#include "boost/range/adaptors.hpp"
+// using boost::adaptors::filtered
+
+#include "boost/range/algorithm.hpp"
+// using boost::range::transform
+
 #include <string>
 // using std::string
 
 #include <algorithm>
-// using std::for_each
 // using std::transform
 
 #include <iterator>
@@ -105,6 +110,9 @@
 // using assert
 
 #define DEBUG_TYPE "iterator-recognition"
+
+namespace ba = boost::adaptors;
+namespace br = boost::range;
 
 // plugin registration for opt
 
@@ -227,6 +235,8 @@ void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.setPreservesAll();
 }
 
+auto is_not_null_unit = [](const auto &e) { return e->unit() != nullptr; };
+
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
 void MapCondensationToLoop(
     GraphT &G, const llvm::LoopInfo &LI,
@@ -234,11 +244,7 @@ void MapCondensationToLoop(
   for (auto &cn : GT::nodes(G)) {
     typename std::remove_reference_t<decltype(Map)>::mapped_type loops;
 
-    for (const auto &n : cn) {
-      if (!n->unit()) {
-        continue;
-      }
-
+    for (const auto &n : cn | ba::filtered(is_not_null_unit)) {
       loops.insert(LI.getLoopFor(n->unit()->getParent()));
     }
 
@@ -296,10 +302,8 @@ void RecognizeIterator(
     }
 
     if (!workFound) {
-      for (const auto &e : *key) {
-        if (e->unit()) {
-          Iterator.insert(e);
-        }
+      for (const auto &e : *key | ba::filtered(is_not_null_unit)) {
+        Iterator.insert(e);
       }
     }
   }
@@ -316,13 +320,11 @@ void ExportCondensations(const GraphT &G, llvm::StringRef FilenamePart) {
     llvm::raw_string_ostream ss(outs);
 
     llvm::json::Array condensationsArray;
-    std::transform(cn.begin(), cn.end(), std::back_inserter(condensationsArray),
-                   [&](const auto &e) {
-                     if (e->unit()) {
-                       ss << *e->unit();
-                     }
-                     return ss.str();
-                   });
+    br::transform(cn | ba::filtered(is_not_null_unit),
+                  std::back_inserter(condensationsArray), [&](const auto &e) {
+                    ss << *e->unit();
+                    return ss.str();
+                  });
     mapping["condensation"] = std::move(condensationsArray);
     outs.clear();
 
@@ -355,7 +357,7 @@ void ExportCondensationToLoopMapping(
   llvm::json::Object root;
   llvm::json::Array condensations;
 
-  for (auto &e : Map) {
+  for (const auto &e : Map) {
     const auto &cn = *e.getFirst();
     const auto &loops = e.getSecond();
 
