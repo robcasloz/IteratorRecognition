@@ -2,9 +2,9 @@
 //
 //
 
-#include "Config.hpp"
+#include "iteratorrecognition/Config.hpp"
 
-#include "Debug.hpp"
+#include "iteratorrecognition/Debug.hpp"
 
 #include "pedigree/Analysis/Graphs/PDGraph.hpp"
 

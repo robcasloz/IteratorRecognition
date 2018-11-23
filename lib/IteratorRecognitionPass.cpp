@@ -2,19 +2,19 @@
 //
 //
 
-#include "Config.hpp"
+#include "iteratorrecognition/Config.hpp"
 
-#include "Util.hpp"
+#include "iteratorrecognition/Util.hpp"
 
-#include "Debug.hpp"
+#include "iteratorrecognition/Debug.hpp"
+
+#include "iteratorrecognition/IteratorRecognitionPass.hpp"
+
+#include "iteratorrecognition/CondensationGraph.hpp"
 
 #include "pedigree/Analysis/Graphs/DependenceGraphs.hpp"
 
 #include "pedigree/Analysis/Passes/PDGraphPass.hpp"
-
-#include "IteratorRecognitionPass.hpp"
-
-#include "CondensationGraph.hpp"
 
 #include "llvm/Pass.h"
 // using llvm::RegisterPass

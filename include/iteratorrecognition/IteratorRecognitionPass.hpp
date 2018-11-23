@@ -5,7 +5,7 @@
 #ifndef ITR_ITRPASS_HPP
 #define ITR_ITRPASS_HPP
 
-#include "Config.hpp"
+#include "iteratorrecognition/Config.hpp"
 
 #include "llvm/Pass.h"
 // using llvm::FunctionPass

@@ -2,7 +2,7 @@
 //
 //
 
-#include "Debug.hpp"
+#include "iteratorrecognition/Debug.hpp"
 
 #if ITERATORRECOGNITION_DEBUG
 namespace itr {
