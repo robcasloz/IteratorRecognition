@@ -388,7 +388,7 @@ void ExportCondensationToLoopMapping(
   root["condensations"] = std::move(condensations);
 
   std::error_code ec;
-  llvm::ToolOutputFile of("itr.scc2loop." + FilenamePart.str() + ".json", ec,
+  llvm::ToolOutputFile of("itr.scc_to_loop." + FilenamePart.str() + ".json", ec,
                           llvm::sys::fs::F_Text);
 
   if (ec) {
