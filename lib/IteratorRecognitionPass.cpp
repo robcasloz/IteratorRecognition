@@ -8,9 +8,9 @@
 
 #include "Debug.hpp"
 
-#include "Analysis/Graphs/DependenceGraphs.hpp"
+#include "pedigree/Analysis/Graphs/DependenceGraphs.hpp"
 
-#include "Analysis/Passes/PDGraphPass.hpp"
+#include "pedigree/Analysis/Passes/PDGraphPass.hpp"
 
 #include "IteratorRecognitionPass.hpp"
 
