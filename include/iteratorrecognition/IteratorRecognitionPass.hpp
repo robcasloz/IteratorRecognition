@@ -2,8 +2,8 @@
 //
 //
 
-#ifndef ITR_ITRPASS_HPP
-#define ITR_ITRPASS_HPP
+#ifndef ITR_ITERATORRECOGNITIONPASS_HPP
+#define ITR_ITERATORRECOGNITIONPASS_HPP
 
 #include "iteratorrecognition/Config.hpp"
 
