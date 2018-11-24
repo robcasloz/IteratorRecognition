@@ -50,7 +50,7 @@
 #ifndef ITR_CONDENSATIONGRAPH_HPP
 #define ITR_CONDENSATIONGRAPH_HPP
 
-namespace itr {
+namespace iteratorrecognition {
 
 template <typename GraphT>
 using CondensationType =
@@ -248,9 +248,9 @@ public:
 
 //
 
-} // namespace itr
+} // namespace iteratorrecognition
 
-namespace itr {
+namespace iteratorrecognition {
 
 // generic base for easing the task of creating graph traits for graphs
 
@@ -360,6 +360,6 @@ template <typename GraphT> struct LLVMCondensationInverseGraphTraitsHelperBase {
   }
 };
 
-} // namespace itr
+} // namespace iteratorrecognition
 
 #endif // header

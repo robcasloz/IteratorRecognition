@@ -111,13 +111,17 @@
 
 #define DEBUG_TYPE "iterator-recognition"
 
+// namspace aliases
+
+namespace itr = iteratorrecognition;
+
 namespace ba = boost::adaptors;
 namespace br = boost::range;
 
 // plugin registration for opt
 
-char itr::IteratorRecognitionPass::ID = 0;
-static llvm::RegisterPass<itr::IteratorRecognitionPass>
+char iteratorrecognition::IteratorRecognitionPass::ID = 0;
+static llvm::RegisterPass<iteratorrecognition::IteratorRecognitionPass>
     X("itr", PRJ_CMDLINE_DESC("iterator recognition pass"), false, false);
 
 // plugin registration for clang
@@ -131,7 +135,7 @@ static llvm::RegisterPass<itr::IteratorRecognitionPass>
 static void
 registerIteratorRecognitionPass(const llvm::PassManagerBuilder &Builder,
                                 llvm::legacy::PassManagerBase &PM) {
-  PM.add(new itr::IteratorRecognitionPass());
+  PM.add(new iteratorrecognition::IteratorRecognitionPass());
 
   return;
 }
@@ -158,13 +162,13 @@ static llvm::cl::opt<bool> ExportMapping(
 #if ITERATORRECOGNITION_DEBUG
 static llvm::cl::opt<bool, true>
     Debug("itr-debug", llvm::cl::desc("debug iterator recognition pass"),
-          llvm::cl::location(itr::debug::passDebugFlag),
+          llvm::cl::location(iteratorrecognition::debug::passDebugFlag),
           llvm::cl::cat(IteratorRecognitionPassCategory));
 
 static llvm::cl::opt<LogLevel, true> DebugLevel(
     "itr-debug-level",
     llvm::cl::desc("debug level for Iterator Recognition pass"),
-    llvm::cl::location(itr::debug::passLogLevel),
+    llvm::cl::location(iteratorrecognition::debug::passLogLevel),
     llvm::cl::values(
         clEnumValN(LogLevel::Info, "Info", "informational messages"),
         clEnumValN(LogLevel::Notice, "Notice", "significant conditions"),
@@ -182,51 +186,57 @@ static llvm::cl::opt<LogLevel, true> DebugLevel(
 
 //
 
-namespace itr {
+namespace iteratorrecognition {
 
 using PDGCondensationType = CondensationType<pedigree::PDGraph *>;
 
 using ConstPDGCondensationVector =
     ConstCondensationVectorType<pedigree::PDGraph *>;
 
-} // namespace itr
+} // namespace iteratorrecognition
 
 namespace llvm {
 
 template <>
-struct GraphTraits<itr::CondensationGraph<pedigree::PDGraph *>>
-    : public itr::LLVMCondensationGraphTraitsHelperBase<
-          itr::CondensationGraph<pedigree::PDGraph *>> {};
-
-template <>
-struct GraphTraits<const itr::CondensationGraph<pedigree::PDGraph *>>
-    : public itr::LLVMCondensationGraphTraitsHelperBase<
-          const itr::CondensationGraph<pedigree::PDGraph *>> {};
-
-template <>
-struct GraphTraits<const itr::CondensationGraph<const pedigree::PDGraph *>>
-    : public itr::LLVMCondensationGraphTraitsHelperBase<
-          const itr::CondensationGraph<const pedigree::PDGraph *>> {};
-
-template <>
-struct GraphTraits<Inverse<itr::CondensationGraph<pedigree::PDGraph *>>>
-    : public itr::LLVMCondensationInverseGraphTraitsHelperBase<
-          itr::CondensationGraph<pedigree::PDGraph *>> {};
-
-template <>
-struct GraphTraits<Inverse<const itr::CondensationGraph<pedigree::PDGraph *>>>
-    : public itr::LLVMCondensationInverseGraphTraitsHelperBase<
-          const itr::CondensationGraph<pedigree::PDGraph *>> {};
+struct GraphTraits<iteratorrecognition::CondensationGraph<pedigree::PDGraph *>>
+    : public iteratorrecognition::LLVMCondensationGraphTraitsHelperBase<
+          iteratorrecognition::CondensationGraph<pedigree::PDGraph *>> {};
 
 template <>
 struct GraphTraits<
-    Inverse<const itr::CondensationGraph<const pedigree::PDGraph *>>>
-    : public itr::LLVMCondensationInverseGraphTraitsHelperBase<
-          const itr::CondensationGraph<const pedigree::PDGraph *>> {};
+    const iteratorrecognition::CondensationGraph<pedigree::PDGraph *>>
+    : public iteratorrecognition::LLVMCondensationGraphTraitsHelperBase<
+          const iteratorrecognition::CondensationGraph<pedigree::PDGraph *>> {};
+
+template <>
+struct GraphTraits<
+    const iteratorrecognition::CondensationGraph<const pedigree::PDGraph *>>
+    : public iteratorrecognition::LLVMCondensationGraphTraitsHelperBase<
+          const iteratorrecognition::CondensationGraph<
+              const pedigree::PDGraph *>> {};
+
+template <>
+struct GraphTraits<
+    Inverse<iteratorrecognition::CondensationGraph<pedigree::PDGraph *>>>
+    : public iteratorrecognition::LLVMCondensationInverseGraphTraitsHelperBase<
+          iteratorrecognition::CondensationGraph<pedigree::PDGraph *>> {};
+
+template <>
+struct GraphTraits<
+    Inverse<const iteratorrecognition::CondensationGraph<pedigree::PDGraph *>>>
+    : public iteratorrecognition::LLVMCondensationInverseGraphTraitsHelperBase<
+          const iteratorrecognition::CondensationGraph<pedigree::PDGraph *>> {};
+
+template <>
+struct GraphTraits<Inverse<
+    const iteratorrecognition::CondensationGraph<const pedigree::PDGraph *>>>
+    : public iteratorrecognition::LLVMCondensationInverseGraphTraitsHelperBase<
+          const iteratorrecognition::CondensationGraph<
+              const pedigree::PDGraph *>> {};
 
 } // namespace llvm
 
-namespace itr {
+namespace iteratorrecognition {
 
 void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.addRequired<llvm::LoopInfoWrapperPass>();
@@ -439,4 +449,4 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   return hasChanged;
 }
 
-} // namespace itr
+} // namespace iteratorrecognition

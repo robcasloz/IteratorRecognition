@@ -5,13 +5,13 @@
 #include "iteratorrecognition/Debug.hpp"
 
 #if ITERATORRECOGNITION_DEBUG
-namespace itr {
+namespace iteratorrecognition {
 namespace debug {
 
 bool passDebugFlag = false;
 LogLevel passLogLevel = LogLevel::Info;
 
 } // namespace debug
-} // namespace itr
+} // namespace iteratorrecognition
 
 #endif // ITERATORRECOGNITION_DEBUG

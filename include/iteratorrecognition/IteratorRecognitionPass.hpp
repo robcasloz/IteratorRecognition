@@ -14,7 +14,7 @@ namespace llvm {
 class Function;
 } // namespace llvm
 
-namespace itr {
+namespace iteratorrecognition {
 
 class IteratorRecognitionPass : public llvm::FunctionPass {
 public:
@@ -26,6 +26,6 @@ public:
   bool runOnFunction(llvm::Function &CurFunc) override;
 };
 
-} // namespace itr
+} // namespace iteratorrecognition
 
 #endif // header

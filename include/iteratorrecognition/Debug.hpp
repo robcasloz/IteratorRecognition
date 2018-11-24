@@ -30,28 +30,30 @@
 
 DEFINE_DEBUG_LEVELS;
 
-namespace itr {
+namespace iteratorrecognition {
 namespace debug {
 
 extern bool passDebugFlag;
 extern LogLevel passLogLevel;
 
 } // namespace debug
-} // namespace itr
+} // namespace iteratorrecognition
 
 #define DEBUG_MSG(L, STR)                                                      \
   do {                                                                         \
-    if (itr::debug::passDebugFlag && L <= itr::debug::passLogLevel)            \
+    if (iteratorrecognition::debug::passDebugFlag &&                           \
+        L <= iteratorrecognition::debug::passLogLevel)                         \
       llvm::errs() << STR;                                                     \
   } while (false)
 
 #define DEBUG_CMD(L, C)                                                        \
   do {                                                                         \
-    if (itr::debug::passDebugFlag && L <= itr::debug::passLogLevel)            \
+    if (iteratorrecognition::debug::passDebugFlag &&                           \
+        L <= iteratorrecognition::debug::passLogLevel)                         \
       C;                                                                       \
   } while (false)
 
-namespace itr {
+namespace iteratorrecognition {
 namespace debug {
 
 static bool dumpFunction(const llvm::Function *CurFunc = nullptr) {
@@ -71,7 +73,7 @@ static bool dumpFunction(const llvm::Function *CurFunc = nullptr) {
 }
 
 } // namespace debug
-} // namespace itr
+} // namespace iteratorrecognition
 
 #else
 
@@ -85,11 +87,11 @@ static bool dumpFunction(const llvm::Function *CurFunc = nullptr) {
 
 namespace llvm {
 class Function;
-} // namespace llvm end
+} // namespace llvm
 
 DEFINE_DEBUG_LEVELS;
 
-namespace itr {
+namespace iteratorrecognition {
 namespace debug {
 
 static constexpr bool dumpFunction(const llvm::Function *CurFunc = nullptr) {
@@ -97,7 +99,7 @@ static constexpr bool dumpFunction(const llvm::Function *CurFunc = nullptr) {
 }
 
 } // namespace debug
-} // namespace itr
+} // namespace iteratorrecognition
 
 #endif // ITR_DEBUG
 
