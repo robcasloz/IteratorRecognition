@@ -186,15 +186,6 @@ static llvm::cl::opt<LogLevel, true> DebugLevel(
 
 //
 
-namespace iteratorrecognition {
-
-using PDGCondensationType = CondensationType<pedigree::PDGraph *>;
-
-using ConstPDGCondensationVector =
-    ConstCondensationVectorType<pedigree::PDGraph *>;
-
-} // namespace iteratorrecognition
-
 namespace llvm {
 
 template <>
@@ -423,7 +414,6 @@ bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
   }
 
   pedigree::PDGraph &Graph{getAnalysis<pedigree::PDGraphPass>().getGraph()};
-  ConstPDGCondensationVector CV;
 
   Graph.connectRootNode();
 
