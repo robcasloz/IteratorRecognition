@@ -8,11 +8,11 @@
 
 #include "IteratorRecognition/Debug.hpp"
 
-#include "IteratorRecognition/IteratorRecognitionPass.hpp"
+#include "IteratorRecognition/Analysis/Graphs/PDGCondensationGraph.hpp"
+
+#include "IteratorRecognition/Analysis/Passes/IteratorRecognitionPass.hpp"
 
 #include "IteratorRecognition/Exchange/JSONTransfer.hpp"
-
-#include "IteratorRecognition/CondensationGraph.hpp"
 
 #include "pedigree/Analysis/Graphs/DependenceGraphs.hpp"
 
@@ -148,47 +148,6 @@ static llvm::cl::opt<LogLevel, true> DebugLevel(
 #endif // ITERATORRECOGNITION_DEBUG
 
 //
-
-namespace llvm {
-
-template <>
-struct GraphTraits<iteratorrecognition::CondensationGraph<pedigree::PDGraph *>>
-    : public iteratorrecognition::LLVMCondensationGraphTraitsHelperBase<
-          iteratorrecognition::CondensationGraph<pedigree::PDGraph *>> {};
-
-template <>
-struct GraphTraits<
-    const iteratorrecognition::CondensationGraph<pedigree::PDGraph *>>
-    : public iteratorrecognition::LLVMCondensationGraphTraitsHelperBase<
-          const iteratorrecognition::CondensationGraph<pedigree::PDGraph *>> {};
-
-template <>
-struct GraphTraits<
-    const iteratorrecognition::CondensationGraph<const pedigree::PDGraph *>>
-    : public iteratorrecognition::LLVMCondensationGraphTraitsHelperBase<
-          const iteratorrecognition::CondensationGraph<
-              const pedigree::PDGraph *>> {};
-
-template <>
-struct GraphTraits<
-    Inverse<iteratorrecognition::CondensationGraph<pedigree::PDGraph *>>>
-    : public iteratorrecognition::LLVMCondensationInverseGraphTraitsHelperBase<
-          iteratorrecognition::CondensationGraph<pedigree::PDGraph *>> {};
-
-template <>
-struct GraphTraits<
-    Inverse<const iteratorrecognition::CondensationGraph<pedigree::PDGraph *>>>
-    : public iteratorrecognition::LLVMCondensationInverseGraphTraitsHelperBase<
-          const iteratorrecognition::CondensationGraph<pedigree::PDGraph *>> {};
-
-template <>
-struct GraphTraits<Inverse<
-    const iteratorrecognition::CondensationGraph<const pedigree::PDGraph *>>>
-    : public iteratorrecognition::LLVMCondensationInverseGraphTraitsHelperBase<
-          const iteratorrecognition::CondensationGraph<
-              const pedigree::PDGraph *>> {};
-
-} // namespace llvm
 
 namespace iteratorrecognition {
 

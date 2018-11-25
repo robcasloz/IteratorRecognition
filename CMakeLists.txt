@@ -135,7 +135,8 @@ endif()
 
 set(LIB_SOURCES
   "lib/Debug.cpp"
-  "lib/IteratorRecognitionPass.cpp")
+  "lib/Analysis/Graphs/PDGCondensationGraph.cpp"
+  "lib/Analysis/Passes/IteratorRecognitionPass.cpp")
 
 set(LIB_NAME "LLVM${PRJ_NAME}Pass")
 set(OBJ_LIB_NAME "${LIB_NAME}_obj")
