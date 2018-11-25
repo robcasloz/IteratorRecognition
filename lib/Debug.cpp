@@ -2,7 +2,7 @@
 //
 //
 
-#include "iteratorrecognition/Debug.hpp"
+#include "IteratorRecognition/Debug.hpp"
 
 #if ITERATORRECOGNITION_DEBUG
 namespace iteratorrecognition {

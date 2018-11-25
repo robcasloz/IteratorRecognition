@@ -270,12 +270,12 @@ add_custom_target(clean_generated_include
 add_dependencies(clean_all clean_generated_include)
 
 configure_file(
-  "${CMAKE_INSTALL_INCLUDEDIR}/${PRJ_NAME_LOWER}/${PRJ_CONFIG_HEADER_FILE}.in"
-  "${CMAKE_INSTALL_INCLUDEDIR}/${PRJ_NAME_LOWER}/${PRJ_CONFIG_HEADER_FILE}")
+  "${CMAKE_INSTALL_INCLUDEDIR}/${PRJ_NAME}/${PRJ_CONFIG_HEADER_FILE}.in"
+  "${CMAKE_INSTALL_INCLUDEDIR}/${PRJ_NAME}/${PRJ_CONFIG_HEADER_FILE}")
 
 configure_file(
   "${CMAKE_INSTALL_DATAROOTDIR}/cmake/${PRJ_CMAKE_CONFIG_FILE}.in"
-  "${CMAKE_INSTALL_LIBDIR}/cmake/${PRJ_NAME_LOWER}-${PRJ_CMAKE_CONFIG_FILE}"
+  "${CMAKE_INSTALL_LIBDIR}/cmake/${PRJ_NAME}-${PRJ_CMAKE_CONFIG_FILE}"
   @ONLY)
 
 configure_file(
@@ -284,7 +284,7 @@ configure_file(
   @ONLY)
 
 write_basic_package_version_file(
-  "${CMAKE_INSTALL_DATAROOTDIR}/cmake/${PRJ_NAME_LOWER}-config-version.cmake"
+  "${CMAKE_INSTALL_DATAROOTDIR}/cmake/${PRJ_NAME}-config-version.cmake"
   VERSION "${PRJ_VERSION_SHORT}" COMPATIBILITY SameMajorVersion)
 
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
@@ -292,7 +292,7 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
   PATTERN "*.in" EXCLUDE)
 
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include/"
-  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PRJ_NAME_LOWER}")
+  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PRJ_NAME}")
 
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/share/"
   DESTINATION "${CMAKE_INSTALL_LIBDIR}")

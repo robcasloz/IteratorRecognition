@@ -2,15 +2,15 @@
 //
 //
 
-#include "iteratorrecognition/Config.hpp"
+#include "IteratorRecognition/Config.hpp"
 
-#include "iteratorrecognition/Util.hpp"
+#include "IteratorRecognition/Util.hpp"
 
-#include "iteratorrecognition/Debug.hpp"
+#include "IteratorRecognition/Debug.hpp"
 
-#include "iteratorrecognition/IteratorRecognitionPass.hpp"
+#include "IteratorRecognition/IteratorRecognitionPass.hpp"
 
-#include "iteratorrecognition/CondensationGraph.hpp"
+#include "IteratorRecognition/CondensationGraph.hpp"
 
 #include "pedigree/Analysis/Graphs/DependenceGraphs.hpp"
 
