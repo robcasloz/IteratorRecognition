@@ -2,6 +2,8 @@
 //
 //
 
+#include "IteratorRecognition/Config.hpp"
+
 #include "IteratorRecognition/Support/CondensationGraph.hpp"
 
 #include "pedigree/Analysis/Graphs/DependenceGraphs.hpp"

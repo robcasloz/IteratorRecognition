@@ -5,7 +5,7 @@
 #ifndef ITR_DEBUG_HPP
 #define ITR_DEBUG_HPP
 
-#include "Config.hpp"
+#include "IteratorRecognition/Config.hpp"
 
 #define DEFINE_DEBUG_LEVELS                                                    \
   enum class LogLevel { Info, Notice, Warning, Error, Debug }

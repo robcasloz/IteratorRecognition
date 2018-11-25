@@ -2,6 +2,10 @@
 //
 //
 
+#include "IteratorRecognition/Config.hpp"
+
+#include "IteratorRecognition/Support/Utils/NodePredicates.hpp"
+
 #include "llvm/Analysis/LoopInfo.h"
 // using llvm::Loop
 
@@ -58,8 +62,6 @@ namespace br = boost::range;
 //
 
 namespace iteratorrecognition {
-
-auto is_not_null_unit = [](const auto &e) { return e->unit() != nullptr; };
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
 void ExportCondensations(const GraphT &G, llvm::StringRef FilenamePart) {

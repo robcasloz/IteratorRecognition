@@ -5,7 +5,7 @@
 #ifndef ITR_UTIL_HPP
 #define ITR_UTIL_HPP
 
-#include "Config.hpp"
+#include "IteratorRecognition/Config.hpp"
 
 // preprocessor stringification macros
 #define STRINGIFY_UTIL(x) #x
