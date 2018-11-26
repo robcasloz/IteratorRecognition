@@ -6,7 +6,7 @@
 
 #include "IteratorRecognition/Debug.hpp"
 
-#include "pedigree/Analysis/Graphs/PDGraph.hpp"
+#include "Pedigree/Analysis/Graphs/PDGraph.hpp"
 
 #include "llvm/ADT/DenseSet.h"
 // using llvm::DenseSet

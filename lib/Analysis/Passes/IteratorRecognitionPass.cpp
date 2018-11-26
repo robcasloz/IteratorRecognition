@@ -16,9 +16,9 @@
 
 #include "IteratorRecognition/Exchange/JSONTransfer.hpp"
 
-#include "pedigree/Analysis/Graphs/DependenceGraphs.hpp"
+#include "Pedigree/Analysis/Graphs/DependenceGraphs.hpp"
 
-#include "pedigree/Analysis/Passes/PDGraphPass.hpp"
+#include "Pedigree/Analysis/Passes/PDGraphPass.hpp"
 
 #include "llvm/Pass.h"
 // using llvm::RegisterPass

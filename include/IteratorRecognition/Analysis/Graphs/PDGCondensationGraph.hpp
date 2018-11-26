@@ -6,7 +6,7 @@
 
 #include "IteratorRecognition/Support/CondensationGraph.hpp"
 
-#include "pedigree/Analysis/Graphs/DependenceGraphs.hpp"
+#include "Pedigree/Analysis/Graphs/DependenceGraphs.hpp"
 
 #ifndef ITR_PDGCONDENSATIONGRAPH_HPP
 #define ITR_PDGCONDENSATIONGRAPH_HPP
