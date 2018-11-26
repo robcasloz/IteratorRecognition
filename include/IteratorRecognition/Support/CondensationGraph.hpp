@@ -52,16 +52,6 @@
 
 namespace iteratorrecognition {
 
-template <typename GraphT>
-using CondensationType =
-    std::vector<typename llvm::GraphTraits<GraphT>::NodeRef>;
-
-template <typename GraphT>
-using CondensationVectorType = std::vector<CondensationType<GraphT>>;
-
-template <typename GraphT>
-using ConstCondensationVectorType = std::vector<const CondensationType<GraphT>>;
-
 // forward declaration
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>,
