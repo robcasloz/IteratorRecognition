@@ -24,9 +24,6 @@
 #include "boost/range/adaptors.hpp"
 // using boost::adaptors::filtered
 
-#include <memory>
-// using std::addressof
-
 #ifndef ITR_ITERATORRECOGNITION_HPP
 #define ITR_ITERATORRECOGNITION_HPP
 
@@ -40,15 +37,15 @@ template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
 void MapCondensationToLoop(
     GraphT &G, const llvm::LoopInfo &LI,
     llvm::DenseMap<typename GT::NodeRef, llvm::DenseSet<llvm::Loop *>> &Map) {
-  for (auto &cn : GT::nodes(G)) {
+  for (const auto &cn : GT::nodes(G)) {
     typename std::remove_reference_t<decltype(Map)>::mapped_type loops;
 
-    for (const auto &n : cn | ba::filtered(is_not_null_unit)) {
+    for (const auto &n : *cn | ba::filtered(is_not_null_unit)) {
       loops.insert(LI.getLoopFor(n->unit()->getParent()));
     }
 
     loops.erase(nullptr);
-    Map.try_emplace(std::addressof(cn), loops);
+    Map.try_emplace(cn, loops);
   }
 }
 

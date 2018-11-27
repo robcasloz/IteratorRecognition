@@ -68,13 +68,13 @@ void ExportCondensations(const GraphT &G, llvm::StringRef FilenamePart) {
   llvm::json::Object root;
   llvm::json::Array condensations;
 
-  for (auto &cn : G) {
+  for (const auto &cn : G) {
     llvm::json::Object mapping;
     std::string outs;
     llvm::raw_string_ostream ss(outs);
 
     llvm::json::Array condensationsArray;
-    br::transform(cn | ba::filtered(is_not_null_unit),
+    br::transform(*cn | ba::filtered(is_not_null_unit),
                   std::back_inserter(condensationsArray), [&](const auto &e) {
                     ss << *e->unit();
                     return ss.str();

@@ -14,6 +14,9 @@
 #include "llvm/ADT/iterator_range.h"
 // using llvm::make_range
 
+#include "llvm/ADT/STLExtras.h"
+// using llvm::mapped_iterator
+
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
 
@@ -176,11 +179,11 @@ private:
     NodeToCondensationMap n2c;
 
     for (const auto &cn : *this) {
-      for (const auto &n : cn) {
-        n2c.emplace(n, std::addressof(cn));
+      for (const auto &n : *cn) {
+        n2c.emplace(n, cn);
 
         if (!n->unit()) {
-          EntryNode = const_cast<NodeRef>(std::addressof(cn));
+          EntryNode = const_cast<NodeRef>(cn);
         }
       }
     }
@@ -191,16 +194,26 @@ private:
     };
 
     for (const auto &cn : *this) {
-      findCondensationExternalEdges(cn, n2c, cn.OutEdges);
-      findCondensationExternalEdges<IGT>(cn, n2c, cn.InEdges);
+      findCondensationExternalEdges(*cn, n2c, cn->OutEdges);
+      findCondensationExternalEdges<IGT>(*cn, n2c, cn->InEdges);
     }
   }
 
+  static decltype(auto) GetNodePtr(typename decltype(Nodes)::reference V) {
+    return std::addressof(V);
+  }
+
+  static decltype(auto)
+  GetNodeConstPtr(typename decltype(Nodes)::const_reference V) {
+    return std::addressof(V);
+  }
+
 public:
-  // TODO the iterator dereferences to a reference type and not a pointer as
-  // denoted by NodeRef, which might create confusion and incompatibilities
-  using iterator = typename decltype(Nodes)::iterator;
-  using const_iterator = typename decltype(Nodes)::const_iterator;
+  using iterator = llvm::mapped_iterator<typename decltype(Nodes)::iterator,
+                                         decltype(&GetNodePtr)>;
+  using const_iterator =
+      llvm::mapped_iterator<typename decltype(Nodes)::const_iterator,
+                            decltype(&GetNodeConstPtr)>;
 
   CondensationGraph() = delete;
   CondensationGraph(const CondensationGraph &) = delete;
@@ -215,24 +228,30 @@ public:
     populateCondensedEdges();
   }
 
-  iterator begin() { return Nodes.begin(); }
-  iterator end() { return Nodes.end(); }
+  iterator begin() { return iterator(Nodes.begin(), &GetNodePtr); }
+  iterator end() { return iterator(Nodes.end(), &GetNodePtr); }
 
-  const_iterator begin() const { return Nodes.begin(); }
-  const_iterator end() const { return Nodes.end(); }
+  const_iterator begin() const {
+    return const_iterator(Nodes.begin(), &GetNodeConstPtr);
+  }
+  const_iterator end() const {
+    return const_iterator(Nodes.end(), &GetNodeConstPtr);
+  }
 
   NodeRef getEntryNode() { return EntryNode; }
   decltype(auto) size() const { return Nodes.size(); }
   bool empty() const { return Nodes.empty(); }
 
   iterator find(const MemberNodeRef &Node) {
-    return std::find_if(begin(), end(),
-                        [&](const auto &e) { return e.find(Node) != e.end(); });
+    return std::find_if(begin(), end(), [&](const auto &e) {
+      return e->find(Node) != e->end();
+    });
   }
 
   const_iterator find(const MemberNodeRef &Node) const {
-    return std::find_if(begin(), end(),
-                        [&](const auto &e) { return e.find(Node) != e.end(); });
+    return std::find_if(begin(), end(), [&](const auto &e) {
+      return e->find(Node) != e->end();
+    });
   }
 };
 
