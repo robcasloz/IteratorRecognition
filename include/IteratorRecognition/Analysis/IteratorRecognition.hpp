@@ -68,30 +68,20 @@ void RecognizeIterator(
     const GraphT &G,
     const llvm::DenseMap<typename GT::NodeRef, llvm::DenseSet<llvm::Loop *>>
         &Map,
-    llvm::DenseSet<typename GraphT::MemberNodeRef> &Iterator) {
+    llvm::DenseSet<typename GraphT::MemberNodeRef> &IteratorSet) {
   for (const auto &e : Map) {
-    const auto &key = e.first;
     const auto &loops = e.second;
-    bool workFound = false;
 
-    if (!loops.size()) {
+    if (loops.empty()) {
       continue;
     }
 
+    const auto &key = e.first;
+    bool workFound = false;
+
     for (auto &cn : IGT::children(key)) {
       auto found = Map.find(cn);
-
-      if (found == Map.end()) {
-        continue;
-      }
-
-      const auto &cnLoops = found->getSecond();
-
-      if (cnLoops.empty()) {
-        continue;
-      }
-
-      if (cnLoops == loops) {
+      if (found != Map.end() && found->second == loops) {
         workFound = true;
         break;
       }
@@ -99,7 +89,7 @@ void RecognizeIterator(
 
     if (!workFound) {
       for (const auto &e : *key | ba::filtered(is_not_null_unit)) {
-        Iterator.insert(e);
+        IteratorSet.insert(e);
       }
     }
   }
