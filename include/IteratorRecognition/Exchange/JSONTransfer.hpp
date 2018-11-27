@@ -77,7 +77,9 @@ void ExportCondensations(const GraphT &G, llvm::StringRef FilenamePart) {
     br::transform(*cn | ba::filtered(is_not_null_unit),
                   std::back_inserter(condensationsArray), [&](const auto &e) {
                     ss << *e->unit();
-                    return ss.str();
+                    auto s = ss.str();
+                    outs.clear();
+                    return s;
                   });
     mapping["condensation"] = std::move(condensationsArray);
     outs.clear();
