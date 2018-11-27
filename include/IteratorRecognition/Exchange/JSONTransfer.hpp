@@ -4,7 +4,7 @@
 
 #include "IteratorRecognition/Config.hpp"
 
-#include "IteratorRecognition/Support/Utils/NodePredicates.hpp"
+#include "IteratorRecognition/Support/Utils/Extras.hpp"
 
 #include "llvm/Analysis/LoopInfo.h"
 // using llvm::Loop

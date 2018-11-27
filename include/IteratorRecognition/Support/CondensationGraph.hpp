@@ -6,6 +6,8 @@
 
 #include "IteratorRecognition/Debug.hpp"
 
+#include "IteratorRecognition/Support/Utils/Extras.hpp"
+
 #include "Pedigree/Analysis/Graphs/PDGraph.hpp"
 
 #include "llvm/ADT/DenseSet.h"
@@ -33,8 +35,6 @@
 #include <algorithm>
 // using std::copy
 // using std::find
-// using std::sort
-// using std::unique
 // using std::for_each
 // using std::set_difference
 
@@ -150,11 +150,6 @@ private:
       typename NodeType::EdgesContainerType &Dst) const {
     std::vector<MemberNodeRef> current, reachable, external;
 
-    auto sue = [](auto &Vec) {
-      std::sort(Vec.begin(), Vec.end());
-      Vec.erase(std::unique(Vec.begin(), Vec.end()), Vec.end());
-    };
-
     for (const auto &n : CondensationNode) {
       current.push_back(n);
 
@@ -162,8 +157,8 @@ private:
                     [&](const auto &e) { reachable.push_back(e); });
     }
 
-    sue(current);
-    sue(reachable);
+    unique_inplace(current);
+    unique_inplace(reachable);
 
     std::set_difference(reachable.begin(), reachable.end(), current.begin(),
                         current.end(), std::back_inserter(external));
@@ -172,7 +167,7 @@ private:
       Dst.push_back(const_cast<NodeRef>(Map.at(e)));
     });
 
-    sue(Dst);
+    unique_inplace(Dst);
   }
 
   void populateCondensedEdges() const {
@@ -187,11 +182,6 @@ private:
         }
       }
     }
-
-    auto sue = [](auto &Vec) {
-      std::sort(Vec.begin(), Vec.end());
-      Vec.erase(std::unique(Vec.begin(), Vec.end()), Vec.end());
-    };
 
     for (const auto &cn : *this) {
       findCondensationExternalEdges(*cn, n2c, cn->OutEdges);
