@@ -290,12 +290,15 @@ template <typename GraphT> struct LLVMCondensationGraphTraitsHelperBase {
   static decltype(auto) nodes_begin(GraphT *G) { return G->begin(); }
   static decltype(auto) nodes_end(GraphT *G) { return G->end(); }
 
+  static decltype(auto) nodes(GraphT *G) {
+    return llvm::make_range(nodes_begin(G), nodes_end(G));
+  }
+
   static decltype(auto) nodes_begin(GraphT &G) { return G.begin(); }
   static decltype(auto) nodes_end(GraphT &G) { return G.end(); }
 
-  template <typename T> static decltype(auto) nodes(T &&G) {
-    return llvm::make_range(nodes_begin(std::forward<T>(G)),
-                            nodes_end(std::forward<T>(G)));
+  static decltype(auto) nodes(GraphT &G) {
+    return llvm::make_range(nodes_begin(G), nodes_end(G));
   }
 
   static decltype(auto) child_begin(NodeRef N) { return N->edge_begin(); }
@@ -340,12 +343,15 @@ template <typename GraphT> struct LLVMCondensationInverseGraphTraitsHelperBase {
   static decltype(auto) nodes_begin(GraphT *G) { return G->begin(); }
   static decltype(auto) nodes_end(GraphT *G) { return G->end(); }
 
+  static decltype(auto) nodes(GraphT *G) {
+    return llvm::make_range(nodes_begin(G), nodes_end(G));
+  }
+
   static decltype(auto) nodes_begin(GraphT &G) { return G.begin(); }
   static decltype(auto) nodes_end(GraphT &G) { return G.end(); }
 
-  template <typename T> static decltype(auto) nodes(T &&G) {
-    return llvm::make_range(nodes_begin(std::forward<T>(G)),
-                            nodes_end(std::forward<T>(G)));
+  static decltype(auto) nodes(GraphT &G) {
+    return llvm::make_range(nodes_begin(G), nodes_end(G));
   }
 
   static decltype(auto) child_begin(NodeRef N) {
