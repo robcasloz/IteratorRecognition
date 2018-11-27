@@ -70,8 +70,8 @@ void RecognizeIterator(
         &Map,
     llvm::DenseSet<typename GraphT::MemberNodeRef> &Iterator) {
   for (const auto &e : Map) {
-    const auto &key = e.getFirst();
-    const auto &loops = e.getSecond();
+    const auto &key = e.first;
+    const auto &loops = e.second;
     bool workFound = false;
 
     if (!loops.size()) {
