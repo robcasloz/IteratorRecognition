@@ -20,6 +20,8 @@
 
 #include "Pedigree/Analysis/Passes/PDGraphPass.hpp"
 
+#include "PassCommandLineOptions.hpp"
+
 #include "llvm/Pass.h"
 // using llvm::RegisterPass
 
@@ -99,10 +101,6 @@ static llvm::RegisterStandardPasses
                            registerRecognizerPass);
 
 //
-
-static llvm::cl::OptionCategory
-    IteratorRecognitionCLCategory("Iterator Recognition Pass 1",
-                                  "Options for Iterator Recognition pass");
 
 static llvm::cl::opt<bool>
     ExportSCC("itr-export-scc", llvm::cl::desc("export condensations"),

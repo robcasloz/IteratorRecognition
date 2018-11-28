@@ -12,6 +12,8 @@
 
 #include "IteratorRecognition/Analysis/Passes/RecognizerPass.hpp"
 
+#include "PassCommandLineOptions.hpp"
+
 #include "llvm/Pass.h"
 // using llvm::RegisterPass
 
@@ -69,12 +71,6 @@ static void registerAnnotatorPass(const llvm::PassManagerBuilder &Builder,
 static llvm::RegisterStandardPasses
     RegisterAnnotatorPass(llvm::PassManagerBuilder::EP_EarlyAsPossible,
                           registerAnnotatorPass);
-
-//
-
-static llvm::cl::OptionCategory
-    IteratorRecognitionCLCategory("Iterator Recognition Pass 2",
-                                  "Options for Iterator Recognition pass");
 
 //
 
