@@ -12,7 +12,7 @@
 
 #include "IteratorRecognition/Analysis/Graphs/PDGCondensationGraph.hpp"
 
-#include "IteratorRecognition/Analysis/Passes/IteratorRecognitionPass.hpp"
+#include "IteratorRecognition/Analysis/Passes/RecognizerPass.hpp"
 
 #include "IteratorRecognition/Exchange/JSONTransfer.hpp"
 
@@ -74,8 +74,8 @@ namespace itr = iteratorrecognition;
 
 // plugin registration for opt
 
-char itr::IteratorRecognitionPass::ID = 0;
-static llvm::RegisterPass<itr::IteratorRecognitionPass>
+char itr::RecognizerPass::ID = 0;
+static llvm::RegisterPass<itr::RecognizerPass>
     X("itr", PRJ_CMDLINE_DESC("iterator recognition pass"), false, false);
 
 // plugin registration for clang
@@ -86,38 +86,38 @@ static llvm::RegisterPass<itr::IteratorRecognitionPass>
 // add an instance of this pass and a static instance of the
 // RegisterStandardPasses class
 
-static void
-registerIteratorRecognitionPass(const llvm::PassManagerBuilder &Builder,
-                                llvm::legacy::PassManagerBase &PM) {
-  PM.add(new itr::IteratorRecognitionPass());
+static void registerRecognizerPass(const llvm::PassManagerBuilder &Builder,
+                                   llvm::legacy::PassManagerBase &PM) {
+  PM.add(new itr::RecognizerPass());
 
   return;
 }
 
-static llvm::RegisterStandardPasses RegisterIteratorRecognitionPass(
-    llvm::PassManagerBuilder::EP_EarlyAsPossible,
-    registerIteratorRecognitionPass);
+static llvm::RegisterStandardPasses
+    RegisterRecognizerPass(llvm::PassManagerBuilder::EP_EarlyAsPossible,
+                           registerRecognizerPass);
 
 //
 
 static llvm::cl::OptionCategory
-    IteratorRecognitionPassCategory("Iterator Recognition Pass",
-                                    "Options for Iterator Recognition pass");
+    RecognizerPassCategory("Iterator Recognition Pass",
+                           "Options for Iterator Recognition pass");
+
+static llvm::cl::opt<bool> ExportSCC("itr-export-scc",
+                                     llvm::cl::desc("export condensations"),
+                                     llvm::cl::init(false),
+                                     llvm::cl::cat(RecognizerPassCategory));
 
 static llvm::cl::opt<bool>
-    ExportSCC("itr-export-scc", llvm::cl::desc("export condensations"),
-              llvm::cl::init(false),
-              llvm::cl::cat(IteratorRecognitionPassCategory));
-
-static llvm::cl::opt<bool> ExportMapping(
-    "itr-export-mapping", llvm::cl::desc("export condensation to loop mapping"),
-    llvm::cl::init(false), llvm::cl::cat(IteratorRecognitionPassCategory));
+    ExportMapping("itr-export-mapping",
+                  llvm::cl::desc("export condensation to loop mapping"),
+                  llvm::cl::init(false), llvm::cl::cat(RecognizerPassCategory));
 
 #if ITERATORRECOGNITION_DEBUG
 static llvm::cl::opt<bool, true>
     Debug("itr-debug", llvm::cl::desc("debug iterator recognition pass"),
           llvm::cl::location(itr::debug::passDebugFlag),
-          llvm::cl::cat(IteratorRecognitionPassCategory));
+          llvm::cl::cat(RecognizerPassCategory));
 
 static llvm::cl::opt<LogLevel, true> DebugLevel(
     "itr-debug-level",
@@ -135,21 +135,21 @@ static llvm::cl::opt<LogLevel, true> DebugLevel(
 #endif
         // clang-format on
         ),
-    llvm::cl::cat(IteratorRecognitionPassCategory));
+    llvm::cl::cat(RecognizerPassCategory));
 #endif // ITERATORRECOGNITION_DEBUG
 
 //
 
 namespace iteratorrecognition {
 
-void IteratorRecognitionPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+void RecognizerPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.addRequired<llvm::LoopInfoWrapperPass>();
   AU.addRequired<pedigree::PDGraphPass>();
 
   AU.setPreservesAll();
 }
 
-bool IteratorRecognitionPass::runOnFunction(llvm::Function &CurFunc) {
+bool RecognizerPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
 
   const auto *LI = &getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();

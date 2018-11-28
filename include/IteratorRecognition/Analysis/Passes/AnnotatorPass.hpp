@@ -2,8 +2,8 @@
 //
 //
 
-#ifndef ITR_ITERATORRECOGNITIONPASS_HPP
-#define ITR_ITERATORRECOGNITIONPASS_HPP
+#ifndef ITR_ANNOTATORPASS_HPP
+#define ITR_ANNOTATORPASS_HPP
 
 #include "IteratorRecognition/Config.hpp"
 
@@ -16,12 +16,12 @@ class Function;
 
 namespace iteratorrecognition {
 
-class IteratorRecognitionPass : public llvm::FunctionPass {
+class AnnotatorPass : public llvm::FunctionPass {
 public:
   static char ID;
 
   void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-  IteratorRecognitionPass() : llvm::FunctionPass(ID) {}
+  AnnotatorPass() : llvm::FunctionPass(ID) {}
 
   bool runOnFunction(llvm::Function &CurFunc) override;
 };

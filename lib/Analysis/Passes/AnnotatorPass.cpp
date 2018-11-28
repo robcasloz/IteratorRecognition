@@ -8,9 +8,9 @@
 
 #include "IteratorRecognition/Debug.hpp"
 
-#include "IteratorRecognition/Analysis/Passes/IteratorRecognitionMetadataAnnotatorPass.hpp"
+#include "IteratorRecognition/Analysis/Passes/AnnotatorPass.hpp"
 
-#include "IteratorRecognition/Analysis/Passes/IteratorRecognitionPass.hpp"
+#include "IteratorRecognition/Analysis/Passes/RecognizerPass.hpp"
 
 #include "llvm/Pass.h"
 // using llvm::RegisterPass
@@ -44,8 +44,8 @@ namespace itr = iteratorrecognition;
 
 // plugin registration for opt
 
-char itr::IteratorRecognitionMetadataAnnotatorPass::ID = 0;
-static llvm::RegisterPass<itr::IteratorRecognitionMetadataAnnotatorPass>
+char itr::AnnotatorPass::ID = 0;
+static llvm::RegisterPass<itr::AnnotatorPass>
     X("itr-annotate", PRJ_CMDLINE_DESC("iterator recognition annotator pass"),
       false, false);
 
@@ -57,32 +57,29 @@ static llvm::RegisterPass<itr::IteratorRecognitionMetadataAnnotatorPass>
 // add an instance of this pass and a static instance of the
 // RegisterStandardPasses class
 
-static void registerIteratorRecognitionMetadataAnnotatorPass(
-    const llvm::PassManagerBuilder &Builder,
-    llvm::legacy::PassManagerBase &PM) {
-  PM.add(new itr::IteratorRecognitionMetadataAnnotatorPass());
+static void registerAnnotatorPass(const llvm::PassManagerBuilder &Builder,
+                                  llvm::legacy::PassManagerBase &PM) {
+  PM.add(new itr::AnnotatorPass());
 
   return;
 }
 
 static llvm::RegisterStandardPasses
-    RegisterIteratorRecognitionMetadataAnnotatorPass(
-        llvm::PassManagerBuilder::EP_EarlyAsPossible,
-        registerIteratorRecognitionMetadataAnnotatorPass);
+    RegisterAnnotatorPass(llvm::PassManagerBuilder::EP_EarlyAsPossible,
+                          registerAnnotatorPass);
 
 //
 
 static llvm::cl::OptionCategory
-    IteratorRecognitionMetadataAnnotatorPassCategory(
-        "Iterator Recognition Metadata Annotator Pass",
-        "Options for Iterator Recognition pass");
+    AnnotatorPassCategory("Iterator Recognition Metadata Annotator Pass",
+                          "Options for Iterator Recognition pass");
 
 #if ITERATORRECOGNITION_DEBUG
 static llvm::cl::opt<bool, true>
     Debug("itr-annotate-debug",
           llvm::cl::desc("debug iterator recognition pass"),
           llvm::cl::location(itr::debug::passDebugFlag),
-          llvm::cl::cat(IteratorRecognitionMetadataAnnotatorPassCategory));
+          llvm::cl::cat(AnnotatorPassCategory));
 
 static llvm::cl::opt<LogLevel, true> DebugLevel(
     "itr-annotate-debug-level",
@@ -100,22 +97,18 @@ static llvm::cl::opt<LogLevel, true> DebugLevel(
 #endif
         // clang-format on
         ),
-    llvm::cl::cat(IteratorRecognitionMetadataAnnotatorPassCategory));
+    llvm::cl::cat(AnnotatorPassCategory));
 #endif // ITERATORRECOGNITION_DEBUG
 
 namespace iteratorrecognition {
 
-void IteratorRecognitionMetadataAnnotatorPass::getAnalysisUsage(
-    llvm::AnalysisUsage &AU) const {
-  // AU.addRequired<llvm::LoopInfoWrapperPass>();
-  // AU.addRequired<pedigree::PDGraphPass>();
-  AU.addRequired<IteratorRecognitionPass>();
+void AnnotatorPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.addRequired<RecognizerPass>();
 
   AU.setPreservesAll();
 }
 
-bool IteratorRecognitionMetadataAnnotatorPass::runOnFunction(
-    llvm::Function &CurFunc) {
+bool AnnotatorPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
 
   return hasChanged;
