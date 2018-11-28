@@ -74,8 +74,8 @@ namespace itr = iteratorrecognition;
 
 // plugin registration for opt
 
-char iteratorrecognition::IteratorRecognitionPass::ID = 0;
-static llvm::RegisterPass<iteratorrecognition::IteratorRecognitionPass>
+char itr::IteratorRecognitionPass::ID = 0;
+static llvm::RegisterPass<itr::IteratorRecognitionPass>
     X("itr", PRJ_CMDLINE_DESC("iterator recognition pass"), false, false);
 
 // plugin registration for clang
@@ -89,7 +89,7 @@ static llvm::RegisterPass<iteratorrecognition::IteratorRecognitionPass>
 static void
 registerIteratorRecognitionPass(const llvm::PassManagerBuilder &Builder,
                                 llvm::legacy::PassManagerBase &PM) {
-  PM.add(new iteratorrecognition::IteratorRecognitionPass());
+  PM.add(new itr::IteratorRecognitionPass());
 
   return;
 }
@@ -116,13 +116,13 @@ static llvm::cl::opt<bool> ExportMapping(
 #if ITERATORRECOGNITION_DEBUG
 static llvm::cl::opt<bool, true>
     Debug("itr-debug", llvm::cl::desc("debug iterator recognition pass"),
-          llvm::cl::location(iteratorrecognition::debug::passDebugFlag),
+          llvm::cl::location(itr::debug::passDebugFlag),
           llvm::cl::cat(IteratorRecognitionPassCategory));
 
 static llvm::cl::opt<LogLevel, true> DebugLevel(
     "itr-debug-level",
     llvm::cl::desc("debug level for Iterator Recognition pass"),
-    llvm::cl::location(iteratorrecognition::debug::passLogLevel),
+    llvm::cl::location(itr::debug::passLogLevel),
     llvm::cl::values(
         clEnumValN(LogLevel::Info, "Info", "informational messages"),
         clEnumValN(LogLevel::Notice, "Notice", "significant conditions"),
