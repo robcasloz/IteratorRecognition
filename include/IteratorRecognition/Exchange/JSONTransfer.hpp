@@ -54,7 +54,7 @@
 #ifndef ITR_JSONTRANSFER_HPP
 #define ITR_JSONTRANSFER_HPP
 
-// namspace aliases
+// namespace aliases
 
 namespace ba = boost::adaptors;
 namespace br = boost::range;

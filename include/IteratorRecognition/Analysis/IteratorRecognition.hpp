@@ -24,6 +24,9 @@
 #include "boost/range/adaptors.hpp"
 // using boost::adaptors::filtered
 
+#include "boost/range/algorithm.hpp"
+// using boost::range::transform
+
 #ifndef ITR_ITERATORRECOGNITION_HPP
 #define ITR_ITERATORRECOGNITION_HPP
 
@@ -32,6 +35,9 @@ namespace iteratorrecognition {
 // namespace aliases
 
 namespace ba = boost::adaptors;
+namespace br = boost::range;
+
+//
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
 void MapCondensationToLoop(
@@ -68,7 +74,8 @@ void RecognizeIterator(
     const GraphT &G,
     const llvm::DenseMap<typename GT::NodeRef, llvm::DenseSet<llvm::Loop *>>
         &Map,
-    llvm::DenseSet<typename GraphT::MemberNodeRef> &IteratorSet) {
+    llvm::DenseMap<llvm::Loop *, llvm::SmallVector<llvm::Instruction *, 8>>
+        &Iterators) {
   for (const auto &e : Map) {
     const auto &loops = e.second;
 
@@ -81,6 +88,7 @@ void RecognizeIterator(
 
     for (auto &cn : IGT::children(key)) {
       auto found = Map.find(cn);
+      // FIXME the loop set comparison needs to be subset of instead of equality
       if (found != Map.end() && found->second == loops) {
         workFound = true;
         break;
@@ -88,8 +96,12 @@ void RecognizeIterator(
     }
 
     if (!workFound) {
-      for (const auto &e : *key | ba::filtered(is_not_null_unit)) {
-        IteratorSet.insert(e);
+      for (auto &loop : loops) {
+        llvm::SmallVector<llvm::Instruction *, 8> instructions;
+        br::transform(*key | ba::filtered(is_not_null_unit),
+                      std::back_inserter(instructions),
+                      [&](const auto &e) { return e->unit(); });
+        Iterators.insert({loop, instructions});
       }
     }
   }

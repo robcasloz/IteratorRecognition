@@ -150,8 +150,12 @@ bool RecognizerPass::runOnFunction(llvm::Function &CurFunc) {
     ExportCondensationToLoopMapping(CondensationToLoop, CurFunc.getName());
   }
 
-  llvm::DenseSet<typename decltype(CG)::MemberNodeRef> iterator;
-  RecognizeIterator(CG, CondensationToLoop, iterator);
+  // TODO example dependent declaration that can potentially be used for
+  // static_assert
+  // llvm::DenseMap<llvm::Loop *,
+  // llvm::SmallVector<typename decltype(CG)::MemberNodeRef, 8>>
+  // iterators;
+  RecognizeIterator(CG, CondensationToLoop, Iterators);
 
   return hasChanged;
 }
