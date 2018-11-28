@@ -33,7 +33,7 @@ public:
 
   bool runOnFunction(llvm::Function &CurFunc) override;
 
-  decltype(Iterators) getIterators();
+  decltype(Iterators) &getIterators() { return Iterators; }
 };
 
 } // namespace iteratorrecognition
