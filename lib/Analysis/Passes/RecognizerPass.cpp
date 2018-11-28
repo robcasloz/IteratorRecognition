@@ -76,7 +76,8 @@ namespace itr = iteratorrecognition;
 
 char itr::RecognizerPass::ID = 0;
 static llvm::RegisterPass<itr::RecognizerPass>
-    X("itr", PRJ_CMDLINE_DESC("iterator recognition pass"), false, false);
+    X("itr-recognize", PRJ_CMDLINE_DESC("iterator recognition pass"), false,
+      false);
 
 // plugin registration for clang
 
@@ -100,43 +101,17 @@ static llvm::RegisterStandardPasses
 //
 
 static llvm::cl::OptionCategory
-    RecognizerPassCategory("Iterator Recognition Pass",
-                           "Options for Iterator Recognition pass");
-
-static llvm::cl::opt<bool> ExportSCC("itr-export-scc",
-                                     llvm::cl::desc("export condensations"),
-                                     llvm::cl::init(false),
-                                     llvm::cl::cat(RecognizerPassCategory));
+    IteratorRecognitionCLCategory("Iterator Recognition Pass 1",
+                                  "Options for Iterator Recognition pass");
 
 static llvm::cl::opt<bool>
-    ExportMapping("itr-export-mapping",
-                  llvm::cl::desc("export condensation to loop mapping"),
-                  llvm::cl::init(false), llvm::cl::cat(RecognizerPassCategory));
+    ExportSCC("itr-export-scc", llvm::cl::desc("export condensations"),
+              llvm::cl::init(false),
+              llvm::cl::cat(IteratorRecognitionCLCategory));
 
-#if ITERATORRECOGNITION_DEBUG
-static llvm::cl::opt<bool, true>
-    Debug("itr-debug", llvm::cl::desc("debug iterator recognition pass"),
-          llvm::cl::location(itr::debug::passDebugFlag),
-          llvm::cl::cat(RecognizerPassCategory));
-
-static llvm::cl::opt<LogLevel, true> DebugLevel(
-    "itr-debug-level",
-    llvm::cl::desc("debug level for Iterator Recognition pass"),
-    llvm::cl::location(itr::debug::passLogLevel),
-    llvm::cl::values(
-        clEnumValN(LogLevel::Info, "Info", "informational messages"),
-        clEnumValN(LogLevel::Notice, "Notice", "significant conditions"),
-        clEnumValN(LogLevel::Warning, "Warning", "warning conditions"),
-        clEnumValN(LogLevel::Error, "Error", "error conditions"),
-        clEnumValN(LogLevel::Debug, "Debug", "debug messages")
-// clang-format off
-#if (LLVM_VERSION_MAJOR <= 3 && LLVM_VERSION_MINOR < 9)
-        , clEnumValEnd
-#endif
-        // clang-format on
-        ),
-    llvm::cl::cat(RecognizerPassCategory));
-#endif // ITERATORRECOGNITION_DEBUG
+static llvm::cl::opt<bool> ExportMapping(
+    "itr-export-mapping", llvm::cl::desc("export condensation to loop mapping"),
+    llvm::cl::init(false), llvm::cl::cat(IteratorRecognitionCLCategory));
 
 //
 

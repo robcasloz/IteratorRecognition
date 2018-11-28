@@ -38,6 +38,8 @@
 // using llvm::LoopInfo
 // using llvm::LoopInfoWrapperPass
 
+#define DEBUG_TYPE "iterator-recognition"
+
 // namespace aliases
 
 namespace itr = iteratorrecognition;
@@ -71,34 +73,10 @@ static llvm::RegisterStandardPasses
 //
 
 static llvm::cl::OptionCategory
-    AnnotatorPassCategory("Iterator Recognition Metadata Annotator Pass",
-                          "Options for Iterator Recognition pass");
+    IteratorRecognitionCLCategory("Iterator Recognition Pass 2",
+                                  "Options for Iterator Recognition pass");
 
-#if ITERATORRECOGNITION_DEBUG
-static llvm::cl::opt<bool, true>
-    Debug("itr-annotate-debug",
-          llvm::cl::desc("debug iterator recognition pass"),
-          llvm::cl::location(itr::debug::passDebugFlag),
-          llvm::cl::cat(AnnotatorPassCategory));
-
-static llvm::cl::opt<LogLevel, true> DebugLevel(
-    "itr-annotate-debug-level",
-    llvm::cl::desc("debug level for Iterator Recognition pass"),
-    llvm::cl::location(itr::debug::passLogLevel),
-    llvm::cl::values(
-        clEnumValN(LogLevel::Info, "Info", "informational messages"),
-        clEnumValN(LogLevel::Notice, "Notice", "significant conditions"),
-        clEnumValN(LogLevel::Warning, "Warning", "warning conditions"),
-        clEnumValN(LogLevel::Error, "Error", "error conditions"),
-        clEnumValN(LogLevel::Debug, "Debug", "debug messages")
-// clang-format off
-#if (LLVM_VERSION_MAJOR <= 3 && LLVM_VERSION_MINOR < 9)
-        , clEnumValEnd
-#endif
-        // clang-format on
-        ),
-    llvm::cl::cat(AnnotatorPassCategory));
-#endif // ITERATORRECOGNITION_DEBUG
+//
 
 namespace iteratorrecognition {
 
