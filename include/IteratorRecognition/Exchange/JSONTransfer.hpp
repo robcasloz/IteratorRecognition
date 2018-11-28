@@ -64,7 +64,7 @@ namespace br = boost::range;
 namespace iteratorrecognition {
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
-void ExportCondensations(const GraphT &G, llvm::StringRef FilenamePart) {
+void ExportCondensations(const GraphT &G, llvm::Twine FilenamePart) {
   llvm::json::Object root;
   llvm::json::Array condensations;
 
@@ -89,12 +89,14 @@ void ExportCondensations(const GraphT &G, llvm::StringRef FilenamePart) {
 
   root["condensations"] = std::move(condensations);
 
+  std::string filename{"itr.scc." + FilenamePart.str() + ".json"};
+  llvm::errs() << "Writing file '" << filename << "'... ";
+
   std::error_code ec;
-  llvm::ToolOutputFile of("itr.scc." + FilenamePart.str() + ".json", ec,
-                          llvm::sys::fs::F_Text);
+  llvm::ToolOutputFile of(filename, ec, llvm::sys::fs::F_Text);
 
   if (ec) {
-    llvm::errs() << "error opening file for writing!\n";
+    llvm::errs() << "error opening file '" << filename << "' for writing!\n";
     of.os().clear_error();
   }
 
@@ -104,12 +106,14 @@ void ExportCondensations(const GraphT &G, llvm::StringRef FilenamePart) {
   if (!of.os().has_error()) {
     of.keep();
   }
+
+  llvm::errs() << " done. \n";
 }
 
 template <typename NodeRef>
 void ExportCondensationToLoopMapping(
     const llvm::DenseMap<NodeRef, llvm::DenseSet<llvm::Loop *>> &Map,
-    llvm::StringRef FilenamePart) {
+    llvm::Twine FilenamePart) {
   llvm::json::Object root;
   llvm::json::Array condensations;
 
@@ -143,12 +147,14 @@ void ExportCondensationToLoopMapping(
 
   root["condensations"] = std::move(condensations);
 
+  std::string filename{"itr.scc_to_loop." + FilenamePart.str() + ".json"};
+  llvm::errs() << "Writing file '" << filename << "'... ";
+
   std::error_code ec;
-  llvm::ToolOutputFile of("itr.scc_to_loop." + FilenamePart.str() + ".json", ec,
-                          llvm::sys::fs::F_Text);
+  llvm::ToolOutputFile of(filename, ec, llvm::sys::fs::F_Text);
 
   if (ec) {
-    llvm::errs() << "error opening file for writing!\n";
+    llvm::errs() << "error opening file '" << filename << "' for writing!\n";
     of.os().clear_error();
   }
 
@@ -158,6 +164,8 @@ void ExportCondensationToLoopMapping(
   if (!of.os().has_error()) {
     of.keep();
   }
+
+  llvm::errs() << " done. \n";
 }
 
 } // namespace iteratorrecognition
