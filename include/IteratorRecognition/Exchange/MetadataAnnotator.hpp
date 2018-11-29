@@ -21,7 +21,11 @@
 
 #include "boost/range/algorithm.hpp"
 // using boost::make_iterator_range
-// using boost::remove_copy_if
+// using boost::find_if
+// using boost::copy
+
+#include "boost/range/iterator.hpp"
+// using boost::end
 
 #include <iterator>
 // using std::back_inserter
@@ -45,7 +49,9 @@ class MetadataAnnotator {
 public:
   MetadataAnnotator() = default;
 
-  void annotate(llvm::Loop &CurLoop) {
+  bool annotate(llvm::Loop &CurLoop) {
+    bool hasChanged = false;
+
     llvm::SmallVector<llvm::Metadata *, 4> newMetadata{};
 
     auto out = std::back_inserter(newMetadata);
@@ -54,12 +60,21 @@ public:
     // preserve existing metadata, if any
     auto *curMetadata = CurLoop.getLoopID();
     if (curMetadata) {
-      boost::remove_copy_if(boost::make_iterator_range(curMetadata->op_begin(),
-                                                       curMetadata->op_end()),
-                            out, [this](auto &e) -> bool {
-                              auto *s = llvm::dyn_cast<llvm::MDString>(e);
-                              return s && s->getString().equals(LoopKey);
-                            });
+      auto rng = boost::make_iterator_range(curMetadata->op_begin(),
+                                            curMetadata->op_end());
+
+      auto pred = [this](auto &e) -> bool {
+        auto *s = llvm::dyn_cast<llvm::MDString>(e);
+        return s && s->getString().equals(LoopKey);
+      };
+
+      if (boost::find_if(rng, pred) != boost::end(rng)) {
+        return hasChanged;
+      }
+
+      boost::copy(boost::make_iterator_range(curMetadata->op_begin(),
+                                             curMetadata->op_end()),
+                  out);
     }
 
     auto &ctx = CurLoop.getHeader()->getParent()->getContext();
@@ -71,6 +86,8 @@ public:
     newID->replaceOperandWith(0, newID);
 
     CurLoop.setLoopID(newID);
+
+    return hasChanged;
   }
 
   template <typename ForwardRange>
