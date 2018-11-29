@@ -27,6 +27,10 @@
 #include "boost/range/iterator.hpp"
 // using boost::end
 
+#include <tuple>
+// using std::make_tuple
+// using std::get
+
 #include <iterator>
 // using std::back_inserter
 
@@ -42,14 +46,7 @@ class MetadataAnnotator {
   std::string LoopKey{DefaultLoopKey};
   std::string InstructionKey{DefaultInstructionKey};
 
-  void annotate(llvm::Instruction &CurInstruction, llvm::MDNode *LoopMetadata) {
-    CurInstruction.setMetadata(InstructionKey, LoopMetadata);
-  }
-
-public:
-  MetadataAnnotator() = default;
-
-  bool annotate(llvm::Loop &CurLoop) {
+  decltype(auto) annotateLoop(llvm::Loop &CurLoop) {
     bool hasChanged = false;
 
     llvm::SmallVector<llvm::Metadata *, 4> newMetadata{};
@@ -58,10 +55,9 @@ public:
     *out = nullptr; // preserve first place for new loop ID
 
     // preserve existing metadata, if any
-    auto *curMetadata = CurLoop.getLoopID();
-    if (curMetadata) {
-      auto rng = boost::make_iterator_range(curMetadata->op_begin(),
-                                            curMetadata->op_end());
+    auto *curID = CurLoop.getLoopID();
+    if (curID) {
+      auto rng = boost::make_iterator_range(curID->op_begin(), curID->op_end());
 
       auto pred = [this](auto &e) -> bool {
         auto *s = llvm::dyn_cast<llvm::MDString>(e);
@@ -69,12 +65,11 @@ public:
       };
 
       if (boost::find_if(rng, pred) != boost::end(rng)) {
-        return hasChanged;
+        return std::make_tuple(hasChanged, curID);
       }
 
-      boost::copy(boost::make_iterator_range(curMetadata->op_begin(),
-                                             curMetadata->op_end()),
-                  out);
+      boost::copy(
+          boost::make_iterator_range(curID->op_begin(), curID->op_end()), out);
     }
 
     auto &ctx = CurLoop.getHeader()->getParent()->getContext();
@@ -87,12 +82,15 @@ public:
 
     CurLoop.setLoopID(newID);
 
-    return hasChanged;
+    return std::make_tuple(hasChanged, llvm::dyn_cast<llvm::MDNode>(newID));
   }
 
+public:
+  MetadataAnnotator() = default;
+
   template <typename ForwardRange>
-  void annotate(llvm::Loop &CurLoop, ForwardRange Rg) {
-    annotate(CurLoop);
+  bool annotate(llvm::Loop &CurLoop, ForwardRange &Rg) {
+    return std::get<0>(annotateLoop(CurLoop));
   }
 };
 
