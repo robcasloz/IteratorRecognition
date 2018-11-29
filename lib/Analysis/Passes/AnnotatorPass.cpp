@@ -12,6 +12,8 @@
 
 #include "IteratorRecognition/Analysis/Passes/RecognizerPass.hpp"
 
+#include "IteratorRecognition/Exchange/MetadataAnnotator.hpp"
+
 #include "PassCommandLineOptions.hpp"
 
 #include "llvm/Pass.h"
@@ -85,6 +87,12 @@ void AnnotatorPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 bool AnnotatorPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
   auto &iterators = getAnalysis<RecognizerPass>().getIterators();
+
+  MetadataAnnotator annotator;
+
+  for (auto &e : iterators) {
+    annotator.annotate(*e.first);
+  }
 
   return hasChanged;
 }
