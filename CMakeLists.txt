@@ -136,9 +136,9 @@ endif()
 set(LIB_SOURCES
   "lib/Debug.cpp"
   "lib/Analysis/Graphs/PDGCondensationGraph.cpp"
-  "lib/Analysis/Passes/PassCommandLineOptions.cpp"
+  "lib/Passes/PassCommandLineOptions.cpp"
   "lib/Analysis/Passes/RecognizerPass.cpp"
-  "lib/Analysis/Passes/AnnotatorPass.cpp")
+  "lib/Transforms/Passes/AnnotatorPass.cpp")
 
 set(LIB_NAME "LLVM${PRJ_NAME}Pass")
 set(OBJ_LIB_NAME "${LIB_NAME}_obj")
@@ -180,6 +180,9 @@ foreach(PRJ_LIB ${PRJ_LIB_NAMES})
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>)
   target_include_directories(${PRJ_LIB} PUBLIC
     $<INSTALL_INTERFACE:include>)
+
+  target_include_directories(${PRJ_LIB} PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/include>)
 
   if(Pedigree_FOUND)
     target_include_directories(${PRJ_LIB} PUBLIC

@@ -6,7 +6,7 @@
 
 #include "IteratorRecognition/Debug.hpp"
 
-#include "PassCommandLineOptions.hpp"
+#include "private/PassCommandLineOptions.hpp"
 
 #include "llvm/Support/CommandLine.h"
 // using llvm::cl::opt

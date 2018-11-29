@@ -20,7 +20,7 @@
 
 #include "Pedigree/Analysis/Passes/PDGraphPass.hpp"
 
-#include "PassCommandLineOptions.hpp"
+#include "private/PassCommandLineOptions.hpp"
 
 #include "llvm/Pass.h"
 // using llvm::RegisterPass

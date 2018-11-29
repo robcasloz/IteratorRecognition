@@ -14,7 +14,7 @@
 
 #include "IteratorRecognition/Exchange/MetadataAnnotator.hpp"
 
-#include "PassCommandLineOptions.hpp"
+#include "private/PassCommandLineOptions.hpp"
 
 #include "llvm/Pass.h"
 // using llvm::RegisterPass
