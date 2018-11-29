@@ -97,7 +97,9 @@ public:
     std::tie(hasChanged, loopID) = annotateLoop(CurLoop);
 
     for (auto &e : Rng) {
-      e->setMetadata(InstructionKey, loopID);
+      auto *data = e->getMetadata(InstructionKey);
+      data = data ? llvm::MDNode::concatenate(data, loopID) : loopID;
+      e->setMetadata(InstructionKey, data);
     }
 
     return hasChanged;
