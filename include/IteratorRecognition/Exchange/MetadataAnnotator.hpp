@@ -30,6 +30,7 @@
 #include <tuple>
 // using std::make_tuple
 // using std::get
+// using std::tie
 
 #include <iterator>
 // using std::back_inserter
@@ -89,8 +90,17 @@ public:
   MetadataAnnotator() = default;
 
   template <typename ForwardRange>
-  bool annotate(llvm::Loop &CurLoop, ForwardRange &Rg) {
-    return std::get<0>(annotateLoop(CurLoop));
+  bool annotate(llvm::Loop &CurLoop, ForwardRange &Rng) {
+    bool hasChanged;
+    llvm::MDNode *loopID;
+
+    std::tie(hasChanged, loopID) = annotateLoop(CurLoop);
+
+    for (auto &e : Rng) {
+      e->setMetadata(InstructionKey, loopID);
+    }
+
+    return hasChanged;
   }
 };
 
