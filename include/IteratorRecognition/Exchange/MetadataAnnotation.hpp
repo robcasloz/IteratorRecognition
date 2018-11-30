@@ -35,15 +35,15 @@
 #include <iterator>
 // using std::back_inserter
 
-#ifndef ITR_METADATAANNOTATOR_HPP
-#define ITR_METADATAANNOTATOR_HPP
+#ifndef ITR_METADATAANNOTATION_HPP
+#define ITR_METADATAANNOTATION_HPP
 
 namespace iteratorrecognition {
 
 constexpr const char *DefaultLoopKey = "llvm.loop.icsa.itr";
 constexpr const char *DefaultInstructionKey = "icsa.itr.iterator";
 
-class MetadataAnnotator {
+class MetadataAnnotationWriter {
   std::string LoopKey{DefaultLoopKey};
   std::string InstructionKey{DefaultInstructionKey};
 
@@ -87,7 +87,7 @@ class MetadataAnnotator {
   }
 
 public:
-  MetadataAnnotator() = default;
+  MetadataAnnotationWriter() = default;
 
   template <typename ForwardRange>
   bool annotate(llvm::Loop &CurLoop, ForwardRange &Rng) {
