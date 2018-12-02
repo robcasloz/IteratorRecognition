@@ -56,6 +56,12 @@
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
 
+#include "llvm/Support/Path.h"
+// using llvm::sys::fs::exists
+// using llvm::sys::fs::is_directory
+// using llvm::sys::fs::make_absolute
+// using llvm::sys::fs::create_directories
+
 #include "llvm/Support/CommandLine.h"
 // using llvm::cl::opt
 // using llvm::cl::desc
@@ -63,10 +69,16 @@
 // using llvm::cl::cat
 // using llvm::cl::OptionCategory
 
+#include "llvm/Support/ErrorHandling.h"
+// using llvm::report_fatal_error
+
 #include "llvm/Support/Debug.h"
 // using DEBUG macro
 // using llvm::dbgs
 // using llvm::errs
+
+#include <system_error>
+// using std::error_code
 
 #define DEBUG_TYPE "iterator-recognition"
 
@@ -102,6 +114,11 @@ static llvm::RegisterStandardPasses
 
 //
 
+static llvm::cl::opt<std::string>
+    ReportsDirectory("itr-reports-dir",
+                     llvm::cl::desc("output reports directory"),
+                     llvm::cl::cat(IteratorRecognitionCLCategory));
+
 static llvm::cl::opt<bool>
     ExportSCC("itr-export-scc", llvm::cl::desc("export condensations"),
               llvm::cl::init(false),
@@ -124,6 +141,37 @@ void RecognizerPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 
 bool RecognizerPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
+  llvm::SmallString<128> AbsReportsDirectory{ReportsDirectory};
+
+  if (ExportSCC || ExportMapping) {
+    bool status = true;
+
+    if (std::error_code ec =
+            llvm::sys::fs::make_absolute(AbsReportsDirectory)) {
+      status = false;
+      llvm::errs() << "Error: Unable to get absolute path for: "
+                   << AbsReportsDirectory << " : " << ec.message() << '\n';
+    }
+
+    if (llvm::sys::fs::exists(AbsReportsDirectory) &&
+        !llvm::sys::fs::is_directory(AbsReportsDirectory)) {
+      status = false;
+      llvm::errs() << "Error: File " << AbsReportsDirectory
+                   << " already exists\n";
+    }
+
+    if (std::error_code ec =
+            llvm::sys::fs::create_directories(AbsReportsDirectory)) {
+      status = false;
+      llvm::errs() << "Error: Unable to create directories for path: "
+                   << AbsReportsDirectory << " : " << ec.message() << '\n';
+    }
+
+    if (!status) {
+      llvm::report_fatal_error("Failed to create reports directory" +
+                               AbsReportsDirectory);
+    }
+  }
 
   const auto *LI = &getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
   if (LI->empty()) {
