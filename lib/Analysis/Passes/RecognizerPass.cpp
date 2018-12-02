@@ -16,6 +16,8 @@
 
 #include "IteratorRecognition/Exchange/JSONTransfer.hpp"
 
+#include "IteratorRecognition/Support/FileSystem.hpp"
+
 #include "Pedigree/Analysis/Graphs/DependenceGraphs.hpp"
 
 #include "Pedigree/Analysis/Passes/PDGraphPass.hpp"
@@ -55,12 +57,6 @@
 
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
-
-#include "llvm/Support/Path.h"
-// using llvm::sys::fs::exists
-// using llvm::sys::fs::is_directory
-// using llvm::sys::fs::make_absolute
-// using llvm::sys::fs::create_directories
 
 #include "llvm/Support/CommandLine.h"
 // using llvm::cl::opt
@@ -141,36 +137,18 @@ void RecognizerPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 
 bool RecognizerPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
-  llvm::SmallString<128> AbsReportsDirectory{ReportsDirectory};
 
   if (ExportSCC || ExportMapping) {
-    bool status = true;
+    auto dirOrErr = CreateDirectory(ReportsDirectory);
 
-    if (std::error_code ec =
-            llvm::sys::fs::make_absolute(AbsReportsDirectory)) {
-      status = false;
-      llvm::errs() << "Error: Unable to get absolute path for: "
-                   << AbsReportsDirectory << " : " << ec.message() << '\n';
-    }
-
-    if (llvm::sys::fs::exists(AbsReportsDirectory) &&
-        !llvm::sys::fs::is_directory(AbsReportsDirectory)) {
-      status = false;
-      llvm::errs() << "Error: File " << AbsReportsDirectory
-                   << " already exists\n";
-    }
-
-    if (std::error_code ec =
-            llvm::sys::fs::create_directories(AbsReportsDirectory)) {
-      status = false;
-      llvm::errs() << "Error: Unable to create directories for path: "
-                   << AbsReportsDirectory << " : " << ec.message() << '\n';
-    }
-
-    if (!status) {
+    if (std::error_code ec = dirOrErr.getError()) {
+      llvm::errs() << "Error: " << ec.message() << '\n';
       llvm::report_fatal_error("Failed to create reports directory" +
-                               AbsReportsDirectory);
+                               ReportsDirectory);
     }
+    llvm::errs() << dirOrErr.get();
+
+    ReportsDirectory = dirOrErr.get();
   }
 
   const auto *LI = &getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
