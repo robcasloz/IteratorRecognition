@@ -17,18 +17,21 @@
 #include "llvm/Support/FileSystem.h"
 // using llvm::sys::fs::F_Text
 
+#include "llvm/ADT/DenseSet.h"
+// using llvm::DenseSet
+
+#include "llvm/ADT/GraphTraits.h"
+// using llvm::GraphTraits
+
+#include "llvm/Support/Path.h"
+// using llvm::sys::path::filename
+
 #include "llvm/Support/ToolOutputFile.h"
 // using llvm::ToolOutputFile
 
 #include "llvm/Support/raw_ostream.h"
 // using llvm::raw_ostream
 // using llvm::raw_string_ostream
-
-#include "llvm/ADT/DenseSet.h"
-// using llvm::DenseSet
-
-#include "llvm/ADT/GraphTraits.h"
-// using llvm::GraphTraits
 
 #include "boost/range/adaptors.hpp"
 // using boost::adaptors::filtered
@@ -64,7 +67,8 @@ namespace br = boost::range;
 namespace iteratorrecognition {
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
-void ExportCondensations(const GraphT &G, llvm::Twine FilenamePart) {
+void ExportCondensations(const GraphT &G, const llvm::Twine &FilenamePart,
+                         const llvm::Twine &Dir = ".") {
   llvm::json::Object root;
   llvm::json::Array condensations;
 
@@ -89,11 +93,13 @@ void ExportCondensations(const GraphT &G, llvm::Twine FilenamePart) {
 
   root["condensations"] = std::move(condensations);
 
-  std::string filename{"itr.scc." + FilenamePart.str() + ".json"};
+  std::string absFilename{Dir.str() + "/itr.scc." + FilenamePart.str() +
+                          ".json"};
+  llvm::StringRef filename{llvm::sys::path::filename(absFilename)};
   llvm::errs() << "Writing file '" << filename << "'... ";
 
   std::error_code ec;
-  llvm::ToolOutputFile of(filename, ec, llvm::sys::fs::F_Text);
+  llvm::ToolOutputFile of(absFilename, ec, llvm::sys::fs::F_Text);
 
   if (ec) {
     llvm::errs() << "error opening file '" << filename << "' for writing!\n";
@@ -113,7 +119,7 @@ void ExportCondensations(const GraphT &G, llvm::Twine FilenamePart) {
 template <typename NodeRef>
 void ExportCondensationToLoopMapping(
     const llvm::DenseMap<NodeRef, llvm::DenseSet<llvm::Loop *>> &Map,
-    llvm::Twine FilenamePart) {
+    const llvm::Twine &FilenamePart, const llvm::Twine &Dir = ".") {
   llvm::json::Object root;
   llvm::json::Array condensations;
 
@@ -147,11 +153,13 @@ void ExportCondensationToLoopMapping(
 
   root["condensations"] = std::move(condensations);
 
-  std::string filename{"itr.scc_to_loop." + FilenamePart.str() + ".json"};
+  std::string absFilename{Dir.str() + "/itr.scc_to_loop." + FilenamePart.str() +
+                          ".json"};
+  llvm::StringRef filename{llvm::sys::path::filename(absFilename)};
   llvm::errs() << "Writing file '" << filename << "'... ";
 
   std::error_code ec;
-  llvm::ToolOutputFile of(filename, ec, llvm::sys::fs::F_Text);
+  llvm::ToolOutputFile of(absFilename, ec, llvm::sys::fs::F_Text);
 
   if (ec) {
     llvm::errs() << "error opening file '" << filename << "' for writing!\n";

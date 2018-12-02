@@ -111,9 +111,8 @@ static llvm::RegisterStandardPasses
 //
 
 static llvm::cl::opt<std::string>
-    ReportsDirectory("itr-reports-dir",
-                     llvm::cl::desc("output reports directory"),
-                     llvm::cl::cat(IteratorRecognitionCLCategory));
+    ReportsDir("itr-reports-dir", llvm::cl::desc("output reports directory"),
+               llvm::cl::cat(IteratorRecognitionCLCategory));
 
 static llvm::cl::opt<bool>
     ExportSCC("itr-export-scc", llvm::cl::desc("export condensations"),
@@ -139,16 +138,15 @@ bool RecognizerPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
 
   if (ExportSCC || ExportMapping) {
-    auto dirOrErr = CreateDirectory(ReportsDirectory);
+    auto dirOrErr = CreateDirectory(ReportsDir);
 
     if (std::error_code ec = dirOrErr.getError()) {
       llvm::errs() << "Error: " << ec.message() << '\n';
       llvm::report_fatal_error("Failed to create reports directory" +
-                               ReportsDirectory);
+                               ReportsDir);
     }
-    llvm::errs() << dirOrErr.get();
 
-    ReportsDirectory = dirOrErr.get();
+    ReportsDir = dirOrErr.get();
   }
 
   const auto *LI = &getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
@@ -164,7 +162,7 @@ bool RecognizerPass::runOnFunction(llvm::Function &CurFunc) {
                                             llvm::scc_end(&Graph)};
 
   if (ExportSCC) {
-    ExportCondensations(CG, CurFunc.getName());
+    ExportCondensations(CG, CurFunc.getName(), ReportsDir);
   }
 
   llvm::DenseMap<typename llvm::GraphTraits<decltype(CG)>::NodeRef,
@@ -173,7 +171,8 @@ bool RecognizerPass::runOnFunction(llvm::Function &CurFunc) {
   MapCondensationToLoop(CG, *LI, CondensationToLoop);
 
   if (ExportMapping) {
-    ExportCondensationToLoopMapping(CondensationToLoop, CurFunc.getName());
+    ExportCondensationToLoopMapping(CondensationToLoop, CurFunc.getName(),
+                                    ReportsDir);
   }
 
   // TODO example dependent declaration that can potentially be used for
