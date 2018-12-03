@@ -139,6 +139,7 @@ set(LIB_SOURCES
   "lib/Passes/PassCommandLineOptions.cpp"
   "lib/Support/FileSystem.cpp"
   "lib/Analysis/Passes/RecognizerPass.cpp"
+  "lib/Analysis/Passes/Exchange/JSONExporterPass.cpp"
   "lib/Transforms/Passes/AnnotatorPass.cpp")
 
 set(LIB_NAME "LLVM${PRJ_NAME}Pass")

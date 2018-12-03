@@ -16,8 +16,6 @@
 
 #include "IteratorRecognition/Exchange/JSONTransfer.hpp"
 
-#include "IteratorRecognition/Support/FileSystem.hpp"
-
 #include "Pedigree/Analysis/Graphs/DependenceGraphs.hpp"
 
 #include "Pedigree/Analysis/Passes/PDGraphPass.hpp"
@@ -31,9 +29,6 @@
 // using llvm::Loop
 // using llvm::LoopInfo
 // using llvm::LoopInfoWrapperPass
-
-#include "llvm/IR/Instruction.h"
-// using llvm::Instruction
 
 #include "llvm/IR/Function.h"
 // using llvm::Function
@@ -64,9 +59,6 @@
 // using llvm::cl::location
 // using llvm::cl::cat
 // using llvm::cl::OptionCategory
-
-#include "llvm/Support/ErrorHandling.h"
-// using llvm::report_fatal_error
 
 #include "llvm/Support/Debug.h"
 // using DEBUG macro
@@ -110,21 +102,6 @@ static llvm::RegisterStandardPasses
 
 //
 
-static llvm::cl::opt<std::string>
-    ReportsDir("itr-reports-dir", llvm::cl::desc("output reports directory"),
-               llvm::cl::cat(IteratorRecognitionCLCategory));
-
-static llvm::cl::opt<bool>
-    ExportSCC("itr-export-scc", llvm::cl::desc("export condensations"),
-              llvm::cl::init(false),
-              llvm::cl::cat(IteratorRecognitionCLCategory));
-
-static llvm::cl::opt<bool> ExportMapping(
-    "itr-export-mapping", llvm::cl::desc("export condensation to loop mapping"),
-    llvm::cl::init(false), llvm::cl::cat(IteratorRecognitionCLCategory));
-
-//
-
 namespace iteratorrecognition {
 
 void RecognizerPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
@@ -136,18 +113,6 @@ void RecognizerPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 
 bool RecognizerPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
-
-  if (ExportSCC || ExportMapping) {
-    auto dirOrErr = CreateDirectory(ReportsDir);
-
-    if (std::error_code ec = dirOrErr.getError()) {
-      llvm::errs() << "Error: " << ec.message() << '\n';
-      llvm::report_fatal_error("Failed to create reports directory" +
-                               ReportsDir);
-    }
-
-    ReportsDir = dirOrErr.get();
-  }
 
   const auto *LI = &getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
   if (LI->empty()) {
@@ -161,19 +126,10 @@ bool RecognizerPass::runOnFunction(llvm::Function &CurFunc) {
   CondensationGraph<pedigree::PDGraph *> CG{llvm::scc_begin(&Graph),
                                             llvm::scc_end(&Graph)};
 
-  if (ExportSCC) {
-    ExportCondensations(CG, CurFunc.getName(), ReportsDir);
-  }
-
   llvm::DenseMap<typename llvm::GraphTraits<decltype(CG)>::NodeRef,
                  llvm::DenseSet<llvm::Loop *>>
       CondensationToLoop;
   MapCondensationToLoop(CG, *LI, CondensationToLoop);
-
-  if (ExportMapping) {
-    ExportCondensationToLoopMapping(CondensationToLoop, CurFunc.getName(),
-                                    ReportsDir);
-  }
 
   // TODO example dependent declaration that can potentially be used for
   // static_assert
