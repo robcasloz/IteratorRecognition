@@ -10,13 +10,9 @@
 
 #include "IteratorRecognition/Analysis/IteratorRecognition.hpp"
 
-#include "IteratorRecognition/Analysis/Graphs/PDGCondensationGraph.hpp"
-
 #include "IteratorRecognition/Analysis/Passes/RecognizerPass.hpp"
 
 #include "IteratorRecognition/Exchange/JSONTransfer.hpp"
-
-#include "Pedigree/Analysis/Graphs/DependenceGraphs.hpp"
 
 #include "Pedigree/Analysis/Passes/PDGraphPass.hpp"
 
@@ -39,10 +35,6 @@
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 // using llvm::PassManagerBuilder
 // using llvm::RegisterStandardPasses
-
-#include "llvm/ADT/SCCIterator.h"
-// using llvm::scc_begin
-// using llvm::scc_end
 
 #include "llvm/ADT/DenseMap.h"
 // using llvm::DenseMap
@@ -123,20 +115,7 @@ bool RecognizerPass::runOnFunction(llvm::Function &CurFunc) {
 
   Graph.connectRootNode();
 
-  CondensationGraph<pedigree::PDGraph *> CG{llvm::scc_begin(&Graph),
-                                            llvm::scc_end(&Graph)};
-
-  llvm::DenseMap<typename llvm::GraphTraits<decltype(CG)>::NodeRef,
-                 llvm::DenseSet<llvm::Loop *>>
-      CondensationToLoop;
-  MapCondensationToLoop(CG, *LI, CondensationToLoop);
-
-  // TODO example dependent declaration that can potentially be used for
-  // static_assert
-  // llvm::DenseMap<llvm::Loop *,
-  // llvm::SmallVector<typename decltype(CG)::MemberNodeRef, 8>>
-  // iterators;
-  RecognizeIterator(CG, CondensationToLoop, Iterators);
+  IteratorRecognitionInfo itrInfo{*LI, Graph};
 
   return hasChanged;
 }
