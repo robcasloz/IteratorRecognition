@@ -109,10 +109,9 @@ void JSONExporterPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 
 bool JSONExporterPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
-  auto &iterators = getAnalysis<RecognizerPass>().getIterators();
+  auto *info = getAnalysis<RecognizerPass>().getInfo();
 
   auto dirOrErr = CreateDirectory(ReportsDir);
-
   if (std::error_code ec = dirOrErr.getError()) {
     llvm::errs() << "Error: " << ec.message() << '\n';
     llvm::report_fatal_error("Failed to create reports directory" + ReportsDir);
@@ -120,9 +119,10 @@ bool JSONExporterPass::runOnFunction(llvm::Function &CurFunc) {
 
   ReportsDir = dirOrErr.get();
 
-  // ExportCondensations(CG, CurFunc.getName(), ReportsDir);
-  // ExportCondensationToLoopMapping(CondensationToLoop, CurFunc.getName(),
-  // ReportsDir);
+  ExportCondensations(info->getCondensationGraph(), CurFunc.getName(),
+                      ReportsDir);
+  ExportCondensationToLoopMapping(info->getMap(), CurFunc.getName(),
+                                  ReportsDir);
 
   return hasChanged;
 }

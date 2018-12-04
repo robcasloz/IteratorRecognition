@@ -7,11 +7,16 @@
 
 #include "IteratorRecognition/Config.hpp"
 
+#include "IteratorRecognition/Analysis/IteratorRecognition.hpp"
+
 #include "llvm/Pass.h"
 // using llvm::FunctionPass
 
 #include "llvm/ADT/SmallVector.h"
 // using llvm::SmallVector
+
+#include <memory>
+// using std::unique_ptr
 
 namespace llvm {
 class Instruction;
@@ -22,8 +27,7 @@ class Function;
 namespace iteratorrecognition {
 
 class RecognizerPass : public llvm::FunctionPass {
-  llvm::DenseMap<llvm::Loop *, llvm::SmallVector<llvm::Instruction *, 8>>
-      Iterators;
+  std::unique_ptr<IteratorRecognitionInfo> Info;
 
 public:
   static char ID;
@@ -33,7 +37,8 @@ public:
 
   bool runOnFunction(llvm::Function &CurFunc) override;
 
-  decltype(Iterators) &getIterators() { return Iterators; }
+  decltype(auto) getInfo() { return Info.get(); }
+  decltype(auto) getInfo() const { return Info.get(); }
 };
 
 } // namespace iteratorrecognition

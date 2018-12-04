@@ -112,10 +112,8 @@ bool RecognizerPass::runOnFunction(llvm::Function &CurFunc) {
   }
 
   pedigree::PDGraph &Graph{getAnalysis<pedigree::PDGraphPass>().getGraph()};
-
   Graph.connectRootNode();
-
-  IteratorRecognitionInfo itrInfo{*LI, Graph};
+  Info = std::make_unique<IteratorRecognitionInfo>(*LI, Graph);
 
   return hasChanged;
 }

@@ -132,6 +132,10 @@ public:
     MapCondensationToLoop();
     RecognizeIterator();
   }
+
+  const auto &getMap() { return Map; }
+  const auto &getIterators() { return Iterators; }
+  const auto &getCondensationGraph() { return CG; }
 };
 
 } // namespace iteratorrecognition

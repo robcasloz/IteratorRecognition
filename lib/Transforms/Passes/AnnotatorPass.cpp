@@ -86,7 +86,7 @@ void AnnotatorPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 
 bool AnnotatorPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
-  auto &iterators = getAnalysis<RecognizerPass>().getIterators();
+  auto &iterators = getAnalysis<RecognizerPass>().getInfo()->getIterators();
 
   MetadataAnnotationWriter annotator;
 
