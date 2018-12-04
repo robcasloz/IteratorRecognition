@@ -26,19 +26,19 @@ class Function;
 
 namespace iteratorrecognition {
 
-class RecognizerPass : public llvm::FunctionPass {
+class IteratorRecognitionWrapperPass : public llvm::FunctionPass {
   std::unique_ptr<IteratorRecognitionInfo> Info;
 
 public:
   static char ID;
 
   void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-  RecognizerPass() : llvm::FunctionPass(ID) {}
+  IteratorRecognitionWrapperPass() : llvm::FunctionPass(ID) {}
 
   bool runOnFunction(llvm::Function &CurFunc) override;
 
-  decltype(auto) getInfo() { return Info.get(); }
-  decltype(auto) getInfo() const { return Info.get(); }
+  decltype(auto) getIteratorInfo() { return Info.get(); }
+  decltype(auto) getIteratorInfo() const { return Info.get(); }
 };
 
 } // namespace iteratorrecognition

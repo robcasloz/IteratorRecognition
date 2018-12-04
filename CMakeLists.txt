@@ -138,7 +138,7 @@ set(LIB_SOURCES
   "lib/Analysis/Graphs/PDGCondensationGraph.cpp"
   "lib/Passes/PassCommandLineOptions.cpp"
   "lib/Support/FileSystem.cpp"
-  "lib/Analysis/Passes/RecognizerPass.cpp"
+  "lib/Analysis/Passes/IteratorRecognitionWrapperPass.cpp"
   "lib/Analysis/Passes/Exchange/JSONExporterPass.cpp"
   "lib/Transforms/Passes/AnnotatorPass.cpp")
 

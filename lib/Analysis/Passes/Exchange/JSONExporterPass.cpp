@@ -10,7 +10,7 @@
 
 #include "IteratorRecognition/Analysis/IteratorRecognition.hpp"
 
-#include "IteratorRecognition/Analysis/Passes/RecognizerPass.hpp"
+#include "IteratorRecognition/Analysis/Passes/IteratorRecognitionWrapperPass.hpp"
 
 #include "IteratorRecognition/Exchange/JSONTransfer.hpp"
 
@@ -102,14 +102,14 @@ static llvm::cl::opt<bool> ExportMapping(
 namespace iteratorrecognition {
 
 void JSONExporterPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-  AU.addRequired<RecognizerPass>();
+  AU.addRequired<IteratorRecognitionWrapperPass>();
 
   AU.setPreservesAll();
 }
 
 bool JSONExporterPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
-  auto *info = getAnalysis<RecognizerPass>().getInfo();
+  auto *info = getAnalysis<IteratorRecognitionWrapperPass>().getIteratorInfo();
 
   auto dirOrErr = CreateDirectory(ReportsDir);
   if (std::error_code ec = dirOrErr.getError()) {

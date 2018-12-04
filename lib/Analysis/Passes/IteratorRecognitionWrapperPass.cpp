@@ -10,7 +10,7 @@
 
 #include "IteratorRecognition/Analysis/IteratorRecognition.hpp"
 
-#include "IteratorRecognition/Analysis/Passes/RecognizerPass.hpp"
+#include "IteratorRecognition/Analysis/Passes/IteratorRecognitionWrapperPass.hpp"
 
 #include "IteratorRecognition/Exchange/JSONTransfer.hpp"
 
@@ -68,8 +68,8 @@ namespace itr = iteratorrecognition;
 
 // plugin registration for opt
 
-char itr::RecognizerPass::ID = 0;
-static llvm::RegisterPass<itr::RecognizerPass>
+char itr::IteratorRecognitionWrapperPass::ID = 0;
+static llvm::RegisterPass<itr::IteratorRecognitionWrapperPass>
     X("itr-recognize", PRJ_CMDLINE_DESC("iterator recognition pass"), false,
       false);
 
@@ -81,29 +81,31 @@ static llvm::RegisterPass<itr::RecognizerPass>
 // add an instance of this pass and a static instance of the
 // RegisterStandardPasses class
 
-static void registerRecognizerPass(const llvm::PassManagerBuilder &Builder,
-                                   llvm::legacy::PassManagerBase &PM) {
-  PM.add(new itr::RecognizerPass());
+static void
+registerIteratorRecognitionWrapperPass(const llvm::PassManagerBuilder &Builder,
+                                       llvm::legacy::PassManagerBase &PM) {
+  PM.add(new itr::IteratorRecognitionWrapperPass());
 
   return;
 }
 
-static llvm::RegisterStandardPasses
-    RegisterRecognizerPass(llvm::PassManagerBuilder::EP_EarlyAsPossible,
-                           registerRecognizerPass);
+static llvm::RegisterStandardPasses RegisterIteratorRecognitionWrapperPass(
+    llvm::PassManagerBuilder::EP_EarlyAsPossible,
+    registerIteratorRecognitionWrapperPass);
 
 //
 
 namespace iteratorrecognition {
 
-void RecognizerPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+void IteratorRecognitionWrapperPass::getAnalysisUsage(
+    llvm::AnalysisUsage &AU) const {
   AU.addRequired<llvm::LoopInfoWrapperPass>();
   AU.addRequired<pedigree::PDGraphPass>();
 
   AU.setPreservesAll();
 }
 
-bool RecognizerPass::runOnFunction(llvm::Function &CurFunc) {
+bool IteratorRecognitionWrapperPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
 
   const auto *LI = &getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();

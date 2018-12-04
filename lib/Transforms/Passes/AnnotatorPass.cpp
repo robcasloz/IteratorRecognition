@@ -10,7 +10,7 @@
 
 #include "IteratorRecognition/Analysis/Passes/AnnotatorPass.hpp"
 
-#include "IteratorRecognition/Analysis/Passes/RecognizerPass.hpp"
+#include "IteratorRecognition/Analysis/Passes/IteratorRecognitionWrapperPass.hpp"
 
 #include "IteratorRecognition/Exchange/MetadataAnnotation.hpp"
 
@@ -79,14 +79,15 @@ static llvm::RegisterStandardPasses
 namespace iteratorrecognition {
 
 void AnnotatorPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-  AU.addRequired<RecognizerPass>();
+  AU.addRequired<IteratorRecognitionWrapperPass>();
 
   AU.setPreservesAll();
 }
 
 bool AnnotatorPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
-  auto &iterators = getAnalysis<RecognizerPass>().getInfo()->getIterators();
+  auto *info = getAnalysis<IteratorRecognitionWrapperPass>().getIteratorInfo();
+  auto &iterators = info->getIterators();
 
   MetadataAnnotationWriter annotator;
 
