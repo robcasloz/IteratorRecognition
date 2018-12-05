@@ -6,6 +6,8 @@
 
 #include "IteratorRecognition/Support/Utils/Extras.hpp"
 
+#include "IteratorRecognition/Support/CondensationGraph.hpp"
+
 #include "llvm/Analysis/LoopInfo.h"
 // using llvm::Loop
 
@@ -59,16 +61,17 @@
 
 // namespace aliases
 
+namespace itr = iteratorrecognition;
+
 namespace ba = boost::adaptors;
 namespace br = boost::range;
 
 //
 
-namespace iteratorrecognition {
+namespace llvm {
 
-template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
-void ExportCondensations(const GraphT &G, const llvm::Twine &FilenamePart,
-                         const llvm::Twine &Dir = ".") {
+template <typename GraphT>
+llvm::json::Value toJSON(const itr::CondensationGraph<GraphT *> &G) {
   llvm::json::Object root;
   llvm::json::Array condensations;
 
@@ -78,7 +81,7 @@ void ExportCondensations(const GraphT &G, const llvm::Twine &FilenamePart,
     llvm::raw_string_ostream ss(outs);
 
     llvm::json::Array condensationsArray;
-    br::transform(*cn | ba::filtered(is_not_null_unit),
+    br::transform(*cn | ba::filtered(itr::is_not_null_unit),
                   std::back_inserter(condensationsArray), [&](const auto &e) {
                     ss << *e->unit();
                     auto s = ss.str();
@@ -93,6 +96,16 @@ void ExportCondensations(const GraphT &G, const llvm::Twine &FilenamePart,
 
   root["condensations"] = std::move(condensations);
 
+  return std::move(root);
+}
+
+} // namespace llvm
+
+namespace iteratorrecognition {
+
+template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
+void ExportCondensations(const GraphT &G, const llvm::Twine &FilenamePart,
+                         const llvm::Twine &Dir = ".") {
   std::string absFilename{Dir.str() + "/itr.scc." + FilenamePart.str() +
                           ".json"};
   llvm::StringRef filename{llvm::sys::path::filename(absFilename)};
@@ -106,7 +119,7 @@ void ExportCondensations(const GraphT &G, const llvm::Twine &FilenamePart,
     of.os().clear_error();
   }
 
-  of.os() << llvm::formatv("{0:2}", llvm::json::Value(std::move(root)));
+  of.os() << llvm::formatv("{0:2}", toJSON(G));
   of.os().close();
 
   if (!of.os().has_error()) {
