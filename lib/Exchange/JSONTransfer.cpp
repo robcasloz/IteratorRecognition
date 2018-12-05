@@ -9,8 +9,20 @@
 #include "llvm/Analysis/LoopInfo.h"
 // using llvm::Loop
 
+#include "llvm/Support/FileSystem.h"
+// using llvm::sys::fs::F_Text
+
+#include "llvm/Support/Path.h"
+// using llvm::sys::path::filename
+
+#include "llvm/Support/ToolOutputFile.h"
+// using llvm::ToolOutputFile
+
 #include <algorithm>
 // using std::transform
+
+#include <system_error>
+// using std::error_code
 
 namespace llvm {
 
@@ -56,12 +68,10 @@ toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
 
 namespace iteratorrecognition {
 
-void ExportCondensationToLoopMapping(
-    const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map,
-    const llvm::Twine &FilenamePart, const llvm::Twine &Dir) {
-
-  std::string absFilename{Dir.str() + "/itr.scc_to_loop." + FilenamePart.str() +
-                          ".json"};
+void WriteJSONToFile(const llvm::json::Value &V,
+                     const llvm::Twine &FilenamePrefix,
+                     const llvm::Twine &Dir) {
+  std::string absFilename{Dir.str() + "/" + FilenamePrefix.str() + ".json"};
   llvm::StringRef filename{llvm::sys::path::filename(absFilename)};
   llvm::errs() << "Writing file '" << filename << "'... ";
 
@@ -73,7 +83,7 @@ void ExportCondensationToLoopMapping(
     of.os().clear_error();
   }
 
-  of.os() << llvm::formatv("{0:2}", toJSON(Map));
+  of.os() << llvm::formatv("{0:2}", V);
   of.os().close();
 
   if (!of.os().has_error()) {

@@ -141,13 +141,15 @@ bool JSONExporterPass::runOnFunction(llvm::Function &CurFunc) {
   ReportsDir = dirOrErr.get();
 
   if (ReportComponentOption.isSet(ReportComponent::Condensation)) {
-    ExportCondensations(info->getCondensationGraph(), CurFunc.getName(),
-                        ReportsDir);
+    const auto &json = toJSON(info->getCondensationGraph());
+
+    WriteJSONToFile(json, "itr.scc." + CurFunc.getName(), ReportsDir);
   }
 
   if (ReportComponentOption.isSet(ReportComponent::CondensationToLoop)) {
-    ExportCondensationToLoopMapping(info->getCondensationToLoopsMap(),
-                                    CurFunc.getName(), ReportsDir);
+    const auto &json = toJSON(info->getCondensationToLoopsMap());
+
+    WriteJSONToFile(json, "itr.scc_to_loop." + CurFunc.getName(), ReportsDir);
   }
 
   return hasChanged;

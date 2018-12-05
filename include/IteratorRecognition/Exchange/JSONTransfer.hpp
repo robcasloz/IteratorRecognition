@@ -15,18 +15,6 @@
 // using json::Object
 // using json::Array
 
-#include "llvm/Support/FileSystem.h"
-// using llvm::sys::fs::F_Text
-
-#include "llvm/ADT/GraphTraits.h"
-// using llvm::GraphTraits
-
-#include "llvm/Support/Path.h"
-// using llvm::sys::path::filename
-
-#include "llvm/Support/ToolOutputFile.h"
-// using llvm::ToolOutputFile
-
 #include "llvm/Support/raw_ostream.h"
 // using llvm::raw_ostream
 // using llvm::raw_string_ostream
@@ -45,9 +33,6 @@
 
 #include <utility>
 // using std::move
-
-#include <system_error>
-// using std::error_code
 
 #ifndef ITR_JSONTRANSFER_HPP
 #define ITR_JSONTRANSFER_HPP
@@ -101,35 +86,8 @@ toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map);
 
 namespace iteratorrecognition {
 
-template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
-void ExportCondensations(const GraphT &G, const llvm::Twine &FilenamePart,
-                         const llvm::Twine &Dir = ".") {
-  std::string absFilename{Dir.str() + "/itr.scc." + FilenamePart.str() +
-                          ".json"};
-  llvm::StringRef filename{llvm::sys::path::filename(absFilename)};
-  llvm::errs() << "Writing file '" << filename << "'... ";
-
-  std::error_code ec;
-  llvm::ToolOutputFile of(absFilename, ec, llvm::sys::fs::F_Text);
-
-  if (ec) {
-    llvm::errs() << "error opening file '" << filename << "' for writing!\n";
-    of.os().clear_error();
-  }
-
-  of.os() << llvm::formatv("{0:2}", toJSON(G));
-  of.os().close();
-
-  if (!of.os().has_error()) {
-    of.keep();
-  }
-
-  llvm::errs() << " done. \n";
-}
-
-void ExportCondensationToLoopMapping(
-    const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map,
-    const llvm::Twine &FilenamePart, const llvm::Twine &Dir = ".");
+void WriteJSONToFile(const llvm::json::Value &V,
+                     const llvm::Twine &FilenamePrefix, const llvm::Twine &Dir);
 
 } // namespace iteratorrecognition
 
