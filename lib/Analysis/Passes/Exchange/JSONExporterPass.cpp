@@ -146,8 +146,8 @@ bool JSONExporterPass::runOnFunction(llvm::Function &CurFunc) {
   }
 
   if (ReportComponentOption.isSet(ReportComponent::CondensationToLoop)) {
-    ExportCondensationToLoopMapping(info->getMap(), CurFunc.getName(),
-                                    ReportsDir);
+    ExportCondensationToLoopMapping(info->getCondensationToLoopsMap(),
+                                    CurFunc.getName(), ReportsDir);
   }
 
   return hasChanged;

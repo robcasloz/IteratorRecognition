@@ -136,6 +136,7 @@ endif()
 set(LIB_SOURCES
   "lib/Debug.cpp"
   "lib/Analysis/Graphs/PDGCondensationGraph.cpp"
+  "lib/Exchange/JSONTransfer.cpp"
   "lib/Passes/PassCommandLineOptions.cpp"
   "lib/Support/FileSystem.cpp"
   "lib/Analysis/Passes/IteratorRecognitionWrapperPass.cpp"

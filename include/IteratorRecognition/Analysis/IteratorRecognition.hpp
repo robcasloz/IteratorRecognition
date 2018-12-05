@@ -73,13 +73,18 @@ private:
   using CGT = llvm::GraphTraits<CondensationGraphT>;
   using ICGT = llvm::GraphTraits<llvm::Inverse<CondensationGraphT>>;
 
-  llvm::DenseMap<typename CGT::NodeRef, llvm::DenseSet<llvm::Loop *>> Map;
+public:
+  using CondensationToLoopsMapT =
+      llvm::DenseMap<typename CGT::NodeRef, llvm::DenseSet<llvm::Loop *>>;
+
+private:
+  CondensationToLoopsMapT Map;
   llvm::DenseMap<llvm::Loop *, llvm::SmallVector<llvm::Instruction *, 8>>
       Iterators;
 
-  void MapCondensationToLoop() {
+  void MapCondensationToLoops() {
     for (const auto &cn : CGT::nodes(CG)) {
-      decltype(Map)::mapped_type loops;
+      CondensationToLoopsMapT::mapped_type loops;
 
       for (const auto &n : *cn | ba::filtered(is_not_null_unit)) {
         loops.insert(LI.getLoopFor(n->unit()->getParent()));
@@ -129,13 +134,13 @@ public:
 
   IteratorRecognitionInfo(const llvm::LoopInfo &CurLI, BaseGraphT &CurPDG)
       : LI(CurLI), PDG(CurPDG), CG{llvm::scc_begin(&PDG), llvm::scc_end(&PDG)} {
-    MapCondensationToLoop();
+    MapCondensationToLoops();
     RecognizeIterator();
   }
 
-  const auto &getMap() { return Map; }
-  const auto &getIterators() { return Iterators; }
   const auto &getCondensationGraph() { return CG; }
+  const auto &getCondensationToLoopsMap() { return Map; }
+  const auto &getIterators() { return Iterators; }
 };
 
 } // namespace iteratorrecognition
