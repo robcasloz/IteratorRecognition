@@ -20,6 +20,9 @@
 
 #include "IteratorRecognition/Analysis/Passes/Exchange/JSONExporterPass.hpp"
 
+#include "llvm/Config/llvm-config.h"
+// version macros
+
 #include "llvm/Pass.h"
 // using llvm::RegisterPass
 
@@ -90,16 +93,34 @@ static llvm::cl::opt<std::string>
     ReportsDir("itr-reports-dir", llvm::cl::desc("output reports directory"),
                llvm::cl::cat(IteratorRecognitionCLCategory));
 
-static llvm::cl::opt<bool>
-    ExportSCC("itr-export-scc", llvm::cl::desc("export condensations"),
-              llvm::cl::init(false),
-              llvm::cl::cat(IteratorRecognitionCLCategory));
+enum class ReportComponent { Condensation, CondensationToLoop };
 
-static llvm::cl::opt<bool> ExportMapping(
-    "itr-export-mapping", llvm::cl::desc("export condensation to loop mapping"),
-    llvm::cl::init(false), llvm::cl::cat(IteratorRecognitionCLCategory));
+static llvm::cl::bits<ReportComponent> ReportComponentOption(
+    "itr-export-components",
+    llvm::cl::desc("export report component selection"),
+    llvm::cl::values(clEnumValN(ReportComponent::Condensation, "scc",
+                                "PDG condensations"),
+                     clEnumValN(ReportComponent::CondensationToLoop, "scc2loop",
+                                "PDG condensations to loops mapping")
+// clang-format off
+#if (LLVM_VERSION_MAJOR <= 3 && LLVM_VERSION_MINOR < 9)
+                                , clEnumValEnd
+#endif
+                     // clang-format on
+                     ),
+    llvm::cl::CommaSeparated, llvm::cl::cat(IteratorRecognitionCLCategory));
+
+static void checkAndSetCmdLineOptions() {
+  if (!ReportComponentOption.getBits()) {
+    ReportComponentOption.addValue(ReportComponent::CondensationToLoop);
+  }
+}
 
 namespace iteratorrecognition {
+
+JSONExporterPass::JSONExporterPass() : llvm::FunctionPass(ID) {
+  checkAndSetCmdLineOptions();
+}
 
 void JSONExporterPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.addRequired<IteratorRecognitionWrapperPass>();
@@ -119,10 +140,15 @@ bool JSONExporterPass::runOnFunction(llvm::Function &CurFunc) {
 
   ReportsDir = dirOrErr.get();
 
-  ExportCondensations(info->getCondensationGraph(), CurFunc.getName(),
-                      ReportsDir);
-  ExportCondensationToLoopMapping(info->getMap(), CurFunc.getName(),
-                                  ReportsDir);
+  if (ReportComponentOption.isSet(ReportComponent::Condensation)) {
+    ExportCondensations(info->getCondensationGraph(), CurFunc.getName(),
+                        ReportsDir);
+  }
+
+  if (ReportComponentOption.isSet(ReportComponent::CondensationToLoop)) {
+    ExportCondensationToLoopMapping(info->getMap(), CurFunc.getName(),
+                                    ReportsDir);
+  }
 
   return hasChanged;
 }

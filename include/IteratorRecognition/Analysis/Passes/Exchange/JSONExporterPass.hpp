@@ -20,9 +20,8 @@ class JSONExporterPass : public llvm::FunctionPass {
 public:
   static char ID;
 
+  JSONExporterPass();
   void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-  JSONExporterPass() : llvm::FunctionPass(ID) {}
-
   bool runOnFunction(llvm::Function &CurFunc) override;
 };
 
