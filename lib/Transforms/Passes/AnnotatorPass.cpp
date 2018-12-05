@@ -92,7 +92,8 @@ bool AnnotatorPass::runOnFunction(llvm::Function &CurFunc) {
   MetadataAnnotationWriter annotator;
 
   for (auto &e : iterators) {
-    hasChanged |= annotator.annotate(*e.first, e.second);
+    hasChanged |= annotator.annotate(const_cast<llvm::Loop &>(*e.getLoop()),
+                                     e.getInstructions());
   }
 
   return hasChanged;

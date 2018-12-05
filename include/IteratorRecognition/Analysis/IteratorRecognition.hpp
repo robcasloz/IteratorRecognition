@@ -20,6 +20,8 @@
 // using llvm::scc_begin
 // using llvm::scc_end
 
+#include "llvm/ADT/SmallVector.h"
+
 #include "llvm/ADT/DenseMap.h"
 // using llvm::DenseMap
 
@@ -29,11 +31,20 @@
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
 
+#include "llvm/ADT/iterator_range.h"
+// using llvm::make_range
+
 #include "boost/range/adaptors.hpp"
 // using boost::adaptors::filtered
 
 #include "boost/range/algorithm.hpp"
 // using boost::range::transform
+
+#include <vector>
+// using std::vector
+
+#include <algorithm>
+// using std::find_if
 
 #ifndef ITR_ITERATORRECOGNITION_HPP
 #define ITR_ITERATORRECOGNITION_HPP
@@ -60,6 +71,19 @@ bool operator==(const llvm::DenseSet<ValueT, ValueInfoT> &LHS,
   return true;
 }
 
+class IteratorInfo {
+  llvm::Loop *CurLoop;
+  llvm::SmallVector<llvm::Instruction *, 8> CurInstructions;
+
+public:
+  template <typename ItT>
+  IteratorInfo(llvm::Loop *L, ItT Begin, ItT End)
+      : CurLoop(L), CurInstructions(Begin, End) {}
+
+  const auto *getLoop() const { return CurLoop; }
+  const auto &getInstructions() const { return CurInstructions; }
+};
+
 class IteratorRecognitionInfo {
 public:
   using BaseGraphT = pedigree::PDGraph;
@@ -79,8 +103,7 @@ public:
 
 private:
   CondensationToLoopsMapT Map;
-  llvm::DenseMap<llvm::Loop *, llvm::SmallVector<llvm::Instruction *, 8>>
-      Iterators;
+  std::vector<IteratorInfo> Iterators;
 
   void MapCondensationToLoops() {
     for (const auto &cn : CGT::nodes(CG)) {
@@ -122,7 +145,8 @@ private:
           br::transform(*key | ba::filtered(is_not_null_unit),
                         std::back_inserter(instructions),
                         [&](const auto &e) { return e->unit(); });
-          Iterators.insert({loop, instructions});
+          Iterators.emplace_back(loop, instructions.begin(),
+                                 instructions.end());
         }
       }
     }
@@ -141,6 +165,14 @@ public:
   const auto &getCondensationGraph() { return CG; }
   const auto &getCondensationToLoopsMap() { return Map; }
   const auto &getIterators() { return Iterators; }
+  decltype(auto) getIteratorFor(llvm::Loop *L) {
+    auto found = std::find_if(Iterators.begin(), Iterators.end(),
+                              [&L](const auto &e) { return e.getLoop() == L; });
+
+    // TODO handle case when loop is not found
+    return llvm::make_range(found->getInstructions().begin(),
+                            found->getInstructions().end());
+  }
 };
 
 } // namespace iteratorrecognition
