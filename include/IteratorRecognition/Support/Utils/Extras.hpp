@@ -13,10 +13,12 @@
 
 namespace iteratorrecognition {
 
-// TODO do we need to restrict the arg type here?
-auto is_not_null_unit = [](const auto &e) { return e->unit() != nullptr; };
+// TODO do we need to restrict the arg types here?
 
-// TODO do we need to restrict the arg type here?
+auto is_null_unit = [](const auto &e) { return e->unit() == nullptr; };
+
+auto is_not_null_unit = [](const auto &e) { return !is_null_unit(e); };
+
 auto unique_inplace = [](auto &Vec) {
   std::sort(Vec.begin(), Vec.end());
   Vec.erase(std::unique(Vec.begin(), Vec.end()), Vec.end());
