@@ -86,12 +86,12 @@ void AnnotatorPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 
 bool AnnotatorPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
-  auto *info = getAnalysis<IteratorRecognitionWrapperPass>().getIteratorInfo();
-  auto &iterators = info->getIterators();
+  auto *info = getAnalysis<IteratorRecognitionWrapperPass>()
+                   .getIteratorRecognitionInfo();
 
   MetadataAnnotationWriter annotator;
 
-  for (auto &e : iterators) {
+  for (auto &e : info->getIteratorsInfo()) {
     hasChanged |= annotator.annotate(const_cast<llvm::Loop &>(*e.getLoop()), e);
   }
 

@@ -129,7 +129,7 @@ public:
 
 private:
   CondensationToLoopsMapT Map;
-  std::vector<IteratorInfo> Iterators;
+  std::vector<IteratorInfo> IteratorsInfo;
 
   void MapCondensationToLoops() {
     for (const auto &cn : CGT::nodes(CG)) {
@@ -171,8 +171,8 @@ private:
           br::transform(*key | ba::filtered(is_not_null_unit),
                         std::back_inserter(instructions),
                         [&](const auto &e) { return e->unit(); });
-          Iterators.emplace_back(loop, instructions.begin(),
-                                 instructions.end());
+          IteratorsInfo.emplace_back(loop, instructions.begin(),
+                                     instructions.end());
         }
       }
     }
@@ -190,16 +190,16 @@ public:
 
   const auto &getCondensationGraph() { return CG; }
   const auto &getCondensationToLoopsMap() { return Map; }
-  const auto &getIterators() { return Iterators; }
+  const auto &getIteratorsInfo() { return IteratorsInfo; }
 
   llvm::Optional<llvm::iterator_range<IteratorInfo::const_insts_iterator>>
-  getIteratorFor(const llvm::Loop *L) {
-    assert(L != nullptr && "Loop is null!");
+  getIteratorsFor(const llvm::Loop *L) {
+    assert(L && "Loop is null!");
 
-    auto found = std::find_if(Iterators.begin(), Iterators.end(),
+    auto found = std::find_if(IteratorsInfo.begin(), IteratorsInfo.end(),
                               [&L](const auto &e) { return e.getLoop() == L; });
 
-    if (found != Iterators.end()) {
+    if (found != IteratorsInfo.end()) {
       return found->insts();
     } else {
       return {};

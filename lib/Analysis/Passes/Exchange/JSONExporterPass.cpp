@@ -130,7 +130,8 @@ void JSONExporterPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 
 bool JSONExporterPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
-  auto *info = getAnalysis<IteratorRecognitionWrapperPass>().getIteratorInfo();
+  auto *info = getAnalysis<IteratorRecognitionWrapperPass>()
+                   .getIteratorRecognitionInfo();
 
   auto dirOrErr = CreateDirectory(ReportsDir);
   if (std::error_code ec = dirOrErr.getError()) {
