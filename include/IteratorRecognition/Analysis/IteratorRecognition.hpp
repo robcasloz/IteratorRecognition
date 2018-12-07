@@ -136,7 +136,12 @@ private:
       CondensationToLoopsMapT::mapped_type loops;
 
       for (const auto &n : *cn | ba::filtered(is_not_null_unit)) {
-        loops.insert(LI.getLoopFor(n->unit()->getParent()));
+        auto *loop = LI.getLoopFor(n->unit()->getParent());
+
+        while (loop) {
+          loops.insert(loop);
+          loop = loop->getParentLoop();
+        }
       }
 
       loops.erase(nullptr);
@@ -157,9 +162,7 @@ private:
 
       for (auto &cn : ICGT::children(key)) {
         auto found = Map.find(cn);
-        // FIXME the loop set comparison needs to be subset of instead of
-        // equality
-        if (found != Map.end() && found->second == loops) {
+        if (found != Map.end() && is_subset_of(loops, found->second)) {
           workFound = true;
           break;
         }
