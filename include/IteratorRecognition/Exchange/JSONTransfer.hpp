@@ -15,6 +15,9 @@
 // using json::Object
 // using json::Array
 
+#include <llvm/ADT/GraphTraits.h>
+// using llvm::GraphTraits
+
 #include "llvm/Support/raw_ostream.h"
 // using llvm::raw_ostream
 // using llvm::raw_string_ostream
@@ -34,6 +37,9 @@
 #include <utility>
 // using std::move
 
+#include <type_traits>
+// using std::enable_if
+
 #ifndef ITR_JSONTRANSFER_HPP
 #define ITR_JSONTRANSFER_HPP
 
@@ -48,8 +54,9 @@ namespace br = boost::range;
 
 namespace llvm {
 
-template <typename GraphT>
-json::Value toJSON(const itr::CondensationGraphNode<GraphT *> &CGN) {
+template <typename GraphT, typename GT = llvm::GraphTraits<GraphT *>>
+std::enable_if_t<itr::has_unit_t<typename GT::NodeRef>::value, json::Value>
+toJSON(const itr::CondensationGraphNode<GraphT *> &CGN) {
   json::Object root;
 
   json::Object mapping;
@@ -64,6 +71,24 @@ json::Value toJSON(const itr::CondensationGraphNode<GraphT *> &CGN) {
                   outs.clear();
                   return s;
                 });
+  mapping["condensation"] = std::move(condensationsArray);
+  root = std::move(mapping);
+
+  return std::move(root);
+}
+
+template <typename GraphT, typename GT = llvm::GraphTraits<GraphT *>>
+std::enable_if_t<!itr::has_unit_t<typename GT::NodeRef>::value, json::Value>
+toJSON(const itr::CondensationGraphNode<GraphT *> &CGN) {
+  json::Object root;
+
+  json::Object mapping;
+  std::string outs;
+  raw_string_ostream ss(outs);
+
+  json::Array condensationsArray;
+  br::transform(CGN, std::back_inserter(condensationsArray),
+                [&](const auto &e) { return toJSON(*e); });
   mapping["condensation"] = std::move(condensationsArray);
   root = std::move(mapping);
 
