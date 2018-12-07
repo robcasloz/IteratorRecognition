@@ -18,6 +18,9 @@
 #include "llvm/Support/ToolOutputFile.h"
 // using llvm::ToolOutputFile
 
+#include <utility>
+// using std::move
+
 #include <algorithm>
 // using std::transform
 
@@ -35,17 +38,10 @@ toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
     const auto &cn = *e.getFirst();
     const auto &loops = e.getSecond();
 
-    json::Object mapping;
     std::string outs;
     raw_string_ostream ss(outs);
 
-    const auto &firstUnit = (*cn.begin())->unit();
-
-    if (firstUnit) {
-      ss << *firstUnit;
-    }
-    mapping["condensation"] = ss.str();
-    outs.clear();
+    auto mapping = std::move(*toJSON(cn).getAsObject());
 
     json::Array loopsArray;
     std::transform(loops.begin(), loops.end(), std::back_inserter(loopsArray),
