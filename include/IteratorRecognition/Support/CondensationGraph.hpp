@@ -5,7 +5,6 @@
 #include "IteratorRecognition/Config.hpp"
 
 #include "IteratorRecognition/Debug.hpp"
-#include "IteratorRecognition/Support/Utils/Extras.hpp"
 
 #include "IteratorRecognition/Support/Utils/Extras.hpp"
 
@@ -22,9 +21,6 @@
 
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
-
-#include "boost/type_traits/is_detected.hpp"
-// using boost::is_detected
 
 #include <vector>
 // using std::vector
@@ -144,13 +140,6 @@ public:
   using ConstNodeRef = const NodeType *;
 
 private:
-  template <typename T> using unit_t = decltype(std::declval<T &>().unit());
-
-  template <typename T>
-  using has_unit_t = std::integral_constant<
-      bool,
-      boost::is_detected_v<unit_t, typename std::remove_pointer<T>::type>>;
-
   std::vector<NodeType> Nodes;
   mutable NodeRef EntryNode;
   using NodeToCondensationMap = std::map<MemberNodeRef, ConstNodeRef>;

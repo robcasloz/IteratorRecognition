@@ -7,6 +7,9 @@
 #include "llvm/ADT/DenseSet.h"
 // using llvm::DenseSet
 
+#include "boost/type_traits/is_detected.hpp"
+// using boost::is_detected
+
 #include <algorithm>
 // using std::sort
 // using std::unique
@@ -16,6 +19,13 @@
 // using std::begin
 // using std::end
 
+#include <utility>
+// std::declval
+
+#include <type_traits>
+// using std::remove_pointer_t
+// using std::integral_constant
+
 #ifndef ITR_EXTRAS_HPP
 #define ITR_EXTRAS_HPP
 
@@ -23,9 +33,19 @@ namespace iteratorrecognition {
 
 // TODO do we need to restrict the arg types here?
 
+//
+
 auto is_null_unit = [](const auto &e) { return e->unit() == nullptr; };
 
 auto is_not_null_unit = [](const auto &e) { return !is_null_unit(e); };
+
+template <typename T> using unit_t = decltype(std::declval<T &>().unit());
+
+template <typename T>
+using has_unit_t = std::integral_constant<
+    bool, boost::is_detected_v<unit_t, std::remove_pointer_t<T>>>;
+
+//
 
 auto unique_inplace = [](auto &Vec) {
   using std::begin;
