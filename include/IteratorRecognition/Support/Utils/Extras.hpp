@@ -4,6 +4,9 @@
 
 #include "IteratorRecognition/Config.hpp"
 
+#include "llvm/ADT/DenseSet.h"
+// using llvm::DenseSet
+
 #include <algorithm>
 // using std::sort
 // using std::unique
@@ -45,6 +48,19 @@ auto is_subset_of = [](const auto &Set1, const auto &Set2) {
     return true;
   }
 };
+
+template <typename ValueT, typename ValueInfoT>
+bool operator==(const llvm::DenseSet<ValueT, ValueInfoT> &LHS,
+                const llvm::DenseSet<ValueT, ValueInfoT> &RHS) {
+  if (LHS.size() != RHS.size())
+    return false;
+
+  for (auto &E : LHS)
+    if (!RHS.count(E))
+      return false;
+
+  return true;
+}
 
 } // namespace iteratorrecognition
 

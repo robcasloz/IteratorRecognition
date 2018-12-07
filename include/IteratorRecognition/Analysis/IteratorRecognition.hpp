@@ -66,19 +66,6 @@ namespace br = boost::range;
 
 //
 
-template <typename ValueT, typename ValueInfoT>
-bool operator==(const llvm::DenseSet<ValueT, ValueInfoT> &LHS,
-                const llvm::DenseSet<ValueT, ValueInfoT> &RHS) {
-  if (LHS.size() != RHS.size())
-    return false;
-
-  for (auto &E : LHS)
-    if (!RHS.count(E))
-      return false;
-
-  return true;
-}
-
 class IteratorInfo {
   llvm::Loop *CurLoop;
   llvm::SmallVector<llvm::Instruction *, 8> CurInstructions;
