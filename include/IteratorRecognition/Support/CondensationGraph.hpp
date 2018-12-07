@@ -145,10 +145,11 @@ public:
 
 private:
   template <typename T> using unit_t = decltype(std::declval<T &>().unit());
-  std::integral_constant<
-      bool, boost::is_detected_v<unit_t, typename std::remove_pointer<
-                                             typename GT::NodeRef>::type>>
-      has_unit;
+
+  template <typename T>
+  using has_unit_t = std::integral_constant<
+      bool,
+      boost::is_detected_v<unit_t, typename std::remove_pointer<T>::type>>;
 
   std::vector<NodeType> Nodes;
   mutable NodeRef EntryNode;
@@ -180,6 +181,18 @@ private:
     unique_inplace(Dst);
   }
 
+  template <typename T>
+  std::enable_if_t<has_unit_t<T>::value> setEntryNode(T N,
+                                                      ConstNodeRef CN) const {
+    if (is_null_unit(N)) {
+      EntryNode = const_cast<NodeRef>(CN);
+    }
+  }
+
+  template <typename T>
+  std::enable_if_t<!has_unit_t<T>::value> setEntryNode(T N,
+                                                       ConstNodeRef CN) const {}
+
   void populateCondensedEdges() const {
     NodeToCondensationMap n2c;
 
@@ -187,11 +200,7 @@ private:
       for (const auto &n : *cn) {
         n2c.emplace(n, cn);
 
-        // TODO potential future use of constexpr if
-        // assign entry node
-        if (has_unit.value && is_null_unit(n)) {
-          EntryNode = const_cast<NodeRef>(cn);
-        }
+        setEntryNode(n, cn);
       }
     }
 
