@@ -48,30 +48,35 @@ namespace br = boost::range;
 
 namespace llvm {
 
-// TODO consider restricting to graph that have a unit with the usage
-// requirements described here
+template <typename GraphT>
+json::Value toJSON(const itr::CondensationGraphNode<GraphT *> &CGN) {
+  json::Object root;
+
+  json::Object mapping;
+  std::string outs;
+  raw_string_ostream ss(outs);
+
+  json::Array condensationsArray;
+  br::transform(CGN | ba::filtered(itr::is_not_null_unit),
+                std::back_inserter(condensationsArray), [&](const auto &e) {
+                  ss << *e->unit();
+                  auto s = ss.str();
+                  outs.clear();
+                  return s;
+                });
+  mapping["condensation"] = std::move(condensationsArray);
+  root = std::move(mapping);
+
+  return std::move(root);
+}
+
 template <typename GraphT>
 json::Value toJSON(const itr::CondensationGraph<GraphT *> &G) {
   json::Object root;
   json::Array condensations;
 
   for (const auto &cn : G) {
-    json::Object mapping;
-    std::string outs;
-    raw_string_ostream ss(outs);
-
-    json::Array condensationsArray;
-    br::transform(*cn | ba::filtered(itr::is_not_null_unit),
-                  std::back_inserter(condensationsArray), [&](const auto &e) {
-                    ss << *e->unit();
-                    auto s = ss.str();
-                    outs.clear();
-                    return s;
-                  });
-    mapping["condensation"] = std::move(condensationsArray);
-    outs.clear();
-
-    condensations.push_back(std::move(mapping));
+    condensations.push_back(toJSON(*cn));
   }
 
   root["condensations"] = std::move(condensations);
