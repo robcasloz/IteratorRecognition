@@ -264,7 +264,8 @@ set(PRJ_CMAKE_CONFIG_EXTRA_FILE "config-extra.cmake")
 set(DEPENDEE "")
 
 if(Pedigree_FOUND)
-  list(APPEND DEPENDEE ${FOO_LIB_DIR}${TRGT_PREFIX}${FOO_LIB}${TRGT_SUFFIX})
+  get_target_property(Pedigree_LOCATION LLVMPedigreePass LOCATION)
+  list(APPEND DEPENDEE ${Pedigree_LOCATION})
 endif()
 
 install(TARGETS ${LIB_NAME} EXPORT ${ITERATORRECOGNITION_EXPORT}
