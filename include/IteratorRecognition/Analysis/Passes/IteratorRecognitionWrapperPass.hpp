@@ -37,8 +37,8 @@ public:
 
   bool runOnFunction(llvm::Function &CurFunc) override;
 
-  decltype(auto) getIteratorRecognitionInfo() { return Info.get(); }
-  decltype(auto) getIteratorRecognitionInfo() const { return Info.get(); }
+  IteratorRecognitionInfo &getIteratorRecognitionInfo() { return *Info; }
+  IteratorRecognitionInfo &getIteratorRecognitionInfo() const { return *Info; }
 };
 
 } // namespace iteratorrecognition

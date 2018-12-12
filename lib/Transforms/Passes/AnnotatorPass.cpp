@@ -79,23 +79,19 @@ static llvm::RegisterStandardPasses
 namespace iteratorrecognition {
 
 void AnnotatorPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-  AU.addRequired<IteratorRecognitionWrapperPass>();
+  AU.addRequiredTransitive<IteratorRecognitionWrapperPass>();
 
   AU.setPreservesAll();
 }
 
 bool AnnotatorPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
-  auto *info = getAnalysis<IteratorRecognitionWrapperPass>()
+  auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
                    .getIteratorRecognitionInfo();
-
-  if (!info) {
-    return hasChanged;
-  }
 
   MetadataAnnotationWriter annotator;
 
-  for (auto &e : info->getIteratorsInfo()) {
+  for (auto &e : info.getIteratorsInfo()) {
     hasChanged |= annotator.annotate(const_cast<llvm::Loop &>(*e.getLoop()), e);
   }
 
