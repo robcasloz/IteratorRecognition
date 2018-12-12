@@ -11,7 +11,7 @@
 
 #define @PRJ_NAME_UPPER@_VERSION @PRJ_VERSION@
 
-#define @PRJ_NAME_UPPER@_USES_FOO ${@PRJ_NAME_UPPER@_USES_FOO}
+//#define @PRJ_NAME_UPPER@_USES_FOO ${@PRJ_NAME_UPPER@_USES_FOO}
 
 // clang-format on
 
