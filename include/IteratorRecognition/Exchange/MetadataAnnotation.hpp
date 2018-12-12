@@ -90,17 +90,29 @@ public:
   MetadataAnnotationWriter() = default;
 
   template <typename ForwardRange>
-  bool annotate(llvm::Loop &CurLoop, ForwardRange &Rng) {
-    bool hasChanged;
-    llvm::MDNode *loopID;
-
-    std::tie(hasChanged, loopID) = annotateLoop(CurLoop);
+  bool append(ForwardRange &Rng, llvm::StringRef Key,
+              llvm::MDNode *AdditionalData) {
+    bool hasChanged = false;
 
     for (auto &e : Rng) {
-      auto *data = e->getMetadata(InstructionKey);
-      data = data ? llvm::MDNode::concatenate(data, loopID) : loopID;
-      e->setMetadata(InstructionKey, data);
+      auto *data = e->getMetadata(Key);
+      data = data ? llvm::MDNode::concatenate(data, AdditionalData)
+                  : AdditionalData;
+      e->setMetadata(Key, data);
+
+      hasChanged = true;
     }
+
+    return hasChanged;
+  }
+
+  template <typename ForwardRange>
+  bool annotateWithLoopID(ForwardRange &Rng, llvm::Loop &CurLoop) {
+    bool hasChanged = false;
+    llvm::MDNode *loopID = nullptr;
+
+    std::tie(hasChanged, loopID) = annotateLoop(CurLoop);
+    hasChanged |= append(Rng, InstructionKey, loopID);
 
     return hasChanged;
   }
