@@ -55,6 +55,10 @@ static llvm::RegisterPass<itr::AnnotatorPass>
     X("itr-annotate", PRJ_CMDLINE_DESC("iterator recognition annotator pass"),
       false, false);
 
+static llvm::cl::opt<unsigned> AnnotateLoopLevel(
+    "itr-annotate-loop-level", llvm::cl::init(1), llvm::cl::Hidden,
+    llvm::cl::desc("annotate loops of this depth or greater"));
+
 // plugin registration for clang
 
 // the solution was at the bottom of the header file
@@ -92,8 +96,12 @@ bool AnnotatorPass::runOnFunction(llvm::Function &CurFunc) {
   MetadataAnnotationWriter annotator;
 
   for (auto &e : info.getIteratorsInfo()) {
-    hasChanged |=
-        annotator.annotateWithLoopID(e, const_cast<llvm::Loop &>(*e.getLoop()));
+    const llvm::Loop &curLoop = *e.getLoop();
+
+    if (curLoop.getLoopDepth() >= AnnotateLoopLevel) {
+      hasChanged |=
+          annotator.annotateWithLoopID(e, const_cast<llvm::Loop &>(curLoop));
+    }
   }
 
   return hasChanged;
