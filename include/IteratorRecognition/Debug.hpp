@@ -10,6 +10,25 @@
 #define DEFINE_DEBUG_LEVELS                                                    \
   enum class LogLevel { Info, Notice, Warning, Error, Debug }
 
+#ifdef BOOST_NO_EXCEPTIONS
+
+#include <iostream>
+// using std::cerr
+
+#include <exception>
+// using std::exception
+// using std::terminate
+
+namespace boost {
+
+[[noreturn]] inline void throw_exception(std::exception const &e);
+
+} // namespace boost
+
+#endif // BOOST_NO_EXCEPTIONS
+
+//
+
 #if ITERATORRECOGNITION_DEBUG
 
 #include "llvm/IR/Function.h"
@@ -29,6 +48,7 @@
 // using std::error_code
 
 DEFINE_DEBUG_LEVELS;
+
 
 namespace iteratorrecognition {
 namespace debug {
