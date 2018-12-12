@@ -89,6 +89,10 @@ bool AnnotatorPass::runOnFunction(llvm::Function &CurFunc) {
   auto *info = getAnalysis<IteratorRecognitionWrapperPass>()
                    .getIteratorRecognitionInfo();
 
+  if (!info) {
+    return hasChanged;
+  }
+
   MetadataAnnotationWriter annotator;
 
   for (auto &e : info->getIteratorsInfo()) {
