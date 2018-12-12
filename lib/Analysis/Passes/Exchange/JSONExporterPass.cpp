@@ -129,7 +129,6 @@ void JSONExporterPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 }
 
 bool JSONExporterPass::runOnFunction(llvm::Function &CurFunc) {
-  bool hasChanged = false;
   auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
                    .getIteratorRecognitionInfo();
 
@@ -153,7 +152,7 @@ bool JSONExporterPass::runOnFunction(llvm::Function &CurFunc) {
     WriteJSONToFile(json, "itr.scc_to_loop." + CurFunc.getName(), ReportsDir);
   }
 
-  return hasChanged;
+  return false;
 }
 
 } // namespace iteratorrecognition

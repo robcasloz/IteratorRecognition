@@ -106,14 +106,12 @@ void IteratorRecognitionWrapperPass::getAnalysisUsage(
 }
 
 bool IteratorRecognitionWrapperPass::runOnFunction(llvm::Function &CurFunc) {
-  bool hasChanged = false;
-
   const auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
   pedigree::PDGraph &Graph{getAnalysis<pedigree::PDGraphPass>().getGraph()};
   Graph.connectRootNode();
   Info = std::make_unique<IteratorRecognitionInfo>(LI, Graph);
 
-  return hasChanged;
+  return false;
 }
 
 } // namespace iteratorrecognition
