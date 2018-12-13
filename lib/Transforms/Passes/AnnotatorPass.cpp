@@ -42,6 +42,13 @@
 // using llvm::LoopInfo
 // using llvm::LoopInfoWrapperPass
 
+#include <algorithm>
+// using std::find
+
+#include <iterator>
+// using std::begin
+// using std::end
+
 #define DEBUG_TYPE "iterator-recognition"
 
 // namespace aliases
@@ -54,6 +61,10 @@ char itr::AnnotatorPass::ID = 0;
 static llvm::RegisterPass<itr::AnnotatorPass>
     X("itr-annotate", PRJ_CMDLINE_DESC("iterator recognition annotator pass"),
       false, false);
+
+static llvm::cl::opt<bool> AnnotatePayload(
+    "itr-annotate-payload", llvm::cl::init(false), llvm::cl::Hidden,
+    llvm::cl::desc("annotate the payload instructions of loops"));
 
 static llvm::cl::opt<unsigned> AnnotateLoopLevel(
     "itr-annotate-loop-level", llvm::cl::init(1), llvm::cl::Hidden,
@@ -96,11 +107,31 @@ bool AnnotatorPass::runOnFunction(llvm::Function &CurFunc) {
   MetadataAnnotationWriter annotator;
 
   for (auto &e : info.getIteratorsInfo()) {
-    const llvm::Loop &curLoop = *e.getLoop();
+    llvm::Loop &curLoop = const_cast<llvm::Loop &>(*e.getLoop());
 
     if (curLoop.getLoopDepth() >= AnnotateLoopLevel) {
-      hasChanged |=
-          annotator.annotateWithLoopID(e, const_cast<llvm::Loop &>(curLoop));
+      hasChanged |= annotator.annotateWithLoopID(e, curLoop);
+    }
+
+    auto is_not_in = [](const auto &Elem, const auto &ForwardRange) -> bool {
+      using std::begin;
+      using std::end;
+      return end(ForwardRange) ==
+             std::find(begin(ForwardRange), end(ForwardRange), Elem);
+    };
+
+    if (AnnotatePayload) {
+      llvm::StringRef key = "icsa.itr.payload";
+      auto *data = llvm::MDString::get(CurFunc.getContext(), "");
+
+      for (auto &block : curLoop.blocks()) {
+        for (auto &inst : *block) {
+          if (is_not_in(&inst, e)) {
+            annotator.append(inst, key,
+                             llvm::MDNode::get(CurFunc.getContext(), data));
+          }
+        }
+      }
     }
   }
 
