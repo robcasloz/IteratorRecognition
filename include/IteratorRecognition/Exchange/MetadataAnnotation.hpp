@@ -40,14 +40,12 @@
 
 namespace iteratorrecognition {
 
-constexpr const char *DefaultLoopKey = "llvm.loop.icsa.itr";
-constexpr const char *DefaultInstructionKey = "icsa.itr.iterator";
+static constexpr char *DefaultIteratorInstructionKey = "icsa.itr.iterator";
+static constexpr char *DefaultPayloadInstructionKey = "icsa.itr.payload";
+static constexpr char *DefaultLoopKey = "llvm.loop.icsa.itr";
 
 class MetadataAnnotationWriter {
-  std::string LoopKey{DefaultLoopKey};
-  std::string InstructionKey{DefaultInstructionKey};
-
-  decltype(auto) annotateLoop(llvm::Loop &CurLoop) {
+  decltype(auto) annotateLoop(llvm::StringRef Key, llvm::Loop &CurLoop) {
     bool hasChanged = false;
 
     llvm::SmallVector<llvm::Metadata *, 4> newMetadata{};
@@ -60,9 +58,9 @@ class MetadataAnnotationWriter {
     if (curID) {
       auto rng = boost::make_iterator_range(curID->op_begin(), curID->op_end());
 
-      auto pred = [this](auto &e) -> bool {
+      auto pred = [&Key](auto &e) -> bool {
         auto *s = llvm::dyn_cast<llvm::MDString>(e);
-        return s && s->getString().equals(LoopKey);
+        return s && s->getString().equals(Key);
       };
 
       if (boost::find_if(rng, pred) != boost::end(rng)) {
@@ -75,7 +73,7 @@ class MetadataAnnotationWriter {
 
     auto &ctx = CurLoop.getHeader()->getParent()->getContext();
     llvm::MDBuilder builder(ctx);
-    *out = builder.createString(LoopKey);
+    *out = builder.createString(Key);
 
     // update loop metadata id
     auto *newID = llvm::MDNode::get(ctx, newMetadata);
@@ -100,23 +98,24 @@ public:
   }
 
   template <typename ForwardRange>
-  bool append(ForwardRange &Rng, llvm::StringRef Key,
+  bool append(ForwardRange &Rng, llvm::StringRef InstructionKey,
               llvm::MDNode *AdditionalData) {
     bool hasChanged = false;
 
     for (auto &e : Rng) {
-      hasChanged |= append(*e, Key, AdditionalData);
+      hasChanged |= append(*e, InstructionKey, AdditionalData);
     }
 
     return hasChanged;
   }
 
   template <typename ForwardRange>
-  bool annotateWithLoopID(ForwardRange &Rng, llvm::Loop &CurLoop) {
+  bool append(ForwardRange &Rng, llvm::StringRef InstructionKey,
+              llvm::Loop &CurLoop, llvm::StringRef LoopKey) {
     bool hasChanged = false;
     llvm::MDNode *loopID = nullptr;
 
-    std::tie(hasChanged, loopID) = annotateLoop(CurLoop);
+    std::tie(hasChanged, loopID) = annotateLoop(LoopKey, CurLoop);
     hasChanged |= append(Rng, InstructionKey, loopID);
 
     return hasChanged;

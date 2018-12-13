@@ -110,7 +110,8 @@ bool AnnotatorPass::runOnFunction(llvm::Function &CurFunc) {
     llvm::Loop &curLoop = const_cast<llvm::Loop &>(*e.getLoop());
 
     if (curLoop.getLoopDepth() >= AnnotateLoopLevel) {
-      hasChanged |= annotator.annotateWithLoopID(e, curLoop);
+      hasChanged |= annotator.append(e, DefaultIteratorInstructionKey, curLoop,
+                                     DefaultLoopKey);
     }
 
     auto is_not_in = [](const auto &Elem, const auto &ForwardRange) -> bool {
@@ -121,14 +122,13 @@ bool AnnotatorPass::runOnFunction(llvm::Function &CurFunc) {
     };
 
     if (AnnotatePayload) {
-      llvm::StringRef key = "icsa.itr.payload";
-      auto *data = llvm::MDString::get(CurFunc.getContext(), "");
+      auto *empty = llvm::MDString::get(CurFunc.getContext(), "");
 
       for (auto &block : curLoop.blocks()) {
         for (auto &inst : *block) {
           if (is_not_in(&inst, e)) {
-            annotator.append(inst, key,
-                             llvm::MDNode::get(CurFunc.getContext(), data));
+            annotator.append(inst, DefaultPayloadInstructionKey,
+                             llvm::MDNode::get(CurFunc.getContext(), empty));
           }
         }
       }
