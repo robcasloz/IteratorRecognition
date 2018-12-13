@@ -125,11 +125,8 @@ bool AnnotatorPass::runOnFunction(llvm::Function &CurFunc) {
       for (auto &block : curLoop.blocks()) {
         for (auto &inst : *block) {
           if (is_not_in(&inst, e)) {
-            hasChanged |= annotator.append(
-                inst, DefaultPayloadInstructionKey,
-                llvm::MDNode::get(
-                    CurFunc.getContext(),
-                    llvm::MDString::get(CurFunc.getContext(), "")));
+            hasChanged |= annotator.append(inst, DefaultPayloadInstructionKey,
+                                           curLoop, DefaultLoopKey);
           }
         }
       }
