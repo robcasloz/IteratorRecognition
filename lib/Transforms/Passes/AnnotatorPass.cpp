@@ -122,13 +122,13 @@ bool AnnotatorPass::runOnFunction(llvm::Function &CurFunc) {
     };
 
     if (AnnotatePayload) {
-      auto *empty = llvm::MDString::get(CurFunc.getContext(), "");
-
       for (auto &block : curLoop.blocks()) {
         for (auto &inst : *block) {
           if (is_not_in(&inst, e)) {
             annotator.append(inst, DefaultPayloadInstructionKey,
-                             llvm::MDNode::get(CurFunc.getContext(), empty));
+                             llvm::MDNode::get(CurFunc.getContext(),
+                                               llvm::MDString::get(
+                                                   CurFunc.getContext(), "")));
           }
         }
       }
