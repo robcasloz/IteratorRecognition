@@ -89,18 +89,23 @@ class MetadataAnnotationWriter {
 public:
   MetadataAnnotationWriter() = default;
 
+  bool append(llvm::Instruction &Inst, llvm::StringRef Key,
+              llvm::MDNode *AdditionalData) {
+    auto *data = Inst.getMetadata(Key);
+    data =
+        data ? llvm::MDNode::concatenate(data, AdditionalData) : AdditionalData;
+    Inst.setMetadata(Key, data);
+
+    return true;
+  }
+
   template <typename ForwardRange>
   bool append(ForwardRange &Rng, llvm::StringRef Key,
               llvm::MDNode *AdditionalData) {
     bool hasChanged = false;
 
     for (auto &e : Rng) {
-      auto *data = e->getMetadata(Key);
-      data = data ? llvm::MDNode::concatenate(data, AdditionalData)
-                  : AdditionalData;
-      e->setMetadata(Key, data);
-
-      hasChanged = true;
+      hasChanged |= append(*e, Key, AdditionalData);
     }
 
     return hasChanged;
