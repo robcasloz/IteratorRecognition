@@ -60,6 +60,9 @@
 // using llvm::dbgs
 // using llvm::errs
 
+#include <iterator>
+// using std::distance
+
 #include <system_error>
 // using std::error_code
 
@@ -122,7 +125,7 @@ bool IteratorRecognitionWrapperPass::runOnFunction(llvm::Function &CurFunc) {
       const_cast<llvm::LoopInfo &>(LI).getLoopsInPreorder();
   NumProcessed += preorderLoopForest.size();
   NumTopLevelProcessed += std::distance(LI.begin(), LI.end());
-#endif LLVM_ENABLE_STATS
+#endif // LLVM_ENABLE_STATS
 
   Info = std::make_unique<IteratorRecognitionInfo>(LI, Graph);
 
