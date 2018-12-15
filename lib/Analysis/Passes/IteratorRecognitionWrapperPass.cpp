@@ -14,6 +14,8 @@
 
 #include "IteratorRecognition/Exchange/JSONTransfer.hpp"
 
+#include "Pedigree/Support/Utils/InstIterator.hpp"
+
 #include "Pedigree/Analysis/Passes/PDGraphPass.hpp"
 
 #include "private/PassCommandLineOptions.hpp"
@@ -74,6 +76,7 @@ namespace itr = iteratorrecognition;
 
 STATISTIC(NumTopLevelProcessed, "Number of top-level loops processed");
 STATISTIC(NumProcessed, "Number of loops processed");
+STATISTIC(NumInseparable, "Number of inseparable top-level loops found");
 
 // plugin registration for opt
 
@@ -128,6 +131,20 @@ bool IteratorRecognitionWrapperPass::runOnFunction(llvm::Function &CurFunc) {
 #endif // LLVM_ENABLE_STATS
 
   Info = std::make_unique<IteratorRecognitionInfo>(LI, Graph);
+
+#ifdef LLVM_ENABLE_STATS
+  for (const auto &i : Info.get()->getIteratorsInfo()) {
+    auto numItInst = i.getNumInstructions();
+    auto *curLoop = i.getLoop();
+    auto loopInsts =
+        pedigree::make_inst_range(curLoop->block_begin(), curLoop->block_end());
+    auto numLoopInst = std::distance(loopInsts.begin(), loopInsts.end());
+
+    if (numLoopInst > numItInst) {
+      NumInseparable++;
+    }
+  }
+#endif // LLVM_ENABLE_STATS
 
   return false;
 }
