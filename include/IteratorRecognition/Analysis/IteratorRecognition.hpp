@@ -85,6 +85,7 @@ public:
 
   const auto *getLoop() const { return CurLoop; }
   const auto &getInstructions() const { return CurInstructions; }
+  auto getNumInstructions() const { return CurInstructions.size(); }
 
   decltype(auto) begin() const { return CurInstructions.begin(); }
   decltype(auto) end() const { return CurInstructions.end(); }
