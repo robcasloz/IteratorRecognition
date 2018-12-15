@@ -81,7 +81,7 @@ public:
   IteratorInfo(const llvm::Loop *L, IteratorT Begin, IteratorT End)
       : CurLoop(const_cast<llvm::Loop *>(L)), CurInstructions(Begin, End) {}
 
-  IteratorInfo(llvm::Loop *L) : CurLoop(L) {}
+  explicit IteratorInfo(llvm::Loop *L) : CurLoop(L) {}
 
   const auto *getLoop() const { return CurLoop; }
   const auto &getInstructions() const { return CurInstructions; }

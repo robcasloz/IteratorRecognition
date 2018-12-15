@@ -14,7 +14,7 @@
 
 #include "IteratorRecognition/Exchange/JSONTransfer.hpp"
 
-#include "Pedigree/Support/Utils/InstIterator.hpp"
+#include "IteratorRecognition/Support/Utils/InstTraversal.hpp"
 
 #include "Pedigree/Analysis/Passes/PDGraphPass.hpp"
 
@@ -133,11 +133,9 @@ bool IteratorRecognitionWrapperPass::runOnFunction(llvm::Function &CurFunc) {
   Info = std::make_unique<IteratorRecognitionInfo>(LI, Graph);
 
 #ifdef LLVM_ENABLE_STATS
-  for (const auto &i : Info.get()->getIteratorsInfo()) {
-    auto numItInst = i.getNumInstructions();
-    auto *curLoop = i.getLoop();
-    auto loopInsts =
-        pedigree::make_inst_range(curLoop->block_begin(), curLoop->block_end());
+  for (const auto &ii : Info.get()->getIteratorsInfo()) {
+    auto numItInst = ii.getNumInstructions();
+    auto loopInsts = make_loop_inst_range(ii.getLoop());
     auto numLoopInst = std::distance(loopInsts.begin(), loopInsts.end());
 
     if (numLoopInst > numItInst) {
