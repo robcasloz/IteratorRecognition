@@ -45,6 +45,9 @@
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
 
+#include "llvm/ADT/Statistic.h"
+// using STATISTIC macro
+
 #include "llvm/Support/CommandLine.h"
 // using llvm::cl::opt
 // using llvm::cl::desc
@@ -65,6 +68,9 @@
 // namespace aliases
 
 namespace itr = iteratorrecognition;
+
+STATISTIC(NumTopLevelProcessed, "Number of top-level loops processed");
+STATISTIC(NumProcessed, "Number of loops processed");
 
 // plugin registration for opt
 
@@ -109,6 +115,15 @@ bool IteratorRecognitionWrapperPass::runOnFunction(llvm::Function &CurFunc) {
   const auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
   pedigree::PDGraph &Graph{getAnalysis<pedigree::PDGraphPass>().getGraph()};
   Graph.connectRootNode();
+
+#ifdef LLVM_ENABLE_STATS
+  // TODO const_cast is required due to LLVM API inconsistency with constness
+  const auto &preorderLoopForest =
+      const_cast<llvm::LoopInfo &>(LI).getLoopsInPreorder();
+  NumProcessed += preorderLoopForest.size();
+  NumTopLevelProcessed += std::distance(LI.begin(), LI.end());
+#endif LLVM_ENABLE_STATS
+
   Info = std::make_unique<IteratorRecognitionInfo>(LI, Graph);
 
   return false;
