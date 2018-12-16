@@ -49,7 +49,7 @@
 // using std::begin
 // using std::end
 
-#define DEBUG_TYPE "iterator-recognition"
+#define DEBUG_TYPE "iterator-recognition-annotate"
 
 // namespace aliases
 
