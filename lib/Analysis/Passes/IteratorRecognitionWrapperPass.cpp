@@ -138,7 +138,7 @@ bool IteratorRecognitionWrapperPass::runOnFunction(llvm::Function &CurFunc) {
     auto loopInsts = make_loop_inst_range(ii.getLoop());
     auto numLoopInst = std::distance(loopInsts.begin(), loopInsts.end());
 
-    if (numLoopInst > numItInst) {
+    if (numLoopInst == numItInst) {
       NumInseparable++;
     }
   }
