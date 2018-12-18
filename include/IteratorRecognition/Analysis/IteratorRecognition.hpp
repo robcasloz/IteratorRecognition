@@ -49,6 +49,7 @@
 // using std::vector
 
 #include <algorithm>
+// using std::find
 // using std::find_if
 
 #include <cassert>
@@ -95,6 +96,11 @@ public:
 
   decltype(auto) insts() const {
     return llvm::make_range(insts_begin(), insts_end());
+  }
+
+  bool isIterator(const llvm::Instruction *Inst) const {
+    return CurInstructions.end() !=
+           std::find(CurInstructions.begin(), CurInstructions.end(), Inst);
   }
 };
 
