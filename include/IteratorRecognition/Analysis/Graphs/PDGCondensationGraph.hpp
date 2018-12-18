@@ -2,14 +2,13 @@
 //
 //
 
+#pragma once
+
 #include "IteratorRecognition/Config.hpp"
 
 #include "IteratorRecognition/Support/CondensationGraph.hpp"
 
 #include "Pedigree/Analysis/Graphs/DependenceGraphs.hpp"
-
-#ifndef ITR_PDGCONDENSATIONGRAPH_HPP
-#define ITR_PDGCONDENSATIONGRAPH_HPP
 
 namespace iteratorrecognition {
 
@@ -60,4 +59,3 @@ struct GraphTraits<Inverse<
 
 } // namespace llvm
 
-#endif // header

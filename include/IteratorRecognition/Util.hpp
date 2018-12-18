@@ -2,8 +2,7 @@
 //
 //
 
-#ifndef ITR_UTIL_HPP
-#define ITR_UTIL_HPP
+#pragma once
 
 #include "IteratorRecognition/Config.hpp"
 
@@ -13,6 +12,3 @@
 
 #define PRJ_CMDLINE_DESC(x) x " (version: " STRINGIFY(VERSION_STRING) ")"
 
-//
-
-#endif // header

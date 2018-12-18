@@ -2,8 +2,7 @@
 //
 //
 
-#ifndef ITR_JSONEXPORTERPASS_HPP
-#define ITR_JSONEXPORTERPASS_HPP
+#pragma once
 
 #include "IteratorRecognition/Config.hpp"
 
@@ -27,4 +26,3 @@ public:
 
 } // namespace iteratorrecognition
 
-#endif // header

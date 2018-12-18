@@ -2,6 +2,8 @@
 //
 //
 
+#pragma once
+
 #include "llvm/IR/Instruction.h"
 // using llvm::Instruction
 
@@ -34,9 +36,6 @@
 
 #include <iterator>
 // using std::back_inserter
-
-#ifndef ITR_METADATAANNOTATION_HPP
-#define ITR_METADATAANNOTATION_HPP
 
 namespace iteratorrecognition {
 
@@ -124,4 +123,3 @@ public:
 
 } // namespace iteratorrecognition
 
-#endif // header

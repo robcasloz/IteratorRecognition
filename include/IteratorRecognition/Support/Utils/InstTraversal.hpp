@@ -2,15 +2,14 @@
 //
 //
 
+#pragma once
+
 #include "IteratorRecognition/Config.hpp"
 
 #include "Pedigree/Support/Utils/InstIterator.hpp"
 
 #include "llvm/Analysis/LoopInfo.h"
 // using llvm::LoopBase
-
-#ifndef ITR_INSTTRAVERSAL_HPP
-#define ITR_INSTTRAVERSAL_HPP
 
 namespace iteratorrecognition {
 
@@ -36,4 +35,3 @@ decltype(auto) make_loop_inst_range(const llvm::LoopBase<BlockT, LoopT> *L) {
 
 } // namespace iteratorrecognition
 
-#endif // header

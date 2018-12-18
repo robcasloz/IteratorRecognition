@@ -2,6 +2,8 @@
 //
 //
 
+#pragma once
+
 #include "IteratorRecognition/Config.hpp"
 
 #include "IteratorRecognition/Support/Utils/Extras.hpp"
@@ -54,9 +56,6 @@
 
 #include <cassert>
 // using assert
-
-#ifndef ITR_ITERATORRECOGNITION_HPP
-#define ITR_ITERATORRECOGNITION_HPP
 
 namespace iteratorrecognition {
 
@@ -206,4 +205,3 @@ public:
 
 } // namespace iteratorrecognition
 
-#endif // header

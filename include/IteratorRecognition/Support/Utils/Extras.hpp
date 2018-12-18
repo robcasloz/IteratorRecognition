@@ -2,6 +2,8 @@
 //
 //
 
+#pragma once
+
 #include "IteratorRecognition/Config.hpp"
 
 #include "llvm/ADT/DenseSet.h"
@@ -25,9 +27,6 @@
 #include <type_traits>
 // using std::remove_pointer_t
 // using std::integral_constant
-
-#ifndef ITR_EXTRAS_HPP
-#define ITR_EXTRAS_HPP
 
 namespace iteratorrecognition {
 
@@ -84,4 +83,3 @@ bool operator==(const llvm::DenseSet<ValueT, ValueInfoT> &LHS,
 
 } // namespace iteratorrecognition
 
-#endif // header

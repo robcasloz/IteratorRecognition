@@ -2,6 +2,8 @@
 //
 //
 
+#pragma once
+
 #include "IteratorRecognition/Config.hpp"
 
 #include "IteratorRecognition/Debug.hpp"
@@ -49,9 +51,6 @@
 
 #include <utility>
 // using std::forward
-
-#ifndef ITR_CONDENSATIONGRAPH_HPP
-#define ITR_CONDENSATIONGRAPH_HPP
 
 namespace iteratorrecognition {
 
@@ -377,4 +376,3 @@ template <typename GraphT> struct LLVMCondensationInverseGraphTraitsHelperBase {
 
 } // namespace iteratorrecognition
 
-#endif // header

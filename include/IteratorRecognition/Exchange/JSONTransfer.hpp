@@ -2,6 +2,8 @@
 //
 //
 
+#pragma once
+
 #include "IteratorRecognition/Config.hpp"
 
 #include "IteratorRecognition/Support/Utils/Extras.hpp"
@@ -39,9 +41,6 @@
 
 #include <type_traits>
 // using std::enable_if
-
-#ifndef ITR_JSONTRANSFER_HPP
-#define ITR_JSONTRANSFER_HPP
 
 // namespace aliases
 
@@ -121,4 +120,3 @@ void WriteJSONToFile(const llvm::json::Value &V,
 
 } // namespace iteratorrecognition
 
-#endif // header

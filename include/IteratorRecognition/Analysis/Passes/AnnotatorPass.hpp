@@ -2,8 +2,7 @@
 //
 //
 
-#ifndef ITR_ANNOTATORPASS_HPP
-#define ITR_ANNOTATORPASS_HPP
+#pragma once
 
 #include "IteratorRecognition/Config.hpp"
 
@@ -28,4 +27,3 @@ public:
 
 } // namespace iteratorrecognition
 
-#endif // header

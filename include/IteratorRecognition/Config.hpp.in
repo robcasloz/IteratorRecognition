@@ -2,10 +2,9 @@
 //
 //
 
-// clang-format off
+#pragma once
 
-#ifndef @PRJ_NAME_UPPER@_CONFIG_HPP
-#define @PRJ_NAME_UPPER@_CONFIG_HPP
+// clang-format off
 
 #define @PRJ_NAME_UPPER@_DEBUG @PRJ_DEBUG_VALUE@
 
@@ -14,5 +13,3 @@
 //#define @PRJ_NAME_UPPER@_USES_FOO ${@PRJ_NAME_UPPER@_USES_FOO}
 
 // clang-format on
-
-#endif // header

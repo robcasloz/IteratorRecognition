@@ -2,8 +2,7 @@
 //
 //
 
-#ifndef ITR_DEBUG_HPP
-#define ITR_DEBUG_HPP
+#pragma once
 
 #include "IteratorRecognition/Config.hpp"
 
@@ -60,4 +59,3 @@ static constexpr bool dumpFunction(const llvm::Function *CurFunc = nullptr) {
 
 #endif // ITERATORRECOGNITION_DEBUG
 
-#endif // header
