@@ -52,4 +52,24 @@ void FindPayloadVars(const IteratorInfo &Info,
   }
 }
 
+void FindPayloadTempAndLiveVars(
+    const IteratorInfo &Info,
+    const llvm::SmallPtrSetImpl<llvm::Value *> &PayloadValues,
+    llvm::SmallPtrSetImpl<llvm::Value *> &TempValues,
+    llvm::SmallPtrSetImpl<llvm::Value *> &LiveValues) {
+  auto &loopBlocks = Info.getLoop()->getBlocksSet();
+
+  for (const auto &e : PayloadValues) {
+    bool hasAllUsesIn = true;
+    for (auto &u : e->uses()) {
+      auto *user = llvm::dyn_cast<llvm::Instruction>(u.getUser());
+      if (user && !loopBlocks.count(user->getParent())) {
+        hasAllUsesIn = false;
+      }
+    }
+
+    hasAllUsesIn ? TempValues.insert(e) : LiveValues.insert(e);
+  }
+}
+
 } // namespace iteratorrecognition
