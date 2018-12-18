@@ -99,24 +99,34 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
                  << CurFunc.getName() << "\n";
   });
 
-  llvm::SmallPtrSet<llvm::Instruction *, 8> itVars, pdVars;
+  llvm::SmallPtrSet<llvm::Instruction *, 8> itVars, pdVars, pdTempVars,
+      pdLiveVars;
 
   for (auto &e : info.getIteratorsInfo()) {
     LLVM_DEBUG(llvm::dbgs() << "loop: " << *e.getLoop()->getHeader() << "\n";);
 
     FindIteratorVars(e, itVars);
     FindPayloadVars(e, pdVars);
+    FindPayloadTempAndLiveVars(e, pdVars, pdTempVars, pdLiveVars);
 
     LLVM_DEBUG({
       llvm::dbgs() << "iterator vars: \n";
       for (const auto &e : itVars) {
         llvm::dbgs() << *e << '\n';
       }
-    });
 
-    LLVM_DEBUG({
       llvm::dbgs() << "payload vars: \n";
       for (const auto &e : pdVars) {
+        llvm::dbgs() << *e << '\n';
+      }
+
+      llvm::dbgs() << "payload temp vars: \n";
+      for (const auto &e : pdTempVars) {
+        llvm::dbgs() << *e << '\n';
+      }
+
+      llvm::dbgs() << "payload live vars: \n";
+      for (const auto &e : pdLiveVars) {
         llvm::dbgs() << *e << '\n';
       }
     });
