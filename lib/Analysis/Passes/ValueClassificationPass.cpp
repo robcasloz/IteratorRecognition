@@ -115,7 +115,7 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
     });
 
     LLVM_DEBUG({
-      llvm::dbgs() << "paylod vars: \n";
+      llvm::dbgs() << "payload vars: \n";
       for (const auto &e : pdVars) {
         llvm::dbgs() << *e << '\n';
       }

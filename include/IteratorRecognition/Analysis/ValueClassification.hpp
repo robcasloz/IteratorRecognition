@@ -40,7 +40,7 @@ void FindPayloadVars(const IteratorInfo &Info,
 
   for (auto &e : loopInsts) {
     if (Info.isIterator(&e)) {
-      break;
+      continue;
     }
 
     for (auto &u : e.uses()) {
