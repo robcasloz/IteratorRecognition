@@ -140,6 +140,7 @@ set(LIB_SOURCES
   "lib/Passes/PassCommandLineOptions.cpp"
   "lib/Support/FileSystem.cpp"
   "lib/Analysis/Passes/IteratorRecognitionWrapperPass.cpp"
+  "lib/Analysis/Passes/ValueClassificationPass.cpp"
   "lib/Analysis/Passes/Exchange/JSONExporterPass.cpp"
   "lib/Transforms/Passes/AnnotatorPass.cpp")
 

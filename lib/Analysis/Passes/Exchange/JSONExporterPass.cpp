@@ -48,7 +48,7 @@
 // using llvm::report_fatal_error
 
 #include "llvm/Support/Debug.h"
-// using DEBUG macro
+// using LLVM_DEBUG macro
 // using llvm::dbgs
 // using llvm::errs
 

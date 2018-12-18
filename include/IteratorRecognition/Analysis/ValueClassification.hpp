@@ -19,7 +19,7 @@
 namespace iteratorrecognition {
 
 void FindIteratorVars(const IteratorInfo &Info,
-                      llvm::SmallPtrSetImpl<llvm::Value *> &Values) {
+                      llvm::SmallPtrSetImpl<llvm::Instruction *> &Values) {
   auto &loopBlocks = Info.getLoop()->getBlocksSet();
 
   for (auto *e : Info) {
@@ -34,7 +34,7 @@ void FindIteratorVars(const IteratorInfo &Info,
 }
 
 void FindPayloadVars(const IteratorInfo &Info,
-                     llvm::SmallPtrSetImpl<llvm::Value *> &Values) {
+                     llvm::SmallPtrSetImpl<llvm::Instruction *> &Values) {
   auto &loopBlocks = Info.getLoop()->getBlocksSet();
   auto loopInsts = make_loop_inst_range(Info.getLoop());
 
@@ -54,9 +54,9 @@ void FindPayloadVars(const IteratorInfo &Info,
 
 void FindPayloadTempAndLiveVars(
     const IteratorInfo &Info,
-    const llvm::SmallPtrSetImpl<llvm::Value *> &PayloadValues,
-    llvm::SmallPtrSetImpl<llvm::Value *> &TempValues,
-    llvm::SmallPtrSetImpl<llvm::Value *> &LiveValues) {
+    const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
+    llvm::SmallPtrSetImpl<llvm::Instruction *> &TempValues,
+    llvm::SmallPtrSetImpl<llvm::Instruction *> &LiveValues) {
   auto &loopBlocks = Info.getLoop()->getBlocksSet();
 
   for (const auto &e : PayloadValues) {

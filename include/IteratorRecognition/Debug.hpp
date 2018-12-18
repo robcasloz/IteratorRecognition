@@ -45,10 +45,6 @@ static bool dumpFunction(const llvm::Function *CurFunc = nullptr) {
 
 #else
 
-#define DEBUG_CMD(L, C)                                                        \
-  do {                                                                         \
-  } while (false)
-
 namespace llvm {
 class Function;
 } // namespace llvm
