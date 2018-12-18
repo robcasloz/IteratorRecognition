@@ -35,19 +35,11 @@ void FindIteratorVars(const IteratorInfo &Info,
 
 void FindPayloadVars(const IteratorInfo &Info,
                      llvm::SmallPtrSetImpl<llvm::Instruction *> &Values) {
-  auto &loopBlocks = Info.getLoop()->getBlocksSet();
   auto loopInsts = make_loop_inst_range(Info.getLoop());
 
   for (auto &e : loopInsts) {
-    if (Info.isIterator(&e)) {
-      continue;
-    }
-
-    for (auto &u : e.uses()) {
-      auto *user = llvm::dyn_cast<llvm::Instruction>(u.getUser());
-      if (user && !Info.isIterator(user)) {
-        Values.insert(&e);
-      }
+    if (!Info.isIterator(&e)) {
+      Values.insert(&e);
     }
   }
 }
