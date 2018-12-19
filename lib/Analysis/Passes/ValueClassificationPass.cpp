@@ -100,7 +100,7 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
   });
 
   llvm::SmallPtrSet<llvm::Instruction *, 8> itVars, pdVars, pdTempVars,
-      pdLiveVars;
+      pdLiveVars, directItUsesInPayload;
 
   for (auto &e : info.getIteratorsInfo()) {
     LLVM_DEBUG(llvm::dbgs() << "loop: " << *e.getLoop()->getHeader() << "\n";);
@@ -108,25 +108,31 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
     FindIteratorVars(e, itVars);
     FindPayloadVars(e, pdVars);
     FindPayloadTempAndLiveVars(e, pdVars, pdTempVars, pdLiveVars);
+    FindDirectUsesOfIn(itVars, pdVars, directItUsesInPayload);
 
     LLVM_DEBUG({
-      llvm::dbgs() << "iterator vars: \n";
+      llvm::dbgs() << "iterator: \n";
       for (const auto &e : itVars) {
         llvm::dbgs() << *e << '\n';
       }
 
-      llvm::dbgs() << "payload vars: \n";
+      llvm::dbgs() << "payload: \n";
       for (const auto &e : pdVars) {
         llvm::dbgs() << *e << '\n';
       }
 
-      llvm::dbgs() << "payload temp vars: \n";
+      llvm::dbgs() << "payload temp: \n";
       for (const auto &e : pdTempVars) {
         llvm::dbgs() << *e << '\n';
       }
 
-      llvm::dbgs() << "payload live vars: \n";
+      llvm::dbgs() << "payload live: \n";
       for (const auto &e : pdLiveVars) {
+        llvm::dbgs() << *e << '\n';
+      }
+
+      llvm::dbgs() << "direct uses of iterator in payload: \n";
+      for (const auto &e : directItUsesInPayload) {
         llvm::dbgs() << *e << '\n';
       }
     });

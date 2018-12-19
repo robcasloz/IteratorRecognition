@@ -64,4 +64,18 @@ void FindPayloadTempAndLiveVars(
   }
 }
 
+void FindDirectUsesOfIn(
+    const llvm::SmallPtrSetImpl<llvm::Instruction *> &Values,
+    const llvm::SmallPtrSetImpl<llvm::Instruction *> &OtherValues,
+    llvm::SmallPtrSetImpl<llvm::Instruction *> &DirectUserValues) {
+  for (const auto &e : Values) {
+    for (auto &u : e->uses()) {
+      auto *user = llvm::dyn_cast<llvm::Instruction>(u.getUser());
+      if (user && OtherValues.count(user)) {
+        DirectUserValues.insert(user);
+      }
+    }
+  }
+}
+
 } // namespace iteratorrecognition
