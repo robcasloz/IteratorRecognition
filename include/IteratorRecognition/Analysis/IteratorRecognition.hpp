@@ -184,6 +184,7 @@ public:
     RecognizeIterator();
   }
 
+  const auto &getGraph() { return PDG; }
   const auto &getCondensationGraph() { return CG; }
   const auto &getCondensationToLoopsMap() { return Map; }
   const auto &getIteratorsInfo() { return IteratorsInfo; }
