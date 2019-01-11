@@ -118,15 +118,16 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
       return pdVars.count(e->unit()) != 0;
     };
 
-    std::vector<const DGType::NodeType *> pd;
-    for (const auto &n : DGT::nodes(&g)) {
-      if (is_payload(n)) {
-        pd.emplace_back(n);
-      }
-    }
-
     SDependenceGraph<DGType> sg(g);
     sg.computeNodes();
+    for (const auto &n : DGT::nodes(&g)) {
+      if (!is_payload(n)) {
+        sg.removeNode(n->unit());
+      }
+    }
+    // this does not work due to compiler
+    // sg.computeNodesIf(is_payload);
+
     sg.computeEdges();
 
     llvm::dbgs() << g.size() << '\n';

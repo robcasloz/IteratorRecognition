@@ -146,6 +146,23 @@ public:
     }
   }
 
+  void removeNode(MemberNodeRef I) {
+    for (auto it = Nodes.begin(), end = Nodes.end(); it != end; ++it) {
+      auto &n = *it;
+      auto found = std::find(n->Nodes.begin(), n->Nodes.end(), I);
+
+      if (found != n->Nodes.end()) {
+        n->Nodes.erase(found);
+
+        if (n->Nodes.size() == 0) {
+          Nodes.erase(it);
+        }
+
+        return;
+      }
+    }
+  }
+
   void computeEdges() {
     for (const auto &n : GT::nodes(&OriginalGraph)) {
       auto &sn = SNodesMap[n->unit()];
