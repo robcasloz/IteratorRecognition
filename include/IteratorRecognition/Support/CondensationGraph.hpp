@@ -131,6 +131,7 @@ public:
 };
 
 //
+
 template <typename GraphT, typename GT, typename IGT> class CondensationGraph {
 public:
   using MemberNodeRef = typename GT::NodeRef;
@@ -141,11 +142,11 @@ public:
 private:
   std::vector<NodeType> Nodes;
   mutable NodeRef EntryNode;
-  using NodeToCondensationMap = std::map<MemberNodeRef, ConstNodeRef>;
+  using MemberNodeToCondensationMap = std::map<MemberNodeRef, ConstNodeRef>;
 
   template <typename TraversalGT = GT>
   void findCondensationExternalEdges(
-      const NodeType &CondensationNode, const NodeToCondensationMap &Map,
+      const NodeType &CondensationNode, const MemberNodeToCondensationMap &Map,
       typename NodeType::EdgesContainerType &Dst) const {
     std::vector<MemberNodeRef> current, reachable, external;
 
@@ -181,8 +182,8 @@ private:
   std::enable_if_t<!has_unit_t<T>::value> setEntryNode(T N,
                                                        ConstNodeRef CN) const {}
 
-  void populateCondensedEdges() const {
-    NodeToCondensationMap n2c;
+  void computeEdges() const {
+    MemberNodeToCondensationMap n2c;
 
     for (const auto &cn : *this) {
       for (const auto &n : *cn) {
@@ -224,7 +225,7 @@ public:
       Nodes.emplace_back(NodeType{std::begin(scc), std::end(scc)});
     }
 
-    populateCondensedEdges();
+    computeEdges();
   }
 
   iterator begin() { return iterator(Nodes.begin(), &GetNodePtr); }
