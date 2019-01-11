@@ -111,18 +111,23 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     FindDirectUsesOfIn(itVars, pdVars, directItUsesInPayload);
 
     auto &g = info.getGraph();
+    using DGType = std::remove_reference_t<decltype(g)>;
+    using DGT = llvm::GraphTraits<DGType *>;
 
     auto is_payload = [&pdVars](const auto *e) {
       return pdVars.count(e->unit()) != 0;
     };
 
-    std::vector<const std::remove_reference_t<decltype(g)>::NodeType *> pd;
-    for (auto it = g.nodes_begin(), end = g.nodes_end(); it != end; ++it) {
-      if (is_payload(*it)) {
-        pd.emplace_back(*it);
+    std::vector<const DGType::NodeType *> pd;
+    for (const auto &n : DGT::nodes(&g)) {
+      if (is_payload(n)) {
+        pd.emplace_back(n);
       }
     }
-    ShadowDependenceGraph sg(pd.begin(), pd.end());
+
+    SDependenceGraph<DGType> sg(g);
+    sg.computeNodes();
+    sg.computeEdges();
 
     llvm::dbgs() << g.size() << '\n';
     llvm::dbgs() << sg.size() << '\n';

@@ -17,11 +17,6 @@
 #include <map>
 // using std::map
 
-#include <iterator>
-// using std::iterator_traits
-// using std::begin
-// using std::end
-
 #include <memory>
 // using std::unique_ptr
 // using std::make_unique
@@ -32,19 +27,21 @@ class Instruction;
 
 namespace iteratorrecognition {
 
-class ShadowDependenceGraph;
+template <typename GraphT> class SDependenceGraph;
 
-class ShadowDependenceGraphNode {
-  friend class ShadowDependenceGraph;
+template <typename GraphT> class SDependenceGraphNode {
+  friend class SDependenceGraph<GraphT>;
 
-private:
-  using SelfType = ShadowDependenceGraphNode;
+  using SelfType = SDependenceGraphNode;
   using MemberNodeRef = llvm::Instruction *;
+
+  SDependenceGraph<GraphT> *ContainingGraph;
 
 public:
   using IDType = uint64_t;
 
-  explicit ShadowDependenceGraphNode(MemberNodeRef MemberNode) {
+  explicit SDependenceGraphNode(MemberNodeRef MemberNode)
+      : ContainingGraph(nullptr) {
     Nodes.emplace_back(MemberNode);
   }
 
@@ -52,13 +49,12 @@ private:
   using EdgesContainerType = std::vector<SelfType *>;
 
   IDType ID;
-  IDType ShadowID;
   std::vector<MemberNodeRef> Nodes;
   mutable EdgesContainerType OutEdges;
   mutable EdgesContainerType InEdges;
 
   template <typename IteratorT>
-  explicit ShadowDependenceGraphNode(IteratorT Begin, IteratorT End) {
+  explicit SDependenceGraphNode(IteratorT Begin, IteratorT End) {
     std::copy(Begin, End, std::back_inserter(Nodes));
   }
 
@@ -69,11 +65,11 @@ public:
   using EdgesIteratorType = typename EdgesContainerType::iterator;
   using ConstEdgesIteratorType = typename EdgesContainerType::const_iterator;
 
-  ShadowDependenceGraphNode() = delete;
-  ShadowDependenceGraphNode(const SelfType &) = delete;
+  SDependenceGraphNode() = delete;
+  SDependenceGraphNode(const SelfType &) = delete;
   SelfType &operator=(const SelfType &) = delete;
 
-  ShadowDependenceGraphNode(SelfType &&) = default;
+  SDependenceGraphNode(SelfType &&) = default;
 
   iterator begin() { return Nodes.begin(); }
   iterator end() { return Nodes.end(); }
@@ -109,52 +105,47 @@ public:
   }
 };
 
-class ShadowDependenceGraph {
+template <typename GraphT> class SDependenceGraph {
+  using GT = llvm::GraphTraits<GraphT *>;
+
+  GraphT &OriginalGraph;
+
 public:
   using MemberNodeRef = llvm::Instruction *;
-  using NodeType = ShadowDependenceGraphNode;
+  using NodeType = SDependenceGraphNode<GraphT>;
   using NodeRef = NodeType *;
   using ConstNodeRef = const NodeType *;
 
 private:
   std::vector<std::unique_ptr<NodeType>> Nodes;
-  // mutable NodeRef EntryNode;
 
   using MemberNodeToNodeMap = std::map<MemberNodeRef, NodeRef>;
-  MemberNodeToNodeMap ShadowNodesMap;
+  MemberNodeToNodeMap SNodesMap;
 
-  template <typename IteratorT>
-  void computeEdges(IteratorT Begin, IteratorT End) {
-    using GT =
-        llvm::GraphTraits<typename std::iterator_traits<IteratorT>::value_type>;
+public:
+  SDependenceGraph() = delete;
+  SDependenceGraph(const SDependenceGraph &) = delete;
+  SDependenceGraph &operator=(const SDependenceGraph &) = delete;
 
-    for (IteratorT it = Begin, end = End; it != End; ++it) {
-      auto &n = ShadowNodesMap[(*it)->unit()];
-      for (const auto &e : GT::nodes(*it)) {
-        auto &c = ShadowNodesMap[e->unit()];
-        n->OutEdges.push_back(c);
-        c->InEdges.push_back(n);
-      }
+  explicit SDependenceGraph(GraphT &G) : OriginalGraph(G) {}
+
+  void computeNodes() {
+    for (const auto &n : GT::nodes(&OriginalGraph)) {
+      auto sn{std::make_unique<NodeType>(n->unit())};
+      SNodesMap.emplace(n->unit(), sn.get());
+      Nodes.emplace_back(std::move(sn));
     }
   }
 
-public:
-  ShadowDependenceGraph() = delete;
-  ShadowDependenceGraph(const ShadowDependenceGraph &) = delete;
-  ShadowDependenceGraph &operator=(const ShadowDependenceGraph &) = delete;
-
-  template <typename IteratorT>
-  explicit ShadowDependenceGraph(IteratorT Begin, IteratorT End) {
-    using std::begin;
-    using std::end;
-
-    for (IteratorT it = Begin, end = End; it != End; ++it) {
-      auto n{std::make_unique<NodeType>((*it)->unit())};
-      ShadowNodesMap.emplace((*it)->unit(), n.get());
-      Nodes.emplace_back(std::move(n));
+  void computeEdges() {
+    for (const auto &n : GT::nodes(&OriginalGraph)) {
+      auto &sn = SNodesMap[n->unit()];
+      for (const auto &e : GT::children(n)) {
+        auto &c = SNodesMap[e->unit()];
+        sn->OutEdges.push_back(c);
+        c->InEdges.push_back(sn);
+      }
     }
-
-    computeEdges(Begin, End);
   }
 
   decltype(auto) size() const { return Nodes.size(); }
