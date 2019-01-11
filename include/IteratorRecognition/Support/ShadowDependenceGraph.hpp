@@ -11,6 +11,9 @@
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
 
+#include "llvm/ADT/STLExtras.h"
+// using llvm::make_filter_range
+
 #include <vector>
 // using std::vector
 
@@ -128,6 +131,15 @@ public:
 
   void computeNodes() {
     for (const auto &n : GT::nodes(&OriginalGraph)) {
+      auto sn{std::make_unique<NodeType>(n->unit())};
+      SNodesMap.emplace(n->unit(), sn.get());
+      Nodes.emplace_back(std::move(sn));
+    }
+  }
+
+  template <typename PredT> void computeNodesIf(PredT &&Pred) {
+    for (const auto &n :
+         llvm::make_filter_range(GT::nodes(&OriginalGraph), Pred)) {
       auto sn{std::make_unique<NodeType>(n->unit())};
       SNodesMap.emplace(n->unit(), sn.get());
       Nodes.emplace_back(std::move(sn));
