@@ -38,8 +38,6 @@ template <typename GraphT> class SDependenceGraphNode {
   SDependenceGraph<GraphT> *ContainingGraph;
 
 public:
-  using IDType = uint64_t;
-
   explicit SDependenceGraphNode(MemberNodeRef MemberNode)
       : ContainingGraph(nullptr) {
     Nodes.emplace_back(MemberNode);
@@ -48,7 +46,6 @@ public:
 private:
   using EdgesContainerType = std::vector<SelfType *>;
 
-  IDType ID;
   std::vector<MemberNodeRef> Nodes;
   mutable EdgesContainerType OutEdges;
   mutable EdgesContainerType InEdges;
