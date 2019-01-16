@@ -39,10 +39,11 @@ template <typename GraphT> class SDependenceGraphNode {
   using MemberNodeRef = llvm::Instruction *;
 
   SDependenceGraph<GraphT> *ContainingGraph;
+  bool IsShadow;
 
 public:
   explicit SDependenceGraphNode(MemberNodeRef MemberNode)
-      : ContainingGraph(nullptr) {
+      : ContainingGraph(nullptr), IsShadow(false) {
     Nodes.emplace_back(MemberNode);
   }
 
@@ -120,7 +121,8 @@ private:
   std::vector<std::unique_ptr<NodeType>> Nodes;
 
   using MemberNodeToNodeMap = std::map<MemberNodeRef, NodeRef>;
-  MemberNodeToNodeMap SNodesMap;
+  MemberNodeToNodeMap MainNodesMap;
+  MemberNodeToNodeMap ShadowNodesMap;
 
 public:
   SDependenceGraph() = delete;
@@ -132,7 +134,8 @@ public:
   void computeNodes() {
     for (const auto &n : GT::nodes(&OriginalGraph)) {
       auto sn{std::make_unique<NodeType>(n->unit())};
-      SNodesMap.emplace(n->unit(), sn.get());
+      (*sn).ContainingGraph = this;
+      MainNodesMap.emplace(n->unit(), sn.get());
       Nodes.emplace_back(std::move(sn));
     }
   }
@@ -141,7 +144,8 @@ public:
     for (const auto &n :
          llvm::make_filter_range(GT::nodes(&OriginalGraph), Pred)) {
       auto sn{std::make_unique<NodeType>(n->unit())};
-      SNodesMap.emplace(n->unit(), sn.get());
+      (*sn).ContainingGraph = this;
+      MainNodesMap.emplace(n->unit(), sn.get());
       Nodes.emplace_back(std::move(sn));
     }
   }
@@ -165,14 +169,46 @@ public:
 
   void computeEdges() {
     for (const auto &n : GT::nodes(&OriginalGraph)) {
-      auto &sn = SNodesMap[n->unit()];
+      auto &sn = MainNodesMap[n->unit()];
       for (const auto &e : GT::children(n)) {
-        auto &c = SNodesMap[e->unit()];
+        auto &c = MainNodesMap[e->unit()];
         sn->OutEdges.push_back(c);
         c->InEdges.push_back(sn);
       }
     }
   }
+
+  void computeShadowNodes() {
+    decltype(Nodes) shadowNodes;
+    for (auto &n : Nodes) {
+      for (auto &mn : n->Nodes) {
+        auto sn{std::make_unique<NodeType>(mn)};
+        (*sn).ContainingGraph = this;
+        (*sn).IsShadow = true;
+        ShadowNodesMap.emplace(mn, sn.get());
+        shadowNodes.emplace_back(std::move(sn));
+      }
+    }
+
+    for (auto &n : shadowNodes) {
+      Nodes.emplace_back(std::move(n));
+    }
+  }
+
+  //void computeShadowEdges() {
+    //for (const auto &n : Nodes) {
+      //if (!n->IsShadow) {
+        //continue;
+      //}
+
+      //for (auto &mn : n->Nodes) {
+        //auto &sn = ShadowNodesMap[mn];
+        //auto &c = ShadowNodesMap[sn->unit()];
+        //sn->OutEdges.push_back(c);
+        //c->InEdges.push_back(sn);
+      //}
+    //}
+  //}
 
   decltype(auto) size() const { return Nodes.size(); }
   bool empty() const { return Nodes.empty(); }
