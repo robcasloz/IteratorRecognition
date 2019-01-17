@@ -154,23 +154,11 @@ public:
     return n;
   }
 
-  void computeNodes() {
-    for (const auto &n : GT::nodes(&OriginalGraph)) {
-      auto sn{std::make_unique<NodeType>(n->unit())};
-      (*sn).ContainingGraph = this;
-      MainNodesMap.emplace(n->unit(), sn.get());
-      Nodes.emplace_back(std::move(sn));
-    }
-  }
-
-  template <typename PredT> void computeNodesIf(PredT &&Pred) {
-    for (const auto &n :
-         llvm::make_filter_range(GT::nodes(&OriginalGraph), Pred)) {
-      auto sn{std::make_unique<NodeType>(n->unit())};
-      (*sn).ContainingGraph = this;
-      MainNodesMap.emplace(n->unit(), sn.get());
-      Nodes.emplace_back(std::move(sn));
-    }
+  void createNode(MemberNodeRef I) {
+    auto sn{std::make_unique<NodeType>(I)};
+    (*sn).ContainingGraph = this;
+    MainNodesMap.emplace(I, sn.get());
+    Nodes.emplace_back(std::move(sn));
   }
 
   void removeNode(MemberNodeRef I) {
@@ -187,6 +175,19 @@ public:
 
         return;
       }
+    }
+  }
+
+  void computeNodes() {
+    for (const auto &n : GT::nodes(&OriginalGraph)) {
+      createNode(n->unit());
+    }
+  }
+
+  template <typename PredT> void computeNodesIf(PredT &&Pred) {
+    for (const auto &n :
+         llvm::make_filter_range(GT::nodes(&OriginalGraph), Pred)) {
+      createNode(n->unit());
     }
   }
 
