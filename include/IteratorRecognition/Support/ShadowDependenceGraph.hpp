@@ -139,7 +139,6 @@ private:
 
   using MemberNodeToNodeMap = std::map<MemberNodeRef, NodeRef>;
   MemberNodeToNodeMap MainNodesMap;
-  MemberNodeToNodeMap ShadowNodesMap;
 
 public:
   SDependenceGraph() = delete;
@@ -209,7 +208,6 @@ public:
         auto sn{std::make_unique<NodeType>(mn)};
         (*sn).ContainingGraph = this;
         (*sn).IsShadow = true;
-        ShadowNodesMap.emplace(mn, sn.get());
         AllNodesMap.insert(
             typename NodeToNodeBimap::value_type(n.get(), sn.get()));
         shadowNodes.emplace_back(std::move(sn));
