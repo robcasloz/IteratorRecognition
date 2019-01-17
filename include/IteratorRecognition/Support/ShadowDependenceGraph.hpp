@@ -26,6 +26,9 @@
 #include <map>
 // using std::map
 
+#include <algorithm>
+// using std::for_each
+
 #include <memory>
 // using std::unique_ptr
 // using std::make_unique
@@ -135,10 +138,10 @@ private:
   std::vector<std::unique_ptr<NodeType>> Nodes;
 
   using NodeToNodeBimap = boost::bimap<NodeRef, NodeRef>;
-  NodeToNodeBimap AllNodesMap;
+  NodeToNodeBimap Iterations;
 
   using MemberNodeToNodeMap = std::map<MemberNodeRef, NodeRef>;
-  MemberNodeToNodeMap MainNodesMap;
+  MemberNodeToNodeMap UnitToNodes;
 
 public:
   SDependenceGraph() = delete;
@@ -157,7 +160,7 @@ public:
   void createNode(MemberNodeRef I) {
     auto sn{std::make_unique<NodeType>(I)};
     (*sn).ContainingGraph = this;
-    MainNodesMap.emplace(I, sn.get());
+    UnitToNodes.emplace(I, sn.get());
     Nodes.emplace_back(std::move(sn));
   }
 
@@ -193,9 +196,9 @@ public:
 
   void computeEdges() {
     for (const auto &n : GT::nodes(&OriginalGraph)) {
-      auto &sn = MainNodesMap[n->unit()];
+      auto &sn = UnitToNodes[n->unit()];
       for (const auto &e : GT::children(n)) {
-        auto &c = MainNodesMap[e->unit()];
+        auto &c = UnitToNodes[e->unit()];
         sn->OutEdges.push_back(c);
         c->InEdges.push_back(sn);
       }
@@ -209,7 +212,7 @@ public:
         auto sn{std::make_unique<NodeType>(mn)};
         (*sn).ContainingGraph = this;
         (*sn).IsShadow = true;
-        AllNodesMap.insert(
+        Iterations.insert(
             typename NodeToNodeBimap::value_type(n.get(), sn.get()));
         shadowNodes.emplace_back(std::move(sn));
       }
@@ -226,11 +229,11 @@ public:
         continue;
       }
 
-      auto &n = AllNodesMap.right.at(sn.get());
+      auto &n = Iterations.right.at(sn.get());
 
       for (auto &mn : n->Nodes) {
-        auto &nn = MainNodesMap[mn];
-        auto &snn = AllNodesMap.left.at(nn);
+        auto &nn = UnitToNodes[mn];
+        auto &snn = Iterations.left.at(nn);
         sn->OutEdges.push_back(snn);
         snn->InEdges.push_back(sn.get());
       }
