@@ -24,6 +24,9 @@
 // using std::unique_ptr
 // using std::make_unique
 
+#include <utility>
+// using std::declval
+
 namespace llvm {
 class Instruction;
 } // namespace llvm
@@ -81,6 +84,9 @@ public:
   decltype(auto) size() const { return Nodes.size(); }
   bool empty() const { return Nodes.empty(); }
 
+  decltype(auto) numOutEdges() const { return OutEdges.size(); }
+  decltype(auto) numInEdges() const { return InEdges.size(); }
+
   EdgesIteratorType edge_begin() { return OutEdges.begin(); }
   EdgesIteratorType edge_end() { return OutEdges.end(); }
 
@@ -106,6 +112,8 @@ public:
   }
 };
 
+//
+
 template <typename GraphT> class SDependenceGraph {
   using GT = llvm::GraphTraits<GraphT *>;
 
@@ -130,6 +138,13 @@ public:
   SDependenceGraph &operator=(const SDependenceGraph &) = delete;
 
   explicit SDependenceGraph(GraphT &G) : OriginalGraph(G) {}
+
+  decltype(auto) numOutEdges() const {
+    decltype(std::declval<NodeType>().numOutEdges()) n{};
+    std::for_each(std::begin(Nodes), std::end(Nodes),
+                  [&n](const auto &e) { n += e.get()->numOutEdges(); });
+    return n;
+  }
 
   void computeNodes() {
     for (const auto &n : GT::nodes(&OriginalGraph)) {
