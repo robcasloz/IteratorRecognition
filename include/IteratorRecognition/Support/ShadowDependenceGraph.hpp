@@ -14,6 +14,12 @@
 #include "llvm/ADT/STLExtras.h"
 // using llvm::make_filter_range
 
+#include "llvm/Support/Debug.h"
+// using llvm::dbgs
+
+#include "boost/bimap.hpp"
+// using boost::bimap
+
 #include <vector>
 // using std::vector
 
@@ -128,6 +134,9 @@ public:
 private:
   std::vector<std::unique_ptr<NodeType>> Nodes;
 
+  using NodeToNodeBimap = boost::bimap<NodeRef, NodeRef>;
+  NodeToNodeBimap AllNodesMap;
+
   using MemberNodeToNodeMap = std::map<MemberNodeRef, NodeRef>;
   MemberNodeToNodeMap MainNodesMap;
   MemberNodeToNodeMap ShadowNodesMap;
@@ -201,6 +210,8 @@ public:
         (*sn).ContainingGraph = this;
         (*sn).IsShadow = true;
         ShadowNodesMap.emplace(mn, sn.get());
+        AllNodesMap.insert(
+            typename NodeToNodeBimap::value_type(n.get(), sn.get()));
         shadowNodes.emplace_back(std::move(sn));
       }
     }
@@ -210,20 +221,22 @@ public:
     }
   }
 
-  //void computeShadowEdges() {
-    //for (const auto &n : Nodes) {
-      //if (!n->IsShadow) {
-        //continue;
-      //}
+  void computeShadowEdges() {
+    for (const auto &sn : Nodes) {
+      if (!sn->IsShadow) {
+        continue;
+      }
 
-      //for (auto &mn : n->Nodes) {
-        //auto &sn = ShadowNodesMap[mn];
-        //auto &c = ShadowNodesMap[sn->unit()];
-        //sn->OutEdges.push_back(c);
-        //c->InEdges.push_back(sn);
-      //}
-    //}
-  //}
+      auto &n = AllNodesMap.right.at(sn.get());
+
+      for (auto &mn : n->Nodes) {
+        auto &nn = MainNodesMap[mn];
+        auto &snn = AllNodesMap.left.at(nn);
+        sn->OutEdges.push_back(snn);
+        snn->InEdges.push_back(sn.get());
+      }
+    }
+  }
 
   decltype(auto) size() const { return Nodes.size(); }
   bool empty() const { return Nodes.empty(); }
