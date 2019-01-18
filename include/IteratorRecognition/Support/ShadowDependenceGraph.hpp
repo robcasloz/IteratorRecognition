@@ -155,6 +155,12 @@ private:
   using UnitToNodeMap = std::map<UnitType, NodeRef>;
   UnitToNodeMap UnitToNode;
 
+  static bool is_next_iteration_node(NodeRef N) { return N->isNextIteration(); }
+
+  static bool is_not_next_iteration_node(ConstNodeRef N) {
+    return !N->isNextIteration();
+  }
+
 public:
   using nodes_iterator = llvm::mapped_iterator<
       typename decltype(Nodes)::iterator,
@@ -204,6 +210,23 @@ public:
 
   decltype(auto) nodes() { return llvm::make_range(begin(), end()); }
   decltype(auto) nodes() const { return llvm::make_range(begin(), end()); }
+
+  // TODO these range methods require a patch for llvm::iterator_range
+  decltype(auto) iteration0_nodes() {
+    return llvm::make_filter_range(nodes(), is_not_next_iteration_node);
+  }
+
+  decltype(auto) iteration0_nodes() const {
+    return llvm::make_filter_range(nodes(), is_not_next_iteration_node);
+  }
+
+  decltype(auto) iteration1_nodes() {
+    return llvm::make_filter_range(nodes(), is_next_iteration_node);
+  }
+
+  decltype(auto) iteration1_nodes() const {
+    return llvm::make_filter_range(nodes(), is_next_iteration_node);
+  }
 
   decltype(auto) numOutEdges() const {
     decltype(std::declval<NodeType>().numOutEdges()) n{};
