@@ -123,6 +123,9 @@ public:
 
 //
 
+struct iteration0 {};
+struct iteration1 {};
+
 template <typename GraphT> class SDependenceGraph {
   using GT = llvm::GraphTraits<GraphT *>;
 
@@ -137,7 +140,9 @@ public:
 private:
   std::vector<std::unique_ptr<NodeType>> Nodes;
 
-  using NodeToNodeBimap = boost::bimap<NodeRef, NodeRef>;
+  using NodeToNodeBimap =
+      boost::bimap<boost::bimaps::tagged<NodeRef, iteration0>,
+                   boost::bimaps::tagged<NodeRef, iteration1>>;
   NodeToNodeBimap Iterations;
 
   using MemberNodeToNodeMap = std::map<MemberNodeRef, NodeRef>;
@@ -229,11 +234,11 @@ public:
         continue;
       }
 
-      auto &n = Iterations.right.at(sn.get());
+      auto &n = Iterations.template by<iteration1>().at(sn.get());
 
       for (auto &mn : n->Nodes) {
         auto &nn = UnitToNodes[mn];
-        auto &snn = Iterations.left.at(nn);
+        auto &snn = Iterations.template by<iteration0>().at(nn);
         sn->OutEdges.push_back(snn);
         snn->InEdges.push_back(sn.get());
       }
