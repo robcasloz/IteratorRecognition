@@ -48,32 +48,32 @@ template <typename GraphT> class SDependenceGraphNode {
   friend class SDependenceGraph<GraphT>;
 
   using SelfType = SDependenceGraphNode;
-  using MemberNodeRef = llvm::Instruction *;
+  using UnitType = llvm::Instruction *;
 
   SDependenceGraph<GraphT> *ContainingGraph;
   bool IsNextIteration;
 
 public:
-  explicit SDependenceGraphNode(MemberNodeRef MemberNode)
+  explicit SDependenceGraphNode(UnitType U)
       : ContainingGraph(nullptr), IsNextIteration(false) {
-    Nodes.emplace_back(MemberNode);
+    Units.emplace_back(U);
   }
 
 private:
   using EdgesContainerType = std::vector<SelfType *>;
 
-  std::vector<MemberNodeRef> Nodes;
+  std::vector<UnitType> Units;
   mutable EdgesContainerType OutEdges;
   mutable EdgesContainerType InEdges;
 
   template <typename IteratorT>
   explicit SDependenceGraphNode(IteratorT Begin, IteratorT End) {
-    std::copy(Begin, End, std::back_inserter(Nodes));
+    std::copy(Begin, End, std::back_inserter(Units));
   }
 
 public:
-  using iterator = typename decltype(Nodes)::iterator;
-  using const_iterator = typename decltype(Nodes)::const_iterator;
+  using iterator = typename decltype(Units)::iterator;
+  using const_iterator = typename decltype(Units)::const_iterator;
 
   using EdgesIteratorType = typename EdgesContainerType::iterator;
   using ConstEdgesIteratorType = typename EdgesContainerType::const_iterator;
@@ -87,14 +87,14 @@ public:
   bool isNextIteration() const { return IsNextIteration; }
   void setNextIteration(bool Val) { IsNextIteration = Val; }
 
-  iterator begin() { return Nodes.begin(); }
-  iterator end() { return Nodes.end(); }
+  iterator begin() { return Units.begin(); }
+  iterator end() { return Units.end(); }
 
-  const_iterator begin() const { return Nodes.begin(); }
-  const_iterator end() const { return Nodes.end(); }
+  const_iterator begin() const { return Units.begin(); }
+  const_iterator end() const { return Units.end(); }
 
-  decltype(auto) size() const { return Nodes.size(); }
-  bool empty() const { return Nodes.empty(); }
+  decltype(auto) size() const { return Units.size(); }
+  bool empty() const { return Units.empty(); }
 
   decltype(auto) numOutEdges() const { return OutEdges.size(); }
   decltype(auto) numInEdges() const { return InEdges.size(); }
@@ -111,11 +111,11 @@ public:
   ConstEdgesIteratorType inverse_edge_begin() const { return InEdges.begin(); }
   ConstEdgesIteratorType inverse_edge_end() const { return InEdges.end(); }
 
-  iterator find(const MemberNodeRef &Node) {
+  iterator find(const UnitType &Node) {
     return std::find(begin(), end(), Node);
   }
 
-  const_iterator find(const MemberNodeRef &Node) const {
+  const_iterator find(const UnitType &Node) const {
     return std::find(begin(), end(), Node);
   }
 
@@ -135,7 +135,7 @@ template <typename GraphT> class SDependenceGraph {
   GraphT &OriginalGraph;
 
 public:
-  using MemberNodeRef = llvm::Instruction *;
+  using UnitType = llvm::Instruction *;
   using NodeType = SDependenceGraphNode<GraphT>;
   using NodeRef = NodeType *;
   using ConstNodeRef = const NodeType *;
@@ -148,8 +148,8 @@ private:
                    boost::bimaps::tagged<NodeRef, iteration1>>;
   NodeToNodeBimap Iterations;
 
-  using MemberNodeToNodeMap = std::map<MemberNodeRef, NodeRef>;
-  MemberNodeToNodeMap UnitToNodes;
+  using UnitToNodeMap = std::map<UnitType, NodeRef>;
+  UnitToNodeMap UnitToNode;
 
 public:
   SDependenceGraph() = delete;
@@ -165,22 +165,22 @@ public:
     return n;
   }
 
-  void createNode(MemberNodeRef I) {
+  void createNode(UnitType I) {
     auto sn{std::make_unique<NodeType>(I)};
     (*sn).ContainingGraph = this;
-    UnitToNodes.emplace(I, sn.get());
+    UnitToNode.emplace(I, sn.get());
     Nodes.emplace_back(std::move(sn));
   }
 
-  void removeNode(MemberNodeRef I) {
+  void removeNode(UnitType I) {
     for (auto it = Nodes.begin(), end = Nodes.end(); it != end; ++it) {
       auto &n = *it;
-      auto found = std::find(n->Nodes.begin(), n->Nodes.end(), I);
+      auto found = std::find(n->Units.begin(), n->Units.end(), I);
 
-      if (found != n->Nodes.end()) {
-        n->Nodes.erase(found);
+      if (found != n->Units.end()) {
+        n->Units.erase(found);
 
-        if (n->Nodes.size() == 0) {
+        if (n->Units.size() == 0) {
           Nodes.erase(it);
         }
 
@@ -204,9 +204,9 @@ public:
 
   void computeEdges() {
     for (const auto &n : GT::nodes(&OriginalGraph)) {
-      auto &sn = UnitToNodes[n->unit()];
+      auto &sn = UnitToNode[n->unit()];
       for (const auto &e : GT::children(n)) {
-        auto &c = UnitToNodes[e->unit()];
+        auto &c = UnitToNode[e->unit()];
         sn->OutEdges.push_back(c);
         c->InEdges.push_back(sn);
       }
@@ -216,7 +216,7 @@ public:
   void computeNextIterationNodes() {
     decltype(Nodes) niNodes;
     for (auto &n : Nodes) {
-      for (auto &mn : n->Nodes) {
+      for (auto &mn : n->Units) {
         auto sn{std::make_unique<NodeType>(mn)};
         (*sn).ContainingGraph = this;
         sn->setNextIteration(true);
@@ -239,8 +239,8 @@ public:
 
       auto &n = Iterations.template by<iteration1>().at(sn.get());
 
-      for (auto &mn : n->Nodes) {
-        auto &nn = UnitToNodes[mn];
+      for (auto &mn : n->Units) {
+        auto &nn = UnitToNode[mn];
         auto &snn = Iterations.template by<iteration0>().at(nn);
         sn->OutEdges.push_back(snn);
         snn->InEdges.push_back(sn.get());
