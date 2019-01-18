@@ -51,11 +51,11 @@ template <typename GraphT> class SDependenceGraphNode {
   using MemberNodeRef = llvm::Instruction *;
 
   SDependenceGraph<GraphT> *ContainingGraph;
-  bool IsShadow;
+  bool IsNextIteration;
 
 public:
   explicit SDependenceGraphNode(MemberNodeRef MemberNode)
-      : ContainingGraph(nullptr), IsShadow(false) {
+      : ContainingGraph(nullptr), IsNextIteration(false) {
     Nodes.emplace_back(MemberNode);
   }
 
@@ -83,6 +83,9 @@ public:
   SelfType &operator=(const SelfType &) = delete;
 
   SDependenceGraphNode(SelfType &&) = default;
+
+  bool isNextIteration() const { return IsNextIteration; }
+  void setNextIteration(bool Val) { IsNextIteration = Val; }
 
   iterator begin() { return Nodes.begin(); }
   iterator end() { return Nodes.end(); }
@@ -210,27 +213,27 @@ public:
     }
   }
 
-  void computeShadowNodes() {
-    decltype(Nodes) shadowNodes;
+  void computeNextIterationNodes() {
+    decltype(Nodes) niNodes;
     for (auto &n : Nodes) {
       for (auto &mn : n->Nodes) {
         auto sn{std::make_unique<NodeType>(mn)};
         (*sn).ContainingGraph = this;
-        (*sn).IsShadow = true;
+        sn->setNextIteration(true);
         Iterations.insert(
             typename NodeToNodeBimap::value_type(n.get(), sn.get()));
-        shadowNodes.emplace_back(std::move(sn));
+        niNodes.emplace_back(std::move(sn));
       }
     }
 
-    for (auto &n : shadowNodes) {
+    for (auto &n : niNodes) {
       Nodes.emplace_back(std::move(n));
     }
   }
 
-  void computeShadowEdges() {
+  void computeNextIterationEdges() {
     for (const auto &sn : Nodes) {
-      if (!sn->IsShadow) {
+      if (!sn->isNextIteration()) {
         continue;
       }
 
