@@ -140,6 +140,10 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     llvm::dbgs() << g.size() << '\n';
     llvm::dbgs() << sg.size() << '\n';
     llvm::dbgs() << sg.numOutEdges() << '\n';
+
+    sg.computeCrossIterationEdges();
+
+    llvm::dbgs() << sg.numOutEdges() << '\n';
   }
 
   return false;

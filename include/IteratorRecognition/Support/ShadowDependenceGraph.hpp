@@ -8,6 +8,8 @@
 
 #include "IteratorRecognition/Debug.hpp"
 
+#include "Pedigree/Analysis/Info/EdgeInfo/BasicDependenceInfo.hpp"
+
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
 
@@ -17,6 +19,8 @@
 #include "llvm/ADT/STLExtras.h"
 // using llvm::mapped_iterator
 // using llvm::make_filter_range
+
+#include "llvm/Support/raw_ostream.h"
 
 #include "llvm/Support/Debug.h"
 // using llvm::dbgs
@@ -39,6 +43,8 @@
 
 #include <utility>
 // using std::declval
+
+#define DEBUG_TYPE "iterator-recognition-sgraph"
 
 namespace llvm {
 class Instruction;
@@ -329,8 +335,40 @@ public:
     }
   }
 
-  decltype(auto) size() const { return Nodes.size(); }
-  bool empty() const { return Nodes.empty(); }
+  void computeCrossIterationEdges() {
+    for (auto &n : Nodes) {
+      if (n->isNextIteration()) {
+        continue;
+      }
+
+      std::set<UnitType> unitDestinations;
+
+      const auto &depSrc = *OriginalGraph.getNode(*(n->begin()));
+
+      for (auto &e : n->edges()) {
+        const auto &depDst = *OriginalGraph.getNode(*(e->begin()));
+
+        auto info = depSrc->getEdgeInfo(depDst);
+
+        if (info->origins & pedigree::DependenceOrigin::Memory) {
+          unitDestinations.insert(depDst->unit());
+        }
+      }
+
+      std::set<NodeRef> nodeSources;
+
+      for (auto &e : unitDestinations) {
+        nodeSources.insert(UnitToNode[e]);
+      }
+
+      NodeRef nodeDest = Iterations.template by<iteration0>().at(n.get());
+
+      for (auto &e : nodeSources) {
+        nodeDest->OutEdges.push_back(e);
+        e->InEdges.push_back(nodeDest);
+      }
+    }
+  }
 };
 
 } // namespace iteratorrecognition
