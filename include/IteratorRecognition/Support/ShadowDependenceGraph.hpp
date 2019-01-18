@@ -11,6 +11,9 @@
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
 
+#include "llvm/ADT/iterator_range.h"
+// using llvm::make_range
+
 #include "llvm/ADT/STLExtras.h"
 // using llvm::make_filter_range
 
@@ -157,6 +160,21 @@ public:
   SDependenceGraph &operator=(const SDependenceGraph &) = delete;
 
   explicit SDependenceGraph(GraphT &G) : OriginalGraph(G) {}
+
+  decltype(auto) begin() { return Nodes.begin(); }
+  decltype(auto) end() { return Nodes.end(); }
+
+  decltype(auto) begin() const { return Nodes.begin(); }
+  decltype(auto) end() const { return Nodes.end(); }
+
+  decltype(auto) nodes_begin() { return begin(); }
+  decltype(auto) nodes_end() { return end(); }
+
+  decltype(auto) nodes_begin() const { return begin(); }
+  decltype(auto) nodes_end() const { return end(); }
+
+  decltype(auto) nodes() { return llvm::make_range(begin(), end()); }
+  decltype(auto) nodes() const { return llvm::make_range(begin(), end()); }
 
   decltype(auto) numOutEdges() const {
     decltype(std::declval<NodeType>().numOutEdges()) n{};
