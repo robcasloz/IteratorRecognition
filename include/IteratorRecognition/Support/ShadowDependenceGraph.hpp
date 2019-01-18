@@ -15,6 +15,7 @@
 // using llvm::make_range
 
 #include "llvm/ADT/STLExtras.h"
+// using llvm::mapped_iterator
 // using llvm::make_filter_range
 
 #include "llvm/Support/Debug.h"
@@ -155,17 +156,45 @@ private:
   UnitToNodeMap UnitToNode;
 
 public:
+  using nodes_iterator = llvm::mapped_iterator<
+      typename decltype(Nodes)::iterator,
+      std::function<NodeRef(typename decltype(Nodes)::value_type &)>>;
+
+  using nodes_const_iterator =
+      llvm::mapped_iterator<typename decltype(Nodes)::const_iterator,
+                            std::function<ConstNodeRef(
+                                const typename decltype(Nodes)::value_type &)>>;
+
   SDependenceGraph() = delete;
   SDependenceGraph(const SDependenceGraph &) = delete;
   SDependenceGraph &operator=(const SDependenceGraph &) = delete;
 
+  static NodeRef nodes_iterator_map(typename decltype(Nodes)::value_type &P) {
+    return P.get();
+  }
+
+  static ConstNodeRef
+  nodes_const_iterator_map(const typename decltype(Nodes)::value_type &P) {
+    return P.get();
+  }
+
   explicit SDependenceGraph(GraphT &G) : OriginalGraph(G) {}
 
-  decltype(auto) begin() { return Nodes.begin(); }
-  decltype(auto) end() { return Nodes.end(); }
+  decltype(auto) begin() {
+    return nodes_iterator(Nodes.begin(), nodes_iterator_map);
+  }
 
-  decltype(auto) begin() const { return Nodes.begin(); }
-  decltype(auto) end() const { return Nodes.end(); }
+  decltype(auto) end() {
+    return nodes_iterator(Nodes.end(), nodes_iterator_map);
+  }
+
+  decltype(auto) begin() const {
+    return nodes_const_iterator(Nodes.begin(), nodes_const_iterator_map);
+  }
+
+  decltype(auto) end() const {
+    return nodes_const_iterator(Nodes.end(), nodes_const_iterator_map);
+  }
 
   decltype(auto) nodes_begin() { return begin(); }
   decltype(auto) nodes_end() { return end(); }
