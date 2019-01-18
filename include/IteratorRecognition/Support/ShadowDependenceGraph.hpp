@@ -103,17 +103,25 @@ public:
   decltype(auto) numOutEdges() const { return OutEdges.size(); }
   decltype(auto) numInEdges() const { return InEdges.size(); }
 
-  EdgesIteratorType edge_begin() { return OutEdges.begin(); }
-  EdgesIteratorType edge_end() { return OutEdges.end(); }
+  EdgesIteratorType edges_begin() { return OutEdges.begin(); }
+  EdgesIteratorType edges_end() { return OutEdges.end(); }
 
-  ConstEdgesIteratorType edge_begin() const { return OutEdges.begin(); }
-  ConstEdgesIteratorType edge_end() const { return OutEdges.end(); }
+  ConstEdgesIteratorType edges_begin() const { return OutEdges.begin(); }
+  ConstEdgesIteratorType edges_end() const { return OutEdges.end(); }
 
-  EdgesIteratorType inverse_edge_begin() { return InEdges.begin(); }
-  EdgesIteratorType inverse_edge_end() { return InEdges.end(); }
+  decltype(auto) edges() {
+    return llvm::make_range(edges_begin(), edges_end());
+  }
 
-  ConstEdgesIteratorType inverse_edge_begin() const { return InEdges.begin(); }
-  ConstEdgesIteratorType inverse_edge_end() const { return InEdges.end(); }
+  decltype(auto) edges() const {
+    return llvm::make_range(edges_begin(), edges_end());
+  }
+
+  EdgesIteratorType inverse_edges_begin() { return InEdges.begin(); }
+  EdgesIteratorType inverse_edges_end() { return InEdges.end(); }
+
+  ConstEdgesIteratorType inverse_edges_begin() const { return InEdges.begin(); }
+  ConstEdgesIteratorType inverse_edges_end() const { return InEdges.end(); }
 
   iterator find(const UnitType &Node) {
     return std::find(begin(), end(), Node);
@@ -174,6 +182,9 @@ public:
   SDependenceGraph() = delete;
   SDependenceGraph(const SDependenceGraph &) = delete;
   SDependenceGraph &operator=(const SDependenceGraph &) = delete;
+
+  decltype(auto) size() const { return Nodes.size(); }
+  bool empty() const { return Nodes.empty(); }
 
   static NodeRef nodes_iterator_map(typename decltype(Nodes)::value_type &P) {
     return P.get();
