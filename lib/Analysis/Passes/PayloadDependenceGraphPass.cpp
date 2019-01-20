@@ -122,7 +122,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     sg.computeNodes();
     for (const auto &n : DGT::nodes(&g)) {
       if (!is_payload(n)) {
-        sg.removeNode(n->unit());
+        sg.removeNodeFor(n->unit());
       }
     }
     // this does not work due to compiler

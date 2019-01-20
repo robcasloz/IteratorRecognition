@@ -252,14 +252,14 @@ public:
     return n;
   }
 
-  void createNode(UnitType I) {
+  void addNodeFor(UnitType I) {
     auto sn{std::make_unique<NodeType>(I)};
     (*sn).ContainingGraph = this;
     UnitToNode.emplace(I, sn.get());
     Nodes.emplace_back(std::move(sn));
   }
 
-  void removeNode(UnitType I) {
+  void removeNodeFor(UnitType I) {
     for (auto it = Nodes.begin(), end = Nodes.end(); it != end; ++it) {
       auto &n = *it;
       auto found = std::find(n->Units.begin(), n->Units.end(), I);
@@ -278,14 +278,14 @@ public:
 
   void computeNodes() {
     for (const auto &n : GT::nodes(&OriginalGraph)) {
-      createNode(n->unit());
+      addNodeFor(n->unit());
     }
   }
 
   template <typename PredT> void computeNodesIf(PredT &&Pred) {
     for (const auto &n :
          llvm::make_filter_range(GT::nodes(&OriginalGraph), Pred)) {
-      createNode(n->unit());
+      addNodeFor(n->unit());
     }
   }
 
