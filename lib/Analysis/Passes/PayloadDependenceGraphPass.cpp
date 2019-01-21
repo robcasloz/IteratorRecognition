@@ -134,8 +134,40 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     llvm::dbgs() << sg.size() << '\n';
     llvm::dbgs() << sg.numOutEdges() << '\n';
 
+    // for (auto *n : sg.nodes()) {
+    // if (!n->isNextIteration()) {
+    // llvm::dbgs() << "node with units: \n";
+    // for (auto &u : n->units()) {
+    // llvm::dbgs() << "\t" << *u << '\n';
+    //}
+
+    // for (auto &e : n->edges()) {
+    // llvm::dbgs() << "\thas edge with node with units: \n";
+    // for (auto &u : e->units()) {
+    // llvm::dbgs() << "\t" << *u << '\n';
+    //}
+    //}
+    //}
+    //}
+
     sg.computeNextIterationNodes();
     sg.computeNextIterationEdges();
+
+    // for (auto *n : sg.nodes()) {
+    // if (n->isNextIteration()) {
+    // llvm::dbgs() << "node with units: \n";
+    // for (auto &u : n->units()) {
+    // llvm::dbgs() << "\t" << *u << '\n';
+    //}
+
+    // for (auto &e : n->edges()) {
+    // llvm::dbgs() << "\thas edge with node with units: \n";
+    // for (auto &u : e->units()) {
+    // llvm::dbgs() << "\t" << *u << '\n';
+    //}
+    //}
+    //}
+    //}
 
     llvm::dbgs() << g.size() << '\n';
     llvm::dbgs() << sg.size() << '\n';
