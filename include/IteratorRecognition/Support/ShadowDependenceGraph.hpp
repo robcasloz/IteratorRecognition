@@ -103,6 +103,20 @@ public:
   const_iterator begin() const { return Units.begin(); }
   const_iterator end() const { return Units.end(); }
 
+  iterator units_begin() { return begin(); }
+  iterator units_end() { return end(); }
+
+  const_iterator units_begin() const { return begin(); }
+  const_iterator units_end() const { return end(); }
+
+  decltype(auto) units() {
+    return llvm::make_range(units_begin(), units_end());
+  }
+
+  decltype(auto) units() const {
+    return llvm::make_range(units_begin(), units_end());
+  }
+
   decltype(auto) size() const { return Units.size(); }
   bool empty() const { return Units.empty(); }
 
