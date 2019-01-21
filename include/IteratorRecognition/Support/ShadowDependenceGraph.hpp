@@ -60,12 +60,10 @@ template <typename GraphT> class SDependenceGraphNode {
   using SelfType = SDependenceGraphNode;
   using UnitType = llvm::Instruction *;
 
-  SDependenceGraph<GraphT> *ContainingGraph;
   bool IsNextIteration;
 
 public:
-  explicit SDependenceGraphNode(UnitType U)
-      : ContainingGraph(nullptr), IsNextIteration(false) {
+  explicit SDependenceGraphNode(UnitType U) : IsNextIteration(false) {
     Units.emplace_back(U);
   }
 
@@ -268,7 +266,6 @@ public:
 
   void addNodeFor(UnitType I) {
     auto sn{std::make_unique<NodeType>(I)};
-    (*sn).ContainingGraph = this;
     UnitToNode.emplace(I, sn.get());
     Nodes.emplace_back(std::move(sn));
   }
@@ -316,19 +313,18 @@ public:
 
   void computeNextIterationNodes() {
     decltype(Nodes) niNodes;
-    for (auto &n : Nodes) {
-      for (auto &mn : n->Units) {
-        auto sn{std::make_unique<NodeType>(mn)};
-        (*sn).ContainingGraph = this;
-        sn->setNextIteration(true);
+    for (auto &n0 : Nodes) {
+      for (auto &u : n0->units()) {
+        auto n1{std::make_unique<NodeType>(u)};
+        n1->setNextIteration(true);
         Iterations.insert(
-            typename NodeToNodeBimap::value_type(n.get(), sn.get()));
-        niNodes.emplace_back(std::move(sn));
+            typename NodeToNodeBimap::value_type(n0.get(), n1.get()));
+        niNodes.emplace_back(std::move(n1));
       }
     }
 
-    for (auto &n : niNodes) {
-      Nodes.emplace_back(std::move(n));
+    for (auto &n1 : niNodes) {
+      Nodes.emplace_back(std::move(n1));
     }
   }
 
