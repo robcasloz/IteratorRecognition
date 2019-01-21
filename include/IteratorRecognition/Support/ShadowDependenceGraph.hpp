@@ -333,18 +333,17 @@ public:
   }
 
   void computeNextIterationEdges() {
-    for (const auto &sn : Nodes) {
-      if (!sn->isNextIteration()) {
+    for (const auto &n : Nodes) {
+      if (!n->isNextIteration()) {
         continue;
       }
 
-      auto &n = Iterations.template by<iteration1>().at(sn.get());
+      auto &n0 = Iterations.template by<iteration1>().at(n.get());
 
-      for (auto &mn : n->Units) {
-        auto &nn = UnitToNode[mn];
-        auto &snn = Iterations.template by<iteration0>().at(nn);
-        sn->OutEdges.push_back(snn);
-        snn->InEdges.push_back(sn.get());
+      for (auto &en0 : n0->edges()) {
+        auto &en1 = Iterations.template by<iteration0>().at(en0);
+        n0->OutEdges.push_back(en1);
+        en1->InEdges.push_back(n0);
       }
     }
   }
