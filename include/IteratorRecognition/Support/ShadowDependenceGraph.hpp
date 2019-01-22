@@ -329,16 +329,16 @@ public:
   }
 
   void computeNextIterationEdges() {
-    for (const auto &n : Nodes) {
-      if (!n->isNextIteration()) {
+    for (auto &n1 : Nodes) {
+      if (!n1->isNextIteration()) {
         continue;
       }
 
-      auto &n0 = Iterations.template by<iteration1>().at(n.get());
+      auto &n0 = Iterations.template by<iteration1>().at(n1.get());
 
       for (auto &en0 : n0->edges()) {
         auto &en1 = Iterations.template by<iteration0>().at(en0);
-        n0->OutEdges.push_back(en1);
+        n1->OutEdges.push_back(en1);
         en1->InEdges.push_back(n0);
       }
     }
