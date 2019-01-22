@@ -10,6 +10,9 @@
 
 #include "Pedigree/Analysis/Info/EdgeInfo/BasicDependenceInfo.hpp"
 
+#include "llvm/IR/Instruction.h"
+// using llvm::Instruction
+
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
 
@@ -44,11 +47,10 @@
 #include <utility>
 // using std::declval
 
-#define DEBUG_TYPE "iterator-recognition-sgraph"
+#include <cassert>
+// using assert
 
-namespace llvm {
-class Instruction;
-} // namespace llvm
+#define DEBUG_TYPE "iterator-recognition-sgraph"
 
 namespace iteratorrecognition {
 
@@ -345,36 +347,52 @@ public:
   }
 
   void computeCrossIterationEdges() {
-    for (auto &n : Nodes) {
-      if (n->isNextIteration()) {
+    std::map<NodeRef, std::vector<NodeRef>> ciEdges;
+
+    for (auto *n0 : nodes()) {
+      if (n0->isNextIteration()) {
         continue;
-      }
-
-      std::set<UnitType> unitDestinations;
-
-      const auto &depSrc = *OriginalGraph.getNode(*(n->begin()));
-
-      for (auto &e : n->edges()) {
-        const auto &depDst = *OriginalGraph.getNode(*(e->begin()));
-
-        auto info = depSrc->getEdgeInfo(depDst);
-
-        if (info->origins & pedigree::DependenceOrigin::Memory) {
-          unitDestinations.insert(depDst->unit());
-        }
       }
 
       std::set<NodeRef> nodeSources;
 
-      for (auto &e : unitDestinations) {
-        nodeSources.insert(UnitToNode[e]);
+      for (auto *unitSrc : n0->units()) {
+        auto *depSrc = OriginalGraph.getNode(unitSrc);
+        assert(depSrc && "Pointer is null!");
+
+        std::set<UnitType> unitDestinations;
+
+        for (auto &e : n0->edges()) {
+          for (auto *unitDst : *e) {
+            auto *depDst = OriginalGraph.getNode(unitDst);
+            assert(depDst && "Pointer is null!");
+
+            auto info = depSrc->getEdgeInfo(depDst);
+
+            if (info.value().origins & pedigree::DependenceOrigin::Memory) {
+              unitDestinations.insert(depDst->unit());
+            }
+          }
+
+          for (auto &e : unitDestinations) {
+            nodeSources.insert(UnitToNode[e]);
+          }
+        }
       }
 
-      NodeRef nodeDest = Iterations.template by<iteration0>().at(n.get());
+      NodeRef n1 = Iterations.template by<iteration0>().at(n0);
 
+      ciEdges.insert({n1, {}});
       for (auto &e : nodeSources) {
-        nodeDest->OutEdges.push_back(e);
-        e->InEdges.push_back(nodeDest);
+        ciEdges[n1].emplace_back(e);
+      }
+    }
+
+    for (auto &e : ciEdges) {
+      auto *n1 = e.first;
+      for (auto *n0 : e.second) {
+        n0->OutEdges.push_back(n1);
+        n1->InEdges.push_back(n0);
       }
     }
   }
