@@ -143,6 +143,14 @@ public:
   ConstEdgesIteratorType inverse_edges_begin() const { return InEdges.begin(); }
   ConstEdgesIteratorType inverse_edges_end() const { return InEdges.end(); }
 
+  decltype(auto) inverse_edges() {
+    return llvm::make_range(inverse_edges_begin(), inverse_edges_end());
+  }
+
+  decltype(auto) inverse_edges() const {
+    return llvm::make_range(inverse_edges_begin(), inverse_edges_end());
+  }
+
   iterator find(const UnitType &Node) {
     return std::find(begin(), end(), Node);
   }
