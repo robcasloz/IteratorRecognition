@@ -274,16 +274,29 @@ public:
     return n;
   }
 
-  void addNodeFor(UnitType I) {
-    auto sn{std::make_unique<NodeType>(I)};
-    UnitToNode.emplace(I, sn.get());
+  void addNodeFor(UnitType U) {
+    auto sn{std::make_unique<NodeType>(U)};
+    UnitToNode.emplace(U, sn.get());
     Nodes.emplace_back(std::move(sn));
   }
 
-  void removeNodeFor(UnitType I) {
+  ConstNodeRef findNodeFor(UnitType U) const {
+    for (auto it = nodes_begin(), end = nodes_end(); it != end; ++it) {
+      auto *n = *it;
+      auto found = std::find(n->units_begin(), n->units_end(), U);
+
+      if (found != n->Units.end()) {
+        return n;
+      }
+    }
+
+    return nullptr;
+  }
+
+  void removeNodeFor(UnitType U) {
     for (auto it = Nodes.begin(), end = Nodes.end(); it != end; ++it) {
       auto &n = *it;
-      auto found = std::find(n->Units.begin(), n->Units.end(), I);
+      auto found = std::find(n->Units.begin(), n->Units.end(), U);
 
       if (found != n->Units.end()) {
         n->Units.erase(found);
