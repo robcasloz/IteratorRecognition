@@ -48,7 +48,7 @@
 // using llvm::dbgs
 // using llvm::errs
 
-#define DEBUG_TYPE "iterator-recognition-classify"
+#define DEBUG_TYPE "itrclassify"
 
 // namespace aliases
 
