@@ -10,4 +10,6 @@
 
 extern llvm::cl::OptionCategory IteratorRecognitionCLCategory;
 
+extern llvm::cl::list<std::string> FunctionWhitelist;
+
 #endif // header

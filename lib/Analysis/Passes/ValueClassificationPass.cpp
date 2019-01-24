@@ -94,6 +94,14 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
   auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
                    .getIteratorRecognitionInfo();
 
+  if (FunctionWhitelist.size()) {
+    auto found = std::find(FunctionWhitelist.begin(), FunctionWhitelist.end(),
+                           std::string{CurFunc.getName()});
+    if (found == FunctionWhitelist.end()) {
+      return false;
+    }
+  }
+
   LLVM_DEBUG({
     llvm::dbgs() << "iterator var classification for function: "
                  << CurFunc.getName() << "\n";
