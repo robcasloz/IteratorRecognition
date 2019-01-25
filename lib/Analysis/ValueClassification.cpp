@@ -41,6 +41,16 @@ void FindPayloadVars(const IteratorInfo &Info,
   }
 }
 
+void FindMemPayloadVars(
+    const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
+    llvm::SmallPtrSetImpl<llvm::Instruction *> &MemPayloadValues) {
+  for (const auto &e : PayloadValues) {
+    if (e->mayReadOrWriteMemory()) {
+      MemPayloadValues.insert(e);
+    }
+  }
+}
+
 void FindPayloadTempAndLiveVars(
     const IteratorInfo &Info,
     const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
