@@ -25,7 +25,8 @@ void FindPayloadVars(const IteratorInfo &Info,
 
 void FindMemPayloadVars(
     const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
-    llvm::SmallPtrSetImpl<llvm::Instruction *> &MemPayloadValues);
+    llvm::SmallPtrSetImpl<llvm::Instruction *> &MemLiveInThru,
+    llvm::SmallPtrSetImpl<llvm::Instruction *> &MemLiveOut);
 
 void FindPayloadTempAndLiveVars(
     const IteratorInfo &Info,

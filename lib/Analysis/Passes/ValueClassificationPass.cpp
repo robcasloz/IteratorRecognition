@@ -109,7 +109,8 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
 
   for (auto &e : info.getIteratorsInfo()) {
     llvm::SmallPtrSet<llvm::Instruction *, 8> itVars, pdVars, pdTempVars,
-        pdLiveVars, directItUsesInPayload, pdMemVars;
+        pdLiveVars, directItUsesInPayload, pdMemLiveInThruVars,
+        pdMemLiveOutVars;
 
     LLVM_DEBUG(llvm::dbgs()
                    << "loop: " << e.getLoop()->getHeader()->getName() << "\n";);
@@ -118,7 +119,7 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
     FindPayloadVars(e, pdVars);
     FindPayloadTempAndLiveVars(e, pdVars, pdTempVars, pdLiveVars);
     FindDirectUsesOfIn(itVars, pdVars, directItUsesInPayload);
-    FindMemPayloadVars(pdVars, pdMemVars);
+    FindMemPayloadVars(pdVars, pdMemLiveInThruVars, pdMemLiveOutVars);
 
     LLVM_DEBUG({
       llvm::dbgs() << "iterator: \n";
@@ -131,8 +132,13 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
         llvm::dbgs() << *e << '\n';
       }
 
-      llvm::dbgs() << "payload mem: \n";
-      for (auto *e : pdMemVars) {
+      llvm::dbgs() << "payload mem live in or thru: \n";
+      for (auto *e : pdMemLiveInThruVars) {
+        llvm::dbgs() << *e << '\n';
+      }
+
+      llvm::dbgs() << "payload mem live out: \n";
+      for (auto *e : pdMemLiveOutVars) {
         llvm::dbgs() << *e << '\n';
       }
 
