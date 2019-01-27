@@ -13,6 +13,12 @@
 #include "llvm/IR/Instruction.h"
 // using llvm::Instruction
 
+#include "llvm/IR/Instructions.h"
+// using llvm::PHINode
+
+#include "llvm/IR/Dominators.h"
+// using llvm::DominatorTree
+
 namespace iteratorrecognition {
 
 void FindIteratorVars(const IteratorInfo &Info,
@@ -41,7 +47,7 @@ void FindPayloadVars(const IteratorInfo &Info,
   }
 }
 
-void FindMemPayloadVars(
+void FindMemPayloadLiveVars(
     const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
     llvm::SmallPtrSetImpl<llvm::Instruction *> &MemLiveInThru,
     llvm::SmallPtrSetImpl<llvm::Instruction *> &MemLiveOut) {
@@ -79,6 +85,73 @@ void FindPayloadTempAndLiveVars(
     }
 
     hasAllUsesIn ? TempValues.insert(e) : LiveValues.insert(e);
+  }
+}
+
+void FindVirtRegPayloadLiveVars(
+    const IteratorInfo &Info,
+    const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
+    llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLive) {
+  auto &loopBlocks = Info.getLoop()->getBlocksSet();
+  llvm::SmallPtrSet<llvm::Instruction *, 32> live, visited;
+
+  for (const auto &e : PayloadValues) {
+    visited.insert(e);
+    bool hasAllUsesIn = true;
+
+    for (auto &u : e->uses()) {
+      auto *user = llvm::dyn_cast<llvm::Instruction>(u.getUser());
+      if (user && !loopBlocks.count(user->getParent())) {
+        hasAllUsesIn = false;
+        break;
+      }
+    }
+
+    if (!hasAllUsesIn) {
+      live.insert(e);
+    }
+
+    for (auto &u : e->operands()) {
+      auto *opi = llvm::dyn_cast<llvm::Instruction>(u);
+      if (opi && !visited.count(opi) && !loopBlocks.count(opi->getParent())) {
+        visited.insert(opi);
+        live.insert(opi);
+      }
+    }
+  }
+}
+
+void SplitVirtRegPayloadLiveVars(
+    const IteratorInfo &Info,
+    const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
+    const llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLive,
+    const llvm::DominatorTree &DT,
+    llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLiveIn,
+    llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLiveThru,
+    llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLiveOut) {
+  auto &loopBlocks = Info.getLoop()->getBlocksSet();
+
+  for (auto *e : VirtRegLive) {
+    if (PayloadValues.count(e)) {
+      VirtRegLiveOut.insert(e);
+      continue;
+    }
+
+    bool hasUsesAfter = false;
+    for (auto &u : e->uses()) {
+      auto *user = llvm::dyn_cast<llvm::Instruction>(u.getUser());
+      if (user && !loopBlocks.count(user->getParent())) {
+        if (DT.dominates(e, user) || llvm::isa<llvm::PHINode>(user)) {
+          hasUsesAfter = true;
+          VirtRegLiveThru.insert(e);
+          break;
+        }
+      }
+    }
+
+    if (!hasUsesAfter) {
+      VirtRegLiveIn.insert(e);
+    }
   }
 }
 

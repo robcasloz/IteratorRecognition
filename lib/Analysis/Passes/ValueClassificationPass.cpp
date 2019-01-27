@@ -32,6 +32,10 @@
 #include "llvm/IR/LegacyPassManager.h"
 // using llvm::PassManagerBase
 
+#include "llvm/IR/Dominators.h"
+// using llvm::DominatorTreeWrapperPass
+// using llvm::DominatorTree
+
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 // using llvm::PassManagerBuilder
 // using llvm::RegisterStandardPasses
@@ -85,12 +89,14 @@ static llvm::RegisterStandardPasses RegisterValueClassificationPass(
 namespace iteratorrecognition {
 
 void ValueClassificationPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.addRequired<llvm::DominatorTreeWrapperPass>();
   AU.addRequiredTransitive<IteratorRecognitionWrapperPass>();
 
   AU.setPreservesAll();
 }
 
 bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
+  auto *DT = &getAnalysis<llvm::DominatorTreeWrapperPass>().getDomTree();
   auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
                    .getIteratorRecognitionInfo();
 
@@ -108,18 +114,23 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
   });
 
   for (auto &e : info.getIteratorsInfo()) {
-    llvm::SmallPtrSet<llvm::Instruction *, 8> itVars, pdVars, pdTempVars,
-        pdLiveVars, directItUsesInPayload, pdMemLiveInThruVars,
-        pdMemLiveOutVars;
+    using SetTy = llvm::SmallPtrSet<llvm::Instruction *, 8>;
+    SetTy itVars, pdVars;
+    SetTy directItUsesInPayload, pdMemLiveInThruVars, pdMemLiveOutVars;
+    SetTy pdVirtRegLiveVars, pdVirtRegLiveInVars, pdVirtRegLiveThruVars,
+        pdVirtRegLiveOutVars;
 
     LLVM_DEBUG(llvm::dbgs()
                    << "loop: " << e.getLoop()->getHeader()->getName() << "\n";);
 
     FindIteratorVars(e, itVars);
     FindPayloadVars(e, pdVars);
-    FindPayloadTempAndLiveVars(e, pdVars, pdTempVars, pdLiveVars);
+    FindVirtRegPayloadLiveVars(e, pdVars, pdVirtRegLiveVars);
+    SplitVirtRegPayloadLiveVars(e, pdVars, pdVirtRegLiveVars, *DT,
+                                pdVirtRegLiveInVars, pdVirtRegLiveThruVars,
+                                pdVirtRegLiveOutVars);
     FindDirectUsesOfIn(itVars, pdVars, directItUsesInPayload);
-    FindMemPayloadVars(pdVars, pdMemLiveInThruVars, pdMemLiveOutVars);
+    FindMemPayloadLiveVars(pdVars, pdMemLiveInThruVars, pdMemLiveOutVars);
 
     LLVM_DEBUG({
       llvm::dbgs() << "iterator: \n";
@@ -142,13 +153,18 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
         llvm::dbgs() << *e << '\n';
       }
 
-      llvm::dbgs() << "payload temp: \n";
-      for (const auto &e : pdTempVars) {
+      llvm::dbgs() << "payload virt reg live in: \n";
+      for (const auto &e : pdVirtRegLiveInVars) {
         llvm::dbgs() << *e << '\n';
       }
 
-      llvm::dbgs() << "payload live: \n";
-      for (const auto &e : pdLiveVars) {
+      llvm::dbgs() << "payload virt reg live thru: \n";
+      for (const auto &e : pdVirtRegLiveThruVars) {
+        llvm::dbgs() << *e << '\n';
+      }
+
+      llvm::dbgs() << "payload virt reg live out: \n";
+      for (const auto &e : pdVirtRegLiveOutVars) {
         llvm::dbgs() << *e << '\n';
       }
 

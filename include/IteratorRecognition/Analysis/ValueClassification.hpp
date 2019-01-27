@@ -11,6 +11,7 @@
 
 namespace llvm {
 class Instruction;
+class DominatorTree;
 } // namespace llvm
 
 namespace iteratorrecognition {
@@ -23,10 +24,24 @@ void FindIteratorVars(const IteratorInfo &Info,
 void FindPayloadVars(const IteratorInfo &Info,
                      llvm::SmallPtrSetImpl<llvm::Instruction *> &Values);
 
-void FindMemPayloadVars(
+void FindMemPayloadLiveVars(
     const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
     llvm::SmallPtrSetImpl<llvm::Instruction *> &MemLiveInThru,
     llvm::SmallPtrSetImpl<llvm::Instruction *> &MemLiveOut);
+
+void FindVirtRegPayloadLiveVars(
+    const IteratorInfo &Info,
+    const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
+    llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLive);
+
+void SplitVirtRegPayloadLiveVars(
+    const IteratorInfo &Info,
+    const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
+    const llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLive,
+    const llvm::DominatorTree &DT,
+    llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLiveIn,
+    llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLiveThru,
+    llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLiveOut);
 
 void FindPayloadTempAndLiveVars(
     const IteratorInfo &Info,
