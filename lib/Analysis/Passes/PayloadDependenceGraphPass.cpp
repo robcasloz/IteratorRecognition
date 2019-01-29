@@ -180,7 +180,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     llvm::dbgs() << sg.size() << '\n';
     llvm::dbgs() << sg.numOutEdges() << '\n';
 
-    sg.computeCrossIterationEdges();
+    sg.computeCrossIterationEdges(itVals);
 
     llvm::dbgs() << sg.numOutEdges() << '\n';
 

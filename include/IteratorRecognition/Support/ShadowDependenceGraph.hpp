@@ -13,6 +13,10 @@
 #include "llvm/IR/Instruction.h"
 // using llvm::Instruction
 
+#include "llvm/IR/Instructions.h"
+// using llvm::Argument
+// using llvm::AllocaInst
+
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
 
@@ -53,6 +57,38 @@
 #define DEBUG_TYPE "iterator-recognition-sgraph"
 
 namespace iteratorrecognition {
+
+bool IsIteratorDependent(
+    const llvm::Value *V,
+    const llvm::SmallPtrSetImpl<llvm::Instruction *> &IteratorValues) {
+  llvm::SmallVector<const llvm::Value *, 16> workList{V};
+
+  while (!workList.empty()) {
+    auto *v = workList.back();
+    workList.pop_back();
+
+    if (llvm::isa<llvm::Argument>(v) || llvm::isa<llvm::Constant>(v)) {
+      continue;
+    }
+
+    auto *ptrInst = llvm::dyn_cast<llvm::Instruction>(v);
+    if (!ptrInst) {
+      continue;
+    }
+
+    if (IteratorValues.count(ptrInst)) {
+      return true;
+    }
+
+    if (llvm::isa<llvm::AllocaInst>(ptrInst)) {
+      continue;
+    }
+
+    workList.insert(workList.end(), ptrInst->op_begin(), ptrInst->op_end());
+  }
+
+  return false;
+}
 
 template <typename GraphT> class SDependenceGraph;
 
@@ -367,7 +403,8 @@ public:
     }
   }
 
-  void computeCrossIterationEdges() {
+  void computeCrossIterationEdges(
+      const llvm::SmallPtrSetImpl<llvm::Instruction *> &IteratorValues) {
     std::map<NodeRef, std::vector<NodeRef>> ciEdges;
 
     for (auto *n0 : nodes()) {
@@ -391,6 +428,10 @@ public:
             auto info = depSrc->getEdgeInfo(depDst);
 
             if (info.value().origins & pedigree::DependenceOrigin::Memory) {
+              if (IsIteratorDependent(unitSrc, IteratorValues)) {
+                llvm::dbgs() << "test it dep: " << *unitSrc << "\n";
+              }
+
               unitDestinations.insert(depDst->unit());
             }
           }
