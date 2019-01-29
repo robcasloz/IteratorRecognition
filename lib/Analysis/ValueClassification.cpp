@@ -72,8 +72,8 @@ void FindVirtRegPayloadLiveVars(
     const IteratorInfo &Info,
     const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
     llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLive) {
-  auto &loopBlocks = Info.getLoop()->getBlocksSet();
-  llvm::SmallPtrSet<llvm::Instruction *, 32> live, visited;
+  // auto &loopBlocks = Info.getLoop()->getBlocksSet();
+  llvm::SmallPtrSet<llvm::Instruction *, 32> visited;
 
   for (const auto &e : PayloadValues) {
     visited.insert(e);
@@ -81,21 +81,21 @@ void FindVirtRegPayloadLiveVars(
 
     for (auto &u : e->uses()) {
       auto *user = llvm::dyn_cast<llvm::Instruction>(u.getUser());
-      if (user && !loopBlocks.count(user->getParent())) {
+      if (user && !PayloadValues.count(user)) {
         hasAllUsesIn = false;
         break;
       }
     }
 
     if (!hasAllUsesIn) {
-      live.insert(e);
+      VirtRegLive.insert(e);
     }
 
     for (auto &u : e->operands()) {
       auto *opi = llvm::dyn_cast<llvm::Instruction>(u);
-      if (opi && !visited.count(opi) && !loopBlocks.count(opi->getParent())) {
+      if (opi && !visited.count(opi) && !PayloadValues.count(opi)) {
         visited.insert(opi);
-        live.insert(opi);
+        VirtRegLive.insert(opi);
       }
     }
   }
@@ -109,7 +109,7 @@ void SplitVirtRegPayloadLiveVars(
     llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLiveIn,
     llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLiveThru,
     llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLiveOut) {
-  auto &loopBlocks = Info.getLoop()->getBlocksSet();
+  // auto &loopBlocks = Info.getLoop()->getBlocksSet();
 
   for (auto *e : VirtRegLive) {
     if (PayloadValues.count(e)) {
@@ -120,7 +120,7 @@ void SplitVirtRegPayloadLiveVars(
     bool hasUsesAfter = false;
     for (auto &u : e->uses()) {
       auto *user = llvm::dyn_cast<llvm::Instruction>(u.getUser());
-      if (user && !loopBlocks.count(user->getParent())) {
+      if (user && !PayloadValues.count(user)) {
         if (DT.dominates(e, user) || llvm::isa<llvm::PHINode>(user)) {
           hasUsesAfter = true;
           VirtRegLiveThru.insert(e);
