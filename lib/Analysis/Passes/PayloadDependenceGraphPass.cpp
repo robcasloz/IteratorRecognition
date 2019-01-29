@@ -10,6 +10,8 @@
 
 #include "IteratorRecognition/Support/ShadowDependenceGraph.hpp"
 
+#include "IteratorRecognition/Analysis/DetectOperations.hpp"
+
 #include "IteratorRecognition/Analysis/Passes/PayloadDependenceGraphPass.hpp"
 
 #include "IteratorRecognition/Analysis/IteratorRecognition.hpp"
@@ -30,6 +32,9 @@
 
 #include "llvm/IR/Function.h"
 // using llvm::Function
+
+#include "llvm/IR/Instructions.h"
+// using llvm::StoreInst
 
 #include "llvm/IR/LegacyPassManager.h"
 // using llvm::PassManagerBase
@@ -99,15 +104,14 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
                  << CurFunc.getName() << "\n";
   });
 
-  llvm::SmallPtrSet<llvm::Instruction *, 8> itVars, pdVars, pdTempVars,
-      pdLiveVars, directItUsesInPayload;
+  llvm::SmallPtrSet<llvm::Instruction *, 8> itVars, pdVars, pdLiveVars,
+      directItUsesInPayload;
 
   for (auto &e : info.getIteratorsInfo()) {
     LLVM_DEBUG(llvm::dbgs() << "loop: " << *e.getLoop()->getHeader() << "\n";);
 
     FindIteratorVars(e, itVars);
     FindPayloadVars(e, pdVars);
-    FindPayloadTempAndLiveVars(e, pdVars, pdTempVars, pdLiveVars);
     FindDirectUsesOfIn(itVars, pdVars, directItUsesInPayload);
 
     auto &g = info.getGraph();
@@ -118,17 +122,20 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
       return pdVars.count(e->unit()) != 0;
     };
 
-    SDependenceGraph<DGType> sg(g);
+    SDependenceGraph<DGType> sg(g), sg2(g);
     sg.computeNodes();
+    sg2.computeNodes();
     for (const auto &n : DGT::nodes(&g)) {
       if (!is_payload(n)) {
         sg.removeNodeFor(n->unit());
+        sg2.removeNodeFor(n->unit());
       }
     }
     // this does not work due to compiler
     // sg.computeNodesIf(is_payload);
 
     sg.computeEdges();
+    sg2.computeEdges();
 
     llvm::dbgs() << g.size() << '\n';
     llvm::dbgs() << sg.size() << '\n';
@@ -176,6 +183,30 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     sg.computeCrossIterationEdges();
 
     llvm::dbgs() << sg.numOutEdges() << '\n';
+
+    //
+
+    llvm::Instruction *target = nullptr;
+    for (auto *n : sg.nodes()) {
+      for (auto *i : n->units()) {
+        if (llvm::isa<llvm::StoreInst>(i)) {
+          target = i;
+          break;
+        }
+      }
+
+      if (target) {
+        break;
+      }
+    }
+
+    llvm::SmallVector<llvm::Instruction *, 8> operations;
+
+    DetectOperationsOn(target, sg2, operations);
+
+    for (auto *e : operations) {
+      llvm::dbgs() << *e << '\n';
+    }
   }
 
   return false;

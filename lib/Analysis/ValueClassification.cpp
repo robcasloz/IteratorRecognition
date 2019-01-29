@@ -68,26 +68,6 @@ void FindMemPayloadLiveVars(
   }
 }
 
-void FindPayloadTempAndLiveVars(
-    const IteratorInfo &Info,
-    const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
-    llvm::SmallPtrSetImpl<llvm::Instruction *> &TempValues,
-    llvm::SmallPtrSetImpl<llvm::Instruction *> &LiveValues) {
-  auto &loopBlocks = Info.getLoop()->getBlocksSet();
-
-  for (const auto &e : PayloadValues) {
-    bool hasAllUsesIn = true;
-    for (auto &u : e->uses()) {
-      auto *user = llvm::dyn_cast<llvm::Instruction>(u.getUser());
-      if (user && !loopBlocks.count(user->getParent())) {
-        hasAllUsesIn = false;
-      }
-    }
-
-    hasAllUsesIn ? TempValues.insert(e) : LiveValues.insert(e);
-  }
-}
-
 void FindVirtRegPayloadLiveVars(
     const IteratorInfo &Info,
     const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,

@@ -43,12 +43,6 @@ void SplitVirtRegPayloadLiveVars(
     llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLiveThru,
     llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLiveOut);
 
-void FindPayloadTempAndLiveVars(
-    const IteratorInfo &Info,
-    const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
-    llvm::SmallPtrSetImpl<llvm::Instruction *> &TempValues,
-    llvm::SmallPtrSetImpl<llvm::Instruction *> &LiveValues);
-
 void FindDirectUsesOfIn(
     const llvm::SmallPtrSetImpl<llvm::Instruction *> &Values,
     const llvm::SmallPtrSetImpl<llvm::Instruction *> &OtherValues,
