@@ -18,25 +18,25 @@ namespace iteratorrecognition {
 
 class IteratorInfo;
 
-void FindIteratorVars(const IteratorInfo &Info,
-                      llvm::SmallPtrSetImpl<llvm::Instruction *> &Values);
+void FindIteratorValues(const IteratorInfo &Info,
+                        llvm::SmallPtrSetImpl<llvm::Instruction *> &Values);
 
-void FindPayloadVars(const IteratorInfo &Info,
-                     llvm::SmallPtrSetImpl<llvm::Instruction *> &Values);
+void FindPayloadValues(const IteratorInfo &Info,
+                       llvm::SmallPtrSetImpl<llvm::Instruction *> &Values);
 
-void FindMemPayloadLiveVars(
-    const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
+void FindMemPayloadLiveValues(
+    const llvm::SmallPtrSetImpl<llvm::Instruction *> &Payload,
     llvm::SmallPtrSetImpl<llvm::Instruction *> &MemLiveInThru,
     llvm::SmallPtrSetImpl<llvm::Instruction *> &MemLiveOut);
 
-void FindVirtRegPayloadLiveVars(
+void FindVirtRegPayloadLiveValues(
     const IteratorInfo &Info,
-    const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
+    const llvm::SmallPtrSetImpl<llvm::Instruction *> &Payload,
     llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLive);
 
-void SplitVirtRegPayloadLiveVars(
+void SplitVirtRegPayloadLiveValues(
     const IteratorInfo &Info,
-    const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
+    const llvm::SmallPtrSetImpl<llvm::Instruction *> &Payload,
     const llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLive,
     const llvm::DominatorTree &DT,
     llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLiveIn,

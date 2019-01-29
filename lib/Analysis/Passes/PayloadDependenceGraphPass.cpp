@@ -104,22 +104,22 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
                  << CurFunc.getName() << "\n";
   });
 
-  llvm::SmallPtrSet<llvm::Instruction *, 8> itVars, pdVars, pdLiveVars,
-      directItUsesInPayload;
+  llvm::SmallPtrSet<llvm::Instruction *, 8> itVals, pdVals, pdLiveVals,
+      directItUsesInPayloadVals;
 
   for (auto &e : info.getIteratorsInfo()) {
     LLVM_DEBUG(llvm::dbgs() << "loop: " << *e.getLoop()->getHeader() << "\n";);
 
-    FindIteratorVars(e, itVars);
-    FindPayloadVars(e, pdVars);
-    FindDirectUsesOfIn(itVars, pdVars, directItUsesInPayload);
+    FindIteratorValues(e, itVals);
+    FindPayloadValues(e, pdVals);
+    FindDirectUsesOfIn(itVals, pdVals, directItUsesInPayloadVals);
 
     auto &g = info.getGraph();
     using DGType = std::remove_reference_t<decltype(g)>;
     using DGT = llvm::GraphTraits<DGType *>;
 
-    auto is_payload = [&pdVars](const auto *e) {
-      return pdVars.count(e->unit()) != 0;
+    auto is_payload = [&pdVals](const auto *e) {
+      return pdVals.count(e->unit()) != 0;
     };
 
     SDependenceGraph<DGType> sg(g), sg2(g);

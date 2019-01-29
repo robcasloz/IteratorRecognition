@@ -21,8 +21,8 @@
 
 namespace iteratorrecognition {
 
-void FindIteratorVars(const IteratorInfo &Info,
-                      llvm::SmallPtrSetImpl<llvm::Instruction *> &Values) {
+void FindIteratorValues(const IteratorInfo &Info,
+                        llvm::SmallPtrSetImpl<llvm::Instruction *> &Values) {
   auto &loopBlocks = Info.getLoop()->getBlocksSet();
 
   for (auto *e : Info) {
@@ -36,8 +36,8 @@ void FindIteratorVars(const IteratorInfo &Info,
   }
 }
 
-void FindPayloadVars(const IteratorInfo &Info,
-                     llvm::SmallPtrSetImpl<llvm::Instruction *> &Values) {
+void FindPayloadValues(const IteratorInfo &Info,
+                       llvm::SmallPtrSetImpl<llvm::Instruction *> &Values) {
   auto loopInsts = make_loop_inst_range(Info.getLoop());
 
   for (auto &e : loopInsts) {
@@ -47,7 +47,7 @@ void FindPayloadVars(const IteratorInfo &Info,
   }
 }
 
-void FindMemPayloadLiveVars(
+void FindMemPayloadLiveValues(
     const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
     llvm::SmallPtrSetImpl<llvm::Instruction *> &MemLiveInThru,
     llvm::SmallPtrSetImpl<llvm::Instruction *> &MemLiveOut) {
@@ -68,20 +68,20 @@ void FindMemPayloadLiveVars(
   }
 }
 
-void FindVirtRegPayloadLiveVars(
+void FindVirtRegPayloadLiveValues(
     const IteratorInfo &Info,
-    const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
+    const llvm::SmallPtrSetImpl<llvm::Instruction *> &Payload,
     llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLive) {
   // auto &loopBlocks = Info.getLoop()->getBlocksSet();
   llvm::SmallPtrSet<llvm::Instruction *, 32> visited;
 
-  for (const auto &e : PayloadValues) {
+  for (const auto &e : Payload) {
     visited.insert(e);
     bool hasAllUsesIn = true;
 
     for (auto &u : e->uses()) {
       auto *user = llvm::dyn_cast<llvm::Instruction>(u.getUser());
-      if (user && !PayloadValues.count(user)) {
+      if (user && !Payload.count(user)) {
         hasAllUsesIn = false;
         break;
       }
@@ -93,7 +93,7 @@ void FindVirtRegPayloadLiveVars(
 
     for (auto &u : e->operands()) {
       auto *opi = llvm::dyn_cast<llvm::Instruction>(u);
-      if (opi && !visited.count(opi) && !PayloadValues.count(opi)) {
+      if (opi && !visited.count(opi) && !Payload.count(opi)) {
         visited.insert(opi);
         VirtRegLive.insert(opi);
       }
@@ -101,9 +101,9 @@ void FindVirtRegPayloadLiveVars(
   }
 }
 
-void SplitVirtRegPayloadLiveVars(
+void SplitVirtRegPayloadLiveValues(
     const IteratorInfo &Info,
-    const llvm::SmallPtrSetImpl<llvm::Instruction *> &PayloadValues,
+    const llvm::SmallPtrSetImpl<llvm::Instruction *> &Payload,
     const llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLive,
     const llvm::DominatorTree &DT,
     llvm::SmallPtrSetImpl<llvm::Instruction *> &VirtRegLiveIn,
@@ -112,7 +112,7 @@ void SplitVirtRegPayloadLiveVars(
   // auto &loopBlocks = Info.getLoop()->getBlocksSet();
 
   for (auto *e : VirtRegLive) {
-    if (PayloadValues.count(e)) {
+    if (Payload.count(e)) {
       VirtRegLiveOut.insert(e);
       continue;
     }
@@ -120,7 +120,7 @@ void SplitVirtRegPayloadLiveVars(
     bool hasUsesAfter = false;
     for (auto &u : e->uses()) {
       auto *user = llvm::dyn_cast<llvm::Instruction>(u.getUser());
-      if (user && !PayloadValues.count(user)) {
+      if (user && !Payload.count(user)) {
         if (DT.dominates(e, user) || llvm::isa<llvm::PHINode>(user)) {
           hasUsesAfter = true;
           VirtRegLiveThru.insert(e);
