@@ -41,6 +41,11 @@
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
 
+#include "llvm/Support/Debug.h"
+// using LLVM_DEBUG macro
+// using llvm::dbgs
+// using llvm::errs
+
 #include "boost/range/adaptors.hpp"
 // using boost::adaptors::filtered
 
@@ -56,6 +61,8 @@
 
 #include <cassert>
 // using assert
+
+#define DEBUG_TYPE "itr"
 
 namespace iteratorrecognition {
 
@@ -128,6 +135,9 @@ private:
     for (const auto &cn : CGT::nodes(CG)) {
       CondensationToLoopsMapT::mapped_type loops;
 
+      LLVM_DEBUG(llvm::dbgs() << "condensation: " << cn
+                              << " maps to loops with headers: \n";);
+
       for (const auto &n : *cn | ba::filtered(is_not_null_unit)) {
         auto *loop = LI.getLoopFor(n->unit()->getParent());
 
@@ -138,6 +148,14 @@ private:
       }
 
       loops.erase(nullptr);
+
+      LLVM_DEBUG({
+        for (const auto *loop : loops) {
+          auto *hdr = loop->getHeader();
+          llvm::dbgs() << '\t' << hdr << ' ' << hdr->getName() << '\n';
+        }
+      });
+
       Map.try_emplace(cn, loops);
     }
   }

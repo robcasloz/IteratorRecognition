@@ -68,7 +68,7 @@
 #include <system_error>
 // using std::error_code
 
-#define DEBUG_TYPE "iterator-recognition"
+#define DEBUG_TYPE "itr"
 
 // namespace aliases
 
