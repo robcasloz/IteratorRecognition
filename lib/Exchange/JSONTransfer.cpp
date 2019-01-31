@@ -46,6 +46,7 @@ toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
     json::Array loopsArray;
     std::transform(loops.begin(), loops.end(), std::back_inserter(loopsArray),
                    [&](const auto &e) {
+                     outs.clear();
                      ss << *e->getLoopLatch()->getTerminator();
                      return ss.str();
                    });
