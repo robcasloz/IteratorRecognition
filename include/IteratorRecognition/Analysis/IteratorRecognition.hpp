@@ -162,8 +162,41 @@ private:
   }
 
   void RecognizeIterator() {
-    LoopSet visited;
+    const auto &loops = const_cast<llvm::LoopInfo &>(LI).getLoopsInPreorder();
 
+    for (const auto *loop : loops) {
+      llvm::SmallPtrSet<CGT::NodeRef, 8> loopCondensations;
+
+      for (auto &e : Map) {
+        if (e.second.count(loop)) {
+          loopCondensations.insert(e.first);
+        }
+      }
+
+      llvm::SmallVector<llvm::Instruction *, 8> inst;
+
+      for (auto *cn : loopCondensations) {
+        bool workFound = false;
+
+        for (auto &ccn : ICGT::children(cn)) {
+          if (loopCondensations.count(ccn)) {
+            workFound = true;
+            break;
+          }
+        }
+
+        if (!workFound) {
+          br::transform(*cn | ba::filtered(is_not_null_unit),
+                        std::back_inserter(inst),
+                        [&](const auto &e) { return e->unit(); });
+        }
+      }
+
+      unique_inplace(inst);
+      IteratorsInfo.emplace_back(loop, inst.begin(), inst.end());
+    }
+
+    /*LoopSet visited;
     for (const auto &e : Map) {
       const auto &loops = e.second;
 
@@ -197,7 +230,7 @@ private:
           visited.insert(loop);
         }
       }
-    }
+    }*/
   }
 
 public:
