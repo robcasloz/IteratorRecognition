@@ -25,11 +25,11 @@
 #include "llvm/ADT/SmallVector.h"
 // using llvm::SmallVector
 
+#include "llvm/ADT/SmallPtrSet.h"
+// using llvm::SmallPtrSet
+
 #include "llvm/ADT/DenseMap.h"
 // using llvm::DenseMap
-
-#include "llvm/ADT/DenseSet.h"
-// using llvm::DenseSet
 
 #include "llvm/ADT/iterator_range.h"
 // using llvm::make_range
@@ -124,8 +124,9 @@ private:
   using ICGT = llvm::GraphTraits<llvm::Inverse<CondensationGraphT>>;
 
 public:
+  using LoopSet = llvm::SmallPtrSet<llvm::Loop *, 4>;
   using CondensationToLoopsMapT =
-      llvm::DenseMap<typename CGT::NodeRef, llvm::DenseSet<llvm::Loop *>>;
+      llvm::DenseMap<typename CGT::NodeRef, LoopSet>;
 
 private:
   CondensationToLoopsMapT Map;
