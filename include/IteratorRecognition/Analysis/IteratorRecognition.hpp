@@ -162,6 +162,8 @@ private:
   }
 
   void RecognizeIterator() {
+    LoopSet visited;
+
     for (const auto &e : Map) {
       const auto &loops = e.second;
 
@@ -181,13 +183,18 @@ private:
       }
 
       if (!workFound) {
-        for (auto &loop : loops) {
+        for (auto *loop : loops) {
+          if (visited.count(loop)) {
+            continue;
+          }
+
           llvm::SmallVector<llvm::Instruction *, 8> instructions;
           br::transform(*key | ba::filtered(is_not_null_unit),
                         std::back_inserter(instructions),
                         [&](const auto &e) { return e->unit(); });
           IteratorsInfo.emplace_back(loop, instructions.begin(),
                                      instructions.end());
+          visited.insert(loop);
         }
       }
     }
