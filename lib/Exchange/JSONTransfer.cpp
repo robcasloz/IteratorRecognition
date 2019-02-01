@@ -40,6 +40,17 @@ namespace itr = iteratorrecognition;
 
 namespace llvm {
 
+json::Value toJSON(const itr::LoopDebugInfoT &Info) {
+  json::Object infoMapping;
+
+  infoMapping["line"] = std::get<0>(Info);
+  infoMapping["column"] = std::get<1>(Info);
+  infoMapping["function"] = std::get<2>(Info);
+  infoMapping["filename"] = std::get<3>(Info);
+
+  return std::move(infoMapping);
+}
+
 json::Value
 toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
   json::Object root;
@@ -64,10 +75,7 @@ toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
                      infoMapping["latch"] = ss.str();
 
                      const auto &info = itr::extractLoopDebugInfo(*e);
-                     infoMapping["line"] = std::get<0>(info);
-                     infoMapping["column"] = std::get<1>(info);
-                     infoMapping["function"] = std::get<2>(info);
-                     infoMapping["filename"] = std::get<3>(info);
+                     infoMapping["di"] = toJSON(info);
 
                      return std::move(infoMapping);
                    });

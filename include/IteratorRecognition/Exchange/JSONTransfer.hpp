@@ -8,6 +8,8 @@
 
 #include "IteratorRecognition/Support/Utils/Extras.hpp"
 
+#include "IteratorRecognition/Support/Utils/DebugInfo.hpp"
+
 #include "IteratorRecognition/Support/CondensationGraph.hpp"
 
 #include "IteratorRecognition/Analysis/IteratorRecognition.hpp"
@@ -106,6 +108,9 @@ json::Value toJSON(const itr::CondensationGraph<GraphT *> &G) {
 
   return std::move(root);
 }
+
+json::Value
+toJSON(const itr::LoopDebugInfoT &Info);
 
 json::Value
 toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map);
