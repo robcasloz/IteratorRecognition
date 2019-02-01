@@ -134,6 +134,7 @@ endif()
 #
 
 set(LIB_SOURCES
+  "lib/Support/Utils/DebugInfo.cpp"
   "lib/Analysis/ValueClassification.cpp"
   "lib/Analysis/Graphs/PDGCondensationGraph.cpp"
   "lib/Exchange/JSONTransfer.cpp"

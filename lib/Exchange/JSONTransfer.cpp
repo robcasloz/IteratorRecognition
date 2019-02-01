@@ -6,6 +6,8 @@
 
 #include "IteratorRecognition/Exchange/JSONTransfer.hpp"
 
+#include "IteratorRecognition/Support/Utils/DebugInfo.hpp"
+
 #include "llvm/Analysis/LoopInfo.h"
 // using llvm::Loop
 
@@ -18,6 +20,11 @@
 #include "llvm/Support/ToolOutputFile.h"
 // using llvm::ToolOutputFile
 
+#include "llvm/Support/Debug.h"
+// using LLVM_DEBUG macro
+// using llvm::dbgs
+// using llvm::errs
+
 #include <utility>
 // using std::move
 
@@ -26,6 +33,10 @@
 
 #include <system_error>
 // using std::error_code
+
+// namespace aliases
+
+namespace itr = iteratorrecognition;
 
 namespace llvm {
 
@@ -47,11 +58,20 @@ toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
     std::transform(loops.begin(), loops.end(), std::back_inserter(loopsArray),
                    [&](const auto &e) {
                      outs.clear();
+                     json::Object infoMapping;
+
                      ss << *e->getLoopLatch()->getTerminator();
-                     return ss.str();
+                     infoMapping["latch"] = ss.str();
+
+                     const auto &info = itr::extractLoopDebugInfo(*e);
+                     infoMapping["line"] = std::get<0>(info);
+                     infoMapping["column"] = std::get<1>(info);
+                     infoMapping["function"] = std::get<2>(info);
+                     infoMapping["filename"] = std::get<3>(info);
+
+                     return std::move(infoMapping);
                    });
     mapping["loops"] = std::move(loopsArray);
-    outs.clear();
 
     condensations.push_back(std::move(mapping));
   }

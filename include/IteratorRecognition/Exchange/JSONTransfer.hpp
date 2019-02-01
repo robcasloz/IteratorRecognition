@@ -65,10 +65,9 @@ toJSON(const itr::CondensationGraphNode<GraphT *> &CGN) {
   json::Array condensationsArray;
   br::transform(CGN | ba::filtered(itr::is_not_null_unit),
                 std::back_inserter(condensationsArray), [&](const auto &e) {
-                  ss << *e->unit();
-                  auto s = ss.str();
                   outs.clear();
-                  return s;
+                  ss << *e->unit();
+                  return ss.str();
                 });
   mapping["condensation"] = std::move(condensationsArray);
   root = std::move(mapping);
