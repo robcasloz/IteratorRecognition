@@ -243,6 +243,7 @@ public:
     RecognizeIterator();
   }
 
+  const auto &getLoopInfo() { return LI; }
   const auto &getGraph() { return PDG; }
   const auto &getCondensationGraph() { return CG; }
   const auto &getCondensationToLoopsMap() { return Map; }
