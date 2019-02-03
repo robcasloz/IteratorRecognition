@@ -12,6 +12,8 @@
 
 #include "IteratorRecognition/Analysis/DetectOperations.hpp"
 
+#include "IteratorRecognition/Analysis/IteratorValueTracking.hpp"
+
 #include "IteratorRecognition/Analysis/Passes/PayloadDependenceGraphPass.hpp"
 
 #include "IteratorRecognition/Analysis/IteratorRecognition.hpp"
@@ -30,6 +32,15 @@
 // using llvm::LoopInfo
 // using llvm::LoopInfoWrapperPass
 
+#include "llvm/Analysis/MemoryLocation.h"
+
+#include "llvm/Analysis/AliasAnalysis.h"
+
+#include "llvm/Analysis/ValueTracking.h"
+
+#include "llvm/Analysis/LoopIterator.h"
+// using llvm::LoopBlocksRPO
+
 #include "llvm/IR/Function.h"
 // using llvm::Function
 
@@ -39,9 +50,14 @@
 #include "llvm/IR/LegacyPassManager.h"
 // using llvm::PassManagerBase
 
+#include "llvm/IR/DataLayout.h"
+
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 // using llvm::PassManagerBuilder
 // using llvm::RegisterStandardPasses
+
+#include "llvm/ADT/SmallPtrSet.h"
+// using llvm::SmallPtrSetImpl
 
 #include "llvm/ADT/DenseMap.h"
 // using llvm::DenseMap
@@ -88,8 +104,74 @@ static llvm::RegisterStandardPasses RegisterPayloadDependenceGraphPass(
 
 namespace iteratorrecognition {
 
+class ModRefPostOrder {
+  std::vector<llvm::Instruction *> order;
+
+public:
+  ModRefPostOrder(const llvm::Loop &CurLoop, const llvm::LoopInfo &LI,
+                  const llvm::SmallPtrSetImpl<llvm::Instruction *> &PartOf) {
+    llvm::LoopBlocksRPO rpot(const_cast<llvm::Loop *>(&CurLoop));
+    rpot.perform(const_cast<llvm::LoopInfo *>(&LI));
+
+    for (auto *bb : rpot) {
+      for (auto &ii : *bb) {
+        bool isModRef = false;
+        isModRef |= llvm::isa<llvm::LoadInst>(&ii);
+        isModRef |= llvm::isa<llvm::StoreInst>(&ii);
+
+        if (isModRef && PartOf.count(&ii)) {
+          order.push_back(&ii);
+        }
+      }
+    }
+
+    std::reverse(order.begin(), order.end());
+  }
+
+  using iterator = decltype(order)::iterator;
+  using const_iterator = decltype(order)::const_iterator;
+
+  decltype(auto) begin() { return order.begin(); }
+  decltype(auto) end() { return order.end(); }
+
+  decltype(auto) begin() const { return order.begin(); }
+  decltype(auto) end() const { return order.end(); }
+};
+
+struct CrossIterationDependencyChecker {
+  std::vector<llvm::Instruction *> ModRefInstructions;
+  std::map<llvm::Instruction *, llvm::Instruction *> UnresolvedPairs;
+  llvm::AAResults &AA;
+
+  template <typename IteratorT>
+  CrossIterationDependencyChecker(IteratorT Begin, IteratorT End,
+                                  llvm::AAResults &AA)
+      : AA(AA) {
+    std::copy(Begin, End, std::back_inserter(ModRefInstructions));
+  }
+
+  void check() {
+    for (auto it1 = ModRefInstructions.begin(), ie1 = ModRefInstructions.end();
+         it1 != ie1; ++it1) {
+      auto &I1 = *it1;
+      for (auto it2 = std::next(it1), ie2 = ie1; it2 != ie2; ++it2) {
+        auto &I2 = *it2;
+        auto mri = AA.getModRefInfo(I2, llvm::MemoryLocation::getOrNone(I1));
+        // llvm::dbgs() << "checking: " << *I1 << "\n" << *I2 << "\n";
+        // llvm::dbgs() << "checking: " << static_cast<int>(mri) << "\n";
+
+        if (llvm::isModSet(mri)) {
+          llvm::dbgs() << "dep between: " << *I1 << "\n" << *I2 << "\n";
+          UnresolvedPairs.insert({I1, I2});
+        }
+      }
+    }
+  }
+};
+
 void PayloadDependenceGraphPass::getAnalysisUsage(
     llvm::AnalysisUsage &AU) const {
+  AU.addRequiredTransitive<llvm::AAResultsWrapperPass>();
   AU.addRequiredTransitive<IteratorRecognitionWrapperPass>();
 
   AU.setPreservesAll();
@@ -98,6 +180,7 @@ void PayloadDependenceGraphPass::getAnalysisUsage(
 bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
   auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
                    .getIteratorRecognitionInfo();
+  auto &AA = getAnalysis<llvm::AAResultsWrapperPass>().getAAResults();
 
   LLVM_DEBUG({
     llvm::dbgs() << "payload dependence graph for function: "
@@ -206,6 +289,43 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
 
     for (auto *e : operations) {
       llvm::dbgs() << *e << '\n';
+    }
+
+    llvm::dbgs() << "#######\n";
+    ModRefPostOrder pdModRefTraversal(*e.getLoop(), info.getLoopInfo(), pdVals);
+    std::reverse(pdModRefTraversal.begin(), pdModRefTraversal.end());
+
+    for (auto *e : pdModRefTraversal) {
+      llvm::dbgs() << *e << '\n';
+    }
+
+    CrossIterationDependencyChecker cidc(pdModRefTraversal.begin(),
+                                         pdModRefTraversal.end(), AA);
+    cidc.check();
+
+    // const llvm::DataLayout &DL = CurFunc.getParent()->getDataLayout();
+    for (auto &e : cidc.UnresolvedPairs) {
+      /*llvm::dbgs() << "underlying obj for: " << *e.first << '\n';
+      auto loc1 = llvm::MemoryLocation::getOrNone(e.first);
+
+      if (loc1) {
+        const llvm::Value *V1 = llvm::GetUnderlyingObject((*loc1).Ptr, DL);
+        llvm::dbgs() << *V1 << '\n';
+      }
+
+      llvm::dbgs() << "underlying obj for: " << *e.second << '\n';
+      auto loc2 = llvm::MemoryLocation::getOrNone(e.second);
+
+      if (loc2) {
+        const llvm::Value *V2 = llvm::GetUnderlyingObject((*loc2).Ptr, DL);
+        llvm::dbgs() << *V2 << '\n';
+      }
+      */
+
+      auto res1 = GetIteratorDependent(e.first, itVals);
+      llvm::dbgs() << "I1: " << *e.first << " res1: " << static_cast<unsigned>(res1) << '\n';
+      auto res2 = GetIteratorDependent(e.second, itVals);
+      llvm::dbgs() << "I2: " << *e.second << " res2: " << static_cast<unsigned>(res2) << '\n';
     }
   }
 
