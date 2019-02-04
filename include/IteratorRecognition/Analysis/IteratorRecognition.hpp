@@ -244,10 +244,13 @@ public:
   }
 
   const auto &getLoopInfo() { return LI; }
-  const auto &getGraph() { return PDG; }
+  auto &getGraph() { return PDG; }
   const auto &getCondensationGraph() { return CG; }
+  const auto &getCondensationGraph() const { return CG; }
   const auto &getCondensationToLoopsMap() { return Map; }
+  const auto &getCondensationToLoopsMap() const { return Map; }
   const auto &getIteratorsInfo() { return IteratorsInfo; }
+  const auto &getIteratorsInfo() const { return IteratorsInfo; }
 
   llvm::Optional<llvm::iterator_range<IteratorInfo::const_insts_iterator>>
   getIteratorsFor(const llvm::Loop *L) {
