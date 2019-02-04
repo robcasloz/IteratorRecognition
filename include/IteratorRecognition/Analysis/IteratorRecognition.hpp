@@ -90,11 +90,8 @@ public:
 
   explicit IteratorInfo(llvm::Loop *L) : CurLoop(L) {}
 
-  auto *getLoop() { return CurLoop; }
   const auto *getLoop() const { return CurLoop; }
-  auto &getInstructions() { return CurInstructions; }
   const auto &getInstructions() const { return CurInstructions; }
-  auto getNumInstructions() { return CurInstructions.size(); }
   auto getNumInstructions() const { return CurInstructions.size(); }
 
   decltype(auto) begin() { return CurInstructions.begin(); }
