@@ -90,15 +90,28 @@ public:
 
   explicit IteratorInfo(llvm::Loop *L) : CurLoop(L) {}
 
+  auto *getLoop() { return CurLoop; }
   const auto *getLoop() const { return CurLoop; }
+  auto &getInstructions() { return CurInstructions; }
   const auto &getInstructions() const { return CurInstructions; }
+  auto getNumInstructions() { return CurInstructions.size(); }
   auto getNumInstructions() const { return CurInstructions.size(); }
+
+  decltype(auto) begin() { return CurInstructions.begin(); }
+  decltype(auto) end() { return CurInstructions.end(); }
 
   decltype(auto) begin() const { return CurInstructions.begin(); }
   decltype(auto) end() const { return CurInstructions.end(); }
 
+  decltype(auto) insts_begin() { return begin(); }
+  decltype(auto) insts_end() { return end(); }
+
   decltype(auto) insts_begin() const { return begin(); }
   decltype(auto) insts_end() const { return end(); }
+
+  decltype(auto) insts() {
+    return llvm::make_range(insts_begin(), insts_end());
+  }
 
   decltype(auto) insts() const {
     return llvm::make_range(insts_begin(), insts_end());
@@ -107,6 +120,10 @@ public:
   bool isIterator(const llvm::Instruction *Inst) const {
     return CurInstructions.end() !=
            std::find(CurInstructions.begin(), CurInstructions.end(), Inst);
+  }
+
+  bool isIterator(const llvm::Instruction *Inst) {
+    return static_cast<const IteratorInfo *>(this)->isIterator(Inst);
   }
 };
 
@@ -252,18 +269,24 @@ public:
   const auto &getIteratorsInfo() { return IteratorsInfo; }
   const auto &getIteratorsInfo() const { return IteratorsInfo; }
 
-  llvm::Optional<llvm::iterator_range<IteratorInfo::const_insts_iterator>>
-  getIteratorsFor(const llvm::Loop *L) {
+  llvm::Optional<llvm::iterator_range<IteratorInfo::insts_iterator>>
+  getIteratorsFor(const llvm::Loop *L) const {
     assert(L && "Loop is null!");
 
     auto found = std::find_if(IteratorsInfo.begin(), IteratorsInfo.end(),
                               [&L](const auto &e) { return e.getLoop() == L; });
 
     if (found != IteratorsInfo.end()) {
-      return found->insts();
+      return const_cast<IteratorInfo &>(*found).insts();
     } else {
       return {};
     }
+  }
+
+  llvm::Optional<llvm::iterator_range<IteratorInfo::insts_iterator>>
+  getIteratorsFor(const llvm::Loop *L) {
+    return static_cast<const IteratorRecognitionInfo *>(this)->getIteratorsFor(
+        L);
   }
 };
 
