@@ -10,6 +10,8 @@
 
 #include "IteratorRecognition/Support/ShadowDependenceGraph.hpp"
 
+#include "IteratorRecognition/Analysis/ReversePostOrderTraversal.hpp"
+
 #include "IteratorRecognition/Analysis/DetectOperations.hpp"
 
 #include "IteratorRecognition/Analysis/IteratorValueTracking.hpp"
@@ -36,11 +38,6 @@
 
 #include "llvm/Analysis/AliasAnalysis.h"
 
-#include "llvm/Analysis/ValueTracking.h"
-
-#include "llvm/Analysis/LoopIterator.h"
-// using llvm::LoopBlocksRPO
-
 #include "llvm/IR/Function.h"
 // using llvm::Function
 
@@ -49,8 +46,6 @@
 
 #include "llvm/IR/LegacyPassManager.h"
 // using llvm::PassManagerBase
-
-#include "llvm/IR/DataLayout.h"
 
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 // using llvm::PassManagerBuilder
@@ -103,40 +98,6 @@ static llvm::RegisterStandardPasses RegisterPayloadDependenceGraphPass(
     registerPayloadDependenceGraphPass);
 
 namespace iteratorrecognition {
-
-class ModRefPostOrder {
-  std::vector<llvm::Instruction *> order;
-
-public:
-  ModRefPostOrder(const llvm::Loop &CurLoop, const llvm::LoopInfo &LI,
-                  const llvm::SmallPtrSetImpl<llvm::Instruction *> &PartOf) {
-    llvm::LoopBlocksRPO rpot(const_cast<llvm::Loop *>(&CurLoop));
-    rpot.perform(const_cast<llvm::LoopInfo *>(&LI));
-
-    for (auto *bb : rpot) {
-      for (auto &ii : *bb) {
-        bool isModRef = false;
-        isModRef |= llvm::isa<llvm::LoadInst>(&ii);
-        isModRef |= llvm::isa<llvm::StoreInst>(&ii);
-
-        if (isModRef && PartOf.count(&ii)) {
-          order.push_back(&ii);
-        }
-      }
-    }
-
-    std::reverse(order.begin(), order.end());
-  }
-
-  using iterator = decltype(order)::iterator;
-  using const_iterator = decltype(order)::const_iterator;
-
-  decltype(auto) begin() { return order.begin(); }
-  decltype(auto) end() { return order.end(); }
-
-  decltype(auto) begin() const { return order.begin(); }
-  decltype(auto) end() const { return order.end(); }
-};
 
 struct CrossIterationDependencyChecker {
   std::vector<llvm::Instruction *> ModRefInstructions;
@@ -292,8 +253,8 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     }
 
     llvm::dbgs() << "#######\n";
-    ModRefPostOrder pdModRefTraversal(*e.getLoop(), info.getLoopInfo(), pdVals);
-    std::reverse(pdModRefTraversal.begin(), pdModRefTraversal.end());
+    ModRefReversePostOrder pdModRefTraversal(*e.getLoop(), info.getLoopInfo(),
+                                             pdVals);
 
     for (auto *e : pdModRefTraversal) {
       llvm::dbgs() << *e << '\n';
@@ -323,9 +284,11 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
       */
 
       auto res1 = GetIteratorDependent(e.first, itVals);
-      llvm::dbgs() << "I1: " << *e.first << " res1: " << static_cast<unsigned>(res1) << '\n';
+      llvm::dbgs() << "I1: " << *e.first
+                   << " res1: " << static_cast<unsigned>(res1) << '\n';
       auto res2 = GetIteratorDependent(e.second, itVals);
-      llvm::dbgs() << "I2: " << *e.second << " res2: " << static_cast<unsigned>(res2) << '\n';
+      llvm::dbgs() << "I2: " << *e.second
+                   << " res2: " << static_cast<unsigned>(res2) << '\n';
     }
   }
 
