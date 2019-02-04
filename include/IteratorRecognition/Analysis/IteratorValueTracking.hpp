@@ -41,13 +41,12 @@ public:
       IteratorVarianceValue V = IteratorVarianceValue::Unknown)
       : Val(V) {}
 
-  decltype(auto) get() { return Val; }
   decltype(auto) get() const { return Val; }
 
-  bool operator==(const IteratorVarianceValue &RhsVal) {
+  bool operator==(const IteratorVarianceValue &RhsVal) const {
     return this->Val == RhsVal;
   }
-  bool operator==(const IteratorVariance &Rhs) { return this->Val == Rhs.Val; }
+  bool operator==(const IteratorVariance &Rhs) const { return this->Val == Rhs.Val; }
 
   bool mergeIn(const IteratorVariance &Other) { return mergeIn(Other.Val); }
 

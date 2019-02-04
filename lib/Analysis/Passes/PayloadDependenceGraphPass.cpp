@@ -36,9 +36,9 @@
 // using llvm::LoopInfo
 // using llvm::LoopInfoWrapperPass
 
-#include "llvm/Analysis/MemoryLocation.h"
-
 #include "llvm/Analysis/AliasAnalysis.h"
+// using llvm::AAResultsWrapperPass
+// using llvm::AAResults
 
 #include "llvm/IR/Function.h"
 // using llvm::Function
