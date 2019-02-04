@@ -234,30 +234,12 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     CrossIterationDependencyChecker cidc(pdModRefTraversal.begin(),
                                          pdModRefTraversal.end(), AA);
 
-    // const llvm::DataLayout &DL = CurFunc.getParent()->getDataLayout();
-    for (auto &e : cidc) {
-      /*llvm::dbgs() << "underlying obj for: " << *e.first << '\n';
-      auto loc1 = llvm::MemoryLocation::getOrNone(e.first);
-
-      if (loc1) {
-        const llvm::Value *V1 = llvm::GetUnderlyingObject((*loc1).Ptr, DL);
-        llvm::dbgs() << *V1 << '\n';
-      }
-
-      llvm::dbgs() << "underlying obj for: " << *e.second << '\n';
-      auto loc2 = llvm::MemoryLocation::getOrNone(e.second);
-
-      if (loc2) {
-        const llvm::Value *V2 = llvm::GetUnderlyingObject((*loc2).Ptr, DL);
-        llvm::dbgs() << *V2 << '\n';
-      }
-      */
-
-      auto res1 = GetIteratorVariance(e.first, itVals);
-      llvm::dbgs() << "I1: " << *e.first
+    for (auto &dep : cidc) {
+      auto res1 = GetIteratorVariance(dep.first, itVals, e.getLoop());
+      llvm::dbgs() << "I1: " << *dep.first
                    << " res1: " << static_cast<unsigned>(res1.get()) << '\n';
-      auto res2 = GetIteratorVariance(e.second, itVals);
-      llvm::dbgs() << "I2: " << *e.second
+      auto res2 = GetIteratorVariance(dep.second, itVals, e.getLoop());
+      llvm::dbgs() << "I2: " << *dep.second
                    << " res2: " << static_cast<unsigned>(res2.get()) << '\n';
     }
   }

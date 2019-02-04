@@ -16,6 +16,9 @@
 // using llvm::StoreInst
 // using llvm::SelectInst
 
+#include "llvm/Analysis/LoopInfo.h"
+// using llvm::Loop
+
 #include "llvm/ADT/SmallVector.h"
 // using llvm::SmallVectorImpl
 // using llvm::SmallVector
@@ -77,10 +80,11 @@ public:
 // TODO this might need a cache
 
 IteratorVariance
-GetIteratorVariance(llvm::Value *V,
-                    llvm::SmallPtrSetImpl<llvm::Instruction *> &Iterators) {
-  llvm::SmallVector<llvm::Value *, 8> workList{V};
-  llvm::SmallPtrSet<llvm::Value *, 8> visited;
+GetIteratorVariance(const llvm::Value *V,
+                    const llvm::SmallPtrSetImpl<llvm::Instruction *> &Iterators,
+                    const llvm::Loop *CurLoop = nullptr) {
+  llvm::SmallVector<const llvm::Value *, 8> workList{V};
+  llvm::SmallPtrSet<const llvm::Value *, 8> visited;
 
   IteratorVariance status{};
 
@@ -101,10 +105,18 @@ GetIteratorVariance(llvm::Value *V,
     }
 
     auto *I = llvm::dyn_cast<llvm::Instruction>(V);
+    if (!I) {
+      llvm::dbgs() << "Unhandled value: " << *V << '\n';
+    }
 
     if (Iterators.count(I)) {
       status.mergeIn(IteratorVarianceValue::Variant);
-      break;
+      continue;
+    }
+
+    if (CurLoop && !CurLoop->contains(I)) {
+      status.mergeIn(IteratorVarianceValue::Invariant);
+      continue;
     }
 
     if (auto *gepI = llvm::dyn_cast<llvm::GetElementPtrInst>(I)) {
