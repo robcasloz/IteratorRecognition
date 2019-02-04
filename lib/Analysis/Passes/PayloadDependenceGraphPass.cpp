@@ -12,6 +12,8 @@
 
 #include "IteratorRecognition/Analysis/ReversePostOrderTraversal.hpp"
 
+#include "IteratorRecognition/Analysis/CrossIterationDependencyChecker.hpp"
+
 #include "IteratorRecognition/Analysis/DetectOperations.hpp"
 
 #include "IteratorRecognition/Analysis/IteratorValueTracking.hpp"
@@ -98,37 +100,6 @@ static llvm::RegisterStandardPasses RegisterPayloadDependenceGraphPass(
     registerPayloadDependenceGraphPass);
 
 namespace iteratorrecognition {
-
-struct CrossIterationDependencyChecker {
-  std::vector<llvm::Instruction *> ModRefInstructions;
-  std::map<llvm::Instruction *, llvm::Instruction *> UnresolvedPairs;
-  llvm::AAResults &AA;
-
-  template <typename IteratorT>
-  CrossIterationDependencyChecker(IteratorT Begin, IteratorT End,
-                                  llvm::AAResults &AA)
-      : AA(AA) {
-    std::copy(Begin, End, std::back_inserter(ModRefInstructions));
-  }
-
-  void check() {
-    for (auto it1 = ModRefInstructions.begin(), ie1 = ModRefInstructions.end();
-         it1 != ie1; ++it1) {
-      auto &I1 = *it1;
-      for (auto it2 = std::next(it1), ie2 = ie1; it2 != ie2; ++it2) {
-        auto &I2 = *it2;
-        auto mri = AA.getModRefInfo(I2, llvm::MemoryLocation::getOrNone(I1));
-        // llvm::dbgs() << "checking: " << *I1 << "\n" << *I2 << "\n";
-        // llvm::dbgs() << "checking: " << static_cast<int>(mri) << "\n";
-
-        if (llvm::isModSet(mri)) {
-          llvm::dbgs() << "dep between: " << *I1 << "\n" << *I2 << "\n";
-          UnresolvedPairs.insert({I1, I2});
-        }
-      }
-    }
-  }
-};
 
 void PayloadDependenceGraphPass::getAnalysisUsage(
     llvm::AnalysisUsage &AU) const {
@@ -262,10 +233,9 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
 
     CrossIterationDependencyChecker cidc(pdModRefTraversal.begin(),
                                          pdModRefTraversal.end(), AA);
-    cidc.check();
 
     // const llvm::DataLayout &DL = CurFunc.getParent()->getDataLayout();
-    for (auto &e : cidc.UnresolvedPairs) {
+    for (auto &e : cidc) {
       /*llvm::dbgs() << "underlying obj for: " << *e.first << '\n';
       auto loc1 = llvm::MemoryLocation::getOrNone(e.first);
 
