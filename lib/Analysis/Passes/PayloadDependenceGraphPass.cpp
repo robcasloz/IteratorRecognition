@@ -242,6 +242,9 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
       llvm::dbgs() << "I2: " << *dep.second
                    << " res2: " << static_cast<unsigned>(res2.get()) << '\n';
     }
+
+    IteratorVarianceGraphUpdater<DGType> ivgu{g, cidc.begin(), cidc.end(),
+                                              itVals, *e.getLoop()};
   }
 
   return false;

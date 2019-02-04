@@ -49,7 +49,9 @@ public:
   bool operator==(const IteratorVarianceValue &RhsVal) const {
     return this->Val == RhsVal;
   }
-  bool operator==(const IteratorVariance &Rhs) const { return this->Val == Rhs.Val; }
+  bool operator==(const IteratorVariance &Rhs) const {
+    return this->Val == Rhs.Val;
+  }
 
   bool mergeIn(const IteratorVariance &Other) { return mergeIn(Other.Val); }
 
@@ -138,5 +140,47 @@ GetIteratorVariance(const llvm::Value *V,
 
   return status;
 }
+
+//
+
+template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
+class IteratorVarianceGraphUpdater {
+public:
+  template <typename IteratorT>
+  IteratorVarianceGraphUpdater(
+      GraphT &G, IteratorT Begin, IteratorT End,
+      const llvm::SmallPtrSetImpl<llvm::Instruction *> &ItVals,
+      const llvm::Loop &CurLoop) {
+    for (auto it = Begin, ei = End; it != ei; ++it) {
+      auto &dependence = *it;
+
+      auto res1 = GetIteratorVariance(dependence.first, ItVals, &CurLoop);
+      auto res2 = GetIteratorVariance(dependence.second, ItVals, &CurLoop);
+
+      auto *srcNode = G.getNode(dependence.first);
+      auto *dstNode = G.getNode(dependence.second);
+
+      if (res1 == IteratorVarianceValue::Variant ||
+          res2 == IteratorVarianceValue::Variant) {
+        if (srcNode->hasEdgeWith(dstNode)) {
+          // disconnect edge
+          llvm::dbgs() << "disconnecting edge\n";
+        }
+
+        continue;
+      }
+
+      if (res1 == IteratorVarianceValue::Invariant ||
+          res2 == IteratorVarianceValue::Invariant) {
+        if (!srcNode->hasEdgeWith(dstNode)) {
+          // connect with edge
+          llvm::dbgs() << "connecting edge\n";
+        }
+
+        continue;
+      }
+    }
+  }
+};
 
 } // namespace iteratorrecognition
