@@ -253,12 +253,12 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
       }
       */
 
-      auto res1 = GetIteratorDependent(e.first, itVals);
+      auto res1 = GetIteratorVariance(e.first, itVals);
       llvm::dbgs() << "I1: " << *e.first
-                   << " res1: " << static_cast<unsigned>(res1) << '\n';
-      auto res2 = GetIteratorDependent(e.second, itVals);
+                   << " res1: " << static_cast<unsigned>(res1.get()) << '\n';
+      auto res2 = GetIteratorVariance(e.second, itVals);
       llvm::dbgs() << "I2: " << *e.second
-                   << " res2: " << static_cast<unsigned>(res2) << '\n';
+                   << " res2: " << static_cast<unsigned>(res2.get()) << '\n';
     }
   }
 

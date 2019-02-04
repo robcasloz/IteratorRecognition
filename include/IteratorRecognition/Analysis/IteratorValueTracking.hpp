@@ -11,7 +11,10 @@
 
 #include "llvm/IR/Instructions.h"
 // using llvm::Argument
-// using llvm::AllocaInst
+// using llvm::GetElementPtrInst
+// using llvm::LoadInst
+// using llvm::StoreInst
+// using llvm::SelectInst
 
 #include "llvm/ADT/SmallVector.h"
 // using llvm::SmallVectorImpl
@@ -26,62 +29,100 @@
 #include "llvm/Support/Debug.h"
 // using llvm::dbgs
 
-//#include "llvm/Support/ErrorHandling.h"
-// using llvm::report_fatal_error
-
 namespace iteratorrecognition {
 
-enum class IteratorQueryResult { Unknown, IteratorInvariant, IteratorVariant };
+enum class IteratorVarianceValue { Unknown, Invariant, Variant };
+
+class IteratorVariance {
+  IteratorVarianceValue Val;
+
+public:
+  explicit IteratorVariance(
+      IteratorVarianceValue V = IteratorVarianceValue::Unknown)
+      : Val(V) {}
+
+  decltype(auto) get() { return Val; }
+  decltype(auto) get() const { return Val; }
+
+  bool operator==(const IteratorVarianceValue &RhsVal) {
+    return this->Val == RhsVal;
+  }
+  bool operator==(const IteratorVariance &Rhs) { return this->Val == Rhs.Val; }
+
+  bool mergeIn(const IteratorVariance &Other) { return mergeIn(Other.Val); }
+
+  bool mergeIn(const IteratorVarianceValue &OtherVal) {
+    auto curVal = Val;
+
+    switch (curVal) {
+    case IteratorVarianceValue::Unknown:
+      curVal = OtherVal;
+      break;
+    case IteratorVarianceValue::Invariant:
+    case IteratorVarianceValue::Variant:
+    default:
+      if (OtherVal == IteratorVarianceValue::Variant) {
+        curVal = IteratorVarianceValue::Variant;
+      }
+
+      break;
+    };
+
+    bool hasChanged = (curVal == Val);
+    Val = curVal;
+
+    return hasChanged;
+  }
+};
 
 // TODO this might need a cache
 
-IteratorQueryResult
-GetIteratorDependent(llvm::Value *V,
-                     llvm::SmallPtrSetImpl<llvm::Instruction *> &Iterators) {
+IteratorVariance
+GetIteratorVariance(llvm::Value *V,
+                    llvm::SmallPtrSetImpl<llvm::Instruction *> &Iterators) {
   llvm::SmallVector<llvm::Value *, 8> workList{V};
   llvm::SmallPtrSet<llvm::Value *, 8> visited;
-  auto status = IteratorQueryResult::Unknown;
+
+  IteratorVariance status{};
 
   while (!workList.empty()) {
+    if (status == IteratorVarianceValue::Variant) {
+      break;
+    }
+
     auto *V = workList.pop_back_val();
-    llvm::dbgs() << "checking: " << *V << '\n';
 
     if (visited.count(V)) {
       continue;
     }
 
     if (llvm::isa<llvm::Constant>(V) || llvm::isa<llvm::Argument>(V)) {
-      return IteratorQueryResult::IteratorInvariant;
+      status.mergeIn(IteratorVarianceValue::Invariant);
+      continue;
     }
 
     auto *I = llvm::dyn_cast<llvm::Instruction>(V);
 
     if (Iterators.count(I)) {
-      return IteratorQueryResult::IteratorVariant;
+      status.mergeIn(IteratorVarianceValue::Variant);
+      break;
     }
 
-    switch (I->getOpcode()) {
-    case llvm::Instruction::GetElementPtr: {
-      // TODO handle indices
-      auto *gepI = llvm::dyn_cast<llvm::GetElementPtrInst>(I);
+    if (auto *gepI = llvm::dyn_cast<llvm::GetElementPtrInst>(I)) {
       workList.push_back(gepI->getPointerOperand());
-    } break;
-    case llvm::Instruction::Load: {
-      auto *loadI = llvm::dyn_cast<llvm::LoadInst>(I);
+      for (auto &idx : gepI->indices()) {
+        workList.push_back(idx.get());
+      }
+    } else if (auto *loadI = llvm::dyn_cast<llvm::LoadInst>(I)) {
       workList.push_back(loadI->getPointerOperand());
-    } break;
-    case llvm::Instruction::Store: {
-      auto *storeI = llvm::dyn_cast<llvm::StoreInst>(I);
+    } else if (auto *storeI = llvm::dyn_cast<llvm::StoreInst>(I)) {
       workList.push_back(storeI->getPointerOperand());
-    } break;
-    case llvm::Instruction::Select: {
-      auto *selectI = llvm::dyn_cast<llvm::SelectInst>(I);
+    } else if (auto *selectI = llvm::dyn_cast<llvm::SelectInst>(I)) {
       workList.push_back(selectI->getOperand(1));
       workList.push_back(selectI->getOperand(2));
-    } break;
-    default:
-      llvm::dbgs() << "unhandled instruction: " << *I << '\n';
-    };
+    } else {
+      llvm::dbgs() << "Unhandled instruction: " << *I << '\n';
+    }
   }
 
   return status;
