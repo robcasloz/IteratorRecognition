@@ -13,19 +13,11 @@
 #include "llvm/IR/DebugInfoMetadata.h"
 // using llvm::DISubprogram
 
-#include "llvm/Support/raw_ostream.h"
-// using llvm::raw_string_ostream
-
 namespace iteratorrecognition {
 namespace dbg {
 
 std::string extract(const llvm::Instruction &I) {
-  std::string outs;
-  llvm::raw_string_ostream ss(outs);
-
-  ss << I;
-
-  return ss.str();
+  return "";
 }
 
 LoopDebugInfoT extract(const llvm::Loop &CurLoop) {
