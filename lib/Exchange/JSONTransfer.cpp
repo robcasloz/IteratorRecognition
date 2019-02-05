@@ -11,6 +11,9 @@
 #include "llvm/Analysis/LoopInfo.h"
 // using llvm::Loop
 
+#include "llvm/IR/Instruction.h"
+// using llvm::Instruction
+
 #include "llvm/Support/FileSystem.h"
 // using llvm::sys::fs::F_Text
 
@@ -37,59 +40,6 @@
 // namespace aliases
 
 namespace itr = iteratorrecognition;
-
-namespace llvm {
-
-json::Value toJSON(const itr::LoopDebugInfoT &Info) {
-  json::Object infoMapping;
-
-  infoMapping["line"] = std::get<0>(Info);
-  infoMapping["column"] = std::get<1>(Info);
-  infoMapping["function"] = std::get<2>(Info);
-  infoMapping["filename"] = std::get<3>(Info);
-
-  return std::move(infoMapping);
-}
-
-json::Value
-toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
-  json::Object root;
-  json::Array condensations;
-
-  for (const auto &e : Map) {
-    const auto &cn = *e.getFirst();
-    const auto &loops = e.getSecond();
-
-    std::string outs;
-    raw_string_ostream ss(outs);
-
-    auto mapping = std::move(*toJSON(cn).getAsObject());
-
-    json::Array loopsArray;
-    std::transform(loops.begin(), loops.end(), std::back_inserter(loopsArray),
-                   [&](const auto &e) {
-                     outs.clear();
-                     json::Object infoMapping;
-
-                     ss << *e->getLoopLatch()->getTerminator();
-                     infoMapping["latch"] = ss.str();
-
-                     const auto &info = itr::extractLoopDebugInfo(*e);
-                     infoMapping["di"] = toJSON(info);
-
-                     return std::move(infoMapping);
-                   });
-    mapping["loops"] = std::move(loopsArray);
-
-    condensations.push_back(std::move(mapping));
-  }
-
-  root["condensations"] = std::move(condensations);
-
-  return std::move(root);
-}
-
-} // namespace llvm
 
 namespace iteratorrecognition {
 
@@ -119,3 +69,72 @@ void WriteJSONToFile(const llvm::json::Value &V,
 }
 
 } // namespace iteratorrecognition
+
+//
+
+namespace llvm {
+
+json::Value toJSON(const Instruction &I) {
+  json::Object info;
+
+  std::string outs;
+  raw_string_ostream ss(outs);
+
+  ss << I;
+  info["instruction"] = ss.str();
+
+  return std::move(info);
+}
+
+json::Value toJSON(const Loop &CurLoop) {
+  json::Object infoMapping;
+
+  std::string outs;
+  raw_string_ostream ss(outs);
+
+  ss << *CurLoop.getLoopLatch()->getTerminator();
+  infoMapping["latch"] = ss.str();
+
+  const auto &info = itr::extractLoopDebugInfo(CurLoop);
+  infoMapping["di"] = toJSON(info);
+
+  return std::move(infoMapping);
+}
+
+json::Value toJSON(const itr::LoopDebugInfoT &Info) {
+  json::Object infoMapping;
+
+  infoMapping["line"] = std::get<0>(Info);
+  infoMapping["column"] = std::get<1>(Info);
+  infoMapping["function"] = std::get<2>(Info);
+  infoMapping["filename"] = std::get<3>(Info);
+
+  return std::move(infoMapping);
+}
+
+json::Value
+toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
+  json::Object root;
+  json::Array condensations;
+
+  for (const auto &e : Map) {
+    const auto &cn = *e.getFirst();
+    const auto &loops = e.getSecond();
+
+    auto mapping = std::move(*toJSON(cn).getAsObject());
+
+    json::Array loopsArray;
+    std::transform(loops.begin(), loops.end(), std::back_inserter(loopsArray),
+                   [&](const auto &e) { return std::move(toJSON(*e)); });
+    mapping["loops"] = std::move(loopsArray);
+
+    condensations.push_back(std::move(mapping));
+  }
+
+  root["condensations"] = std::move(condensations);
+
+  return std::move(root);
+}
+
+} // namespace llvm
+

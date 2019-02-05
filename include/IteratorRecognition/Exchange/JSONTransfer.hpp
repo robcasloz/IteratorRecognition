@@ -53,6 +53,15 @@ namespace br = boost::range;
 
 //
 
+namespace iteratorrecognition {
+
+void WriteJSONToFile(const llvm::json::Value &V,
+                     const llvm::Twine &FilenamePrefix, const llvm::Twine &Dir);
+
+} // namespace iteratorrecognition
+
+//
+
 namespace llvm {
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT *>>
@@ -109,18 +118,18 @@ json::Value toJSON(const itr::CondensationGraph<GraphT *> &G) {
   return std::move(root);
 }
 
-json::Value
-toJSON(const itr::LoopDebugInfoT &Info);
+class Instruction;
+
+json::Value toJSON(const Instruction &Instruction);
+
+class Loop;
+
+json::Value toJSON(const Loop &CurLoop);
+
+json::Value toJSON(const itr::LoopDebugInfoT &Info);
 
 json::Value
 toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map);
 
 } // namespace llvm
-
-namespace iteratorrecognition {
-
-void WriteJSONToFile(const llvm::json::Value &V,
-                     const llvm::Twine &FilenamePrefix, const llvm::Twine &Dir);
-
-} // namespace iteratorrecognition
 
