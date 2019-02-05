@@ -6,6 +6,8 @@
 
 #include "IteratorRecognition/Config.hpp"
 
+#include "IteratorRecognition/Exchange/JSONTransfer.hpp"
+
 #include "llvm/IR/Instruction.h"
 // using llvm::Instruction
 
@@ -26,6 +28,11 @@
 #include "llvm/ADT/SmallPtrSet.h"
 // using llvm::SmallPtrSetImpl
 // using llvm::SmallPtrSet
+
+#include "llvm/Support/JSON.h"
+// using json::Value
+// using json::Object
+// using json::Array
 
 #include "llvm/Support/raw_ostream.h"
 
@@ -150,7 +157,9 @@ public:
   IteratorVarianceGraphUpdater(
       GraphT &G, IteratorT Begin, IteratorT End,
       const llvm::SmallPtrSetImpl<llvm::Instruction *> &ItVals,
-      const llvm::Loop &CurLoop) {
+      const llvm::Loop &CurLoop, llvm::json::Object *JSONExport = nullptr) {
+    llvm::json::Array updates;
+
     for (auto it = Begin, ei = End; it != ei; ++it) {
       auto &dependence = *it;
 
@@ -160,11 +169,34 @@ public:
       auto *srcNode = G.getNode(dependence.first);
       auto *dstNode = G.getNode(dependence.second);
 
+      // unhandled combination
+      if (res1 == IteratorVarianceValue::Unknown ||
+          res2 == IteratorVarianceValue::Unknown) {
+        llvm::dbgs() << "unhandled edge\n";
+
+        if (JSONExport) {
+          llvm::json::Object updateMapping;
+          updateMapping["src"] = llvm::toJSON(*dependence.first);
+          updateMapping["dst"] = llvm::toJSON(*dependence.second);
+          updateMapping["remark"] = "unknown relation to iterator";
+
+          updates.push_back(std::move(updateMapping));
+        }
+
+        continue;
+      }
+
       if (res1 == IteratorVarianceValue::Variant ||
           res2 == IteratorVarianceValue::Variant) {
         if (srcNode->hasEdgeWith(dstNode)) {
-          // disconnect edge
-          llvm::dbgs() << "disconnecting edge\n";
+          if (JSONExport) {
+            llvm::json::Object updateMapping;
+            updateMapping["src"] = llvm::toJSON(*dependence.first);
+            updateMapping["dst"] = llvm::toJSON(*dependence.second);
+            updateMapping["remark"] = "disconnect because of iterator variance";
+
+            updates.push_back(std::move(updateMapping));
+          }
         }
 
         continue;
@@ -173,12 +205,25 @@ public:
       if (res1 == IteratorVarianceValue::Invariant ||
           res2 == IteratorVarianceValue::Invariant) {
         if (!srcNode->hasEdgeWith(dstNode)) {
-          // connect with edge
-          llvm::dbgs() << "connecting edge\n";
+          if (JSONExport) {
+            llvm::json::Object updateMapping;
+            updateMapping["src"] = llvm::toJSON(*dependence.first);
+            updateMapping["dst"] = llvm::toJSON(*dependence.second);
+            updateMapping["remark"] = "connect because of iterator invariance";
+
+            updates.push_back(std::move(updateMapping));
+          }
         }
 
         continue;
       }
+    }
+
+    if (JSONExport) {
+      llvm::json::Object infoMapping;
+      infoMapping["loop"] = llvm::toJSON(CurLoop);
+      infoMapping["updates"] = std::move(updates);
+      (*JSONExport)["loop updates"] = std::move(infoMapping);
     }
   }
 };
