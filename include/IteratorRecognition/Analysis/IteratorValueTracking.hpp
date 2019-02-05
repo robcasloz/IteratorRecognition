@@ -154,6 +154,28 @@ GetIteratorVariance(const llvm::Value *V,
 
 //
 
+decltype(auto) determineHazard(const llvm::Instruction &Src,
+                               const llvm::Instruction &Dst) {
+  using namespace pedigree;
+
+  BasicDependenceInfo::value_type info{DependenceOrigin::Memory,
+                                       DependenceHazard::Unknown};
+
+  if (Src.mayReadFromMemory() && Dst.mayReadFromMemory()) {
+    // do not add edge
+  } else if (Src.mayReadFromMemory() && Dst.mayWriteToMemory()) {
+    info.hazards |= DependenceHazard::Anti;
+  } else if (Src.mayWriteToMemory() && Dst.mayReadFromMemory()) {
+    info.hazards |= DependenceHazard::Flow;
+  } else if (Src.mayWriteToMemory() && Dst.mayWriteToMemory()) {
+    info.hazards |= DependenceHazard::Out;
+  } else {
+    LLVM_DEBUG(llvm::dbgs() << "No appropriate hazard was found!");
+  }
+
+  return info;
+}
+
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
 class IteratorVarianceGraphUpdater {
 public:
