@@ -8,6 +8,8 @@
 
 #include "IteratorRecognition/Exchange/JSONTransfer.hpp"
 
+#include "IteratorRecognition/Support/Utils/DebugInfo.hpp"
+
 #include "llvm/IR/Instruction.h"
 // using llvm::Instruction
 
@@ -176,8 +178,8 @@ public:
 
         if (JSONExport) {
           llvm::json::Object updateMapping;
-          updateMapping["src"] = llvm::toJSON(*dependence.first);
-          updateMapping["dst"] = llvm::toJSON(*dependence.second);
+          updateMapping["src"] = dbg::extract(*dependence.first);
+          updateMapping["dst"] = dbg::extract(*dependence.second);
           updateMapping["remark"] = "unknown relation to iterator";
 
           updates.push_back(std::move(updateMapping));
@@ -191,8 +193,8 @@ public:
         if (srcNode->hasEdgeWith(dstNode)) {
           if (JSONExport) {
             llvm::json::Object updateMapping;
-            updateMapping["src"] = llvm::toJSON(*dependence.first);
-            updateMapping["dst"] = llvm::toJSON(*dependence.second);
+            updateMapping["src"] = dbg::extract(*dependence.first);
+            updateMapping["dst"] = dbg::extract(*dependence.second);
             updateMapping["remark"] = "disconnect because of iterator variance";
 
             updates.push_back(std::move(updateMapping));
@@ -207,8 +209,8 @@ public:
         if (!srcNode->hasEdgeWith(dstNode)) {
           if (JSONExport) {
             llvm::json::Object updateMapping;
-            updateMapping["src"] = llvm::toJSON(*dependence.first);
-            updateMapping["dst"] = llvm::toJSON(*dependence.second);
+            updateMapping["src"] = dbg::extract(*dependence.first);
+            updateMapping["dst"] = dbg::extract(*dependence.second);
             updateMapping["remark"] = "connect because of iterator invariance";
 
             updates.push_back(std::move(updateMapping));

@@ -75,13 +75,11 @@ void WriteJSONToFile(const llvm::json::Value &V,
 namespace llvm {
 
 json::Value toJSON(const Instruction &I) {
-  json::Object info;
-
   std::string outs;
   raw_string_ostream ss(outs);
 
   ss << I;
-  info["instruction"] = ss.str();
+  json::Value info{ss.str()};
 
   return std::move(info);
 }
@@ -95,13 +93,13 @@ json::Value toJSON(const Loop &CurLoop) {
   ss << *CurLoop.getLoopLatch()->getTerminator();
   infoMapping["latch"] = ss.str();
 
-  const auto &info = itr::extractLoopDebugInfo(CurLoop);
+  const auto &info = itr::dbg::extract(CurLoop);
   infoMapping["di"] = toJSON(info);
 
   return std::move(infoMapping);
 }
 
-json::Value toJSON(const itr::LoopDebugInfoT &Info) {
+json::Value toJSON(const itr::dbg::LoopDebugInfoT &Info) {
   json::Object infoMapping;
 
   infoMapping["line"] = std::get<0>(Info);

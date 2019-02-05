@@ -23,7 +23,6 @@
 // using llvm::GraphTraits
 
 #include "llvm/Support/raw_ostream.h"
-// using llvm::raw_ostream
 // using llvm::raw_string_ostream
 
 #include "boost/range/adaptors.hpp"
@@ -126,7 +125,7 @@ class Loop;
 
 json::Value toJSON(const Loop &CurLoop);
 
-json::Value toJSON(const itr::LoopDebugInfoT &Info);
+json::Value toJSON(const itr::dbg::LoopDebugInfoT &Info);
 
 json::Value
 toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map);

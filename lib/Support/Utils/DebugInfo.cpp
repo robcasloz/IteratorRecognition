@@ -4,15 +4,31 @@
 
 #include "IteratorRecognition/Support/Utils/DebugInfo.hpp"
 
+#include "llvm/IR/Instruction.h"
+// using llvm::Instruction
+
 #include "llvm/Analysis/LoopInfo.h"
 // using llvm::Loop
 
 #include "llvm/IR/DebugInfoMetadata.h"
 // using llvm::DISubprogram
 
-namespace iteratorrecognition {
+#include "llvm/Support/raw_ostream.h"
+// using llvm::raw_string_ostream
 
-LoopDebugInfoT extractLoopDebugInfo(const llvm::Loop &CurLoop) {
+namespace iteratorrecognition {
+namespace dbg {
+
+std::string extract(const llvm::Instruction &I) {
+  std::string outs;
+  llvm::raw_string_ostream ss(outs);
+
+  ss << I;
+
+  return ss.str();
+}
+
+LoopDebugInfoT extract(const llvm::Loop &CurLoop) {
   auto loc = CurLoop.getStartLoc();
   std::string funcName{""}, fileName{""};
 
@@ -24,4 +40,5 @@ LoopDebugInfoT extractLoopDebugInfo(const llvm::Loop &CurLoop) {
   return std::make_tuple(loc.getLine(), loc.getCol(), funcName, fileName);
 }
 
+} // namespace dbg
 } // namespace iteratorrecognition

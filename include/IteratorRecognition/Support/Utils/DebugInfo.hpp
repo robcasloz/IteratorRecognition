@@ -14,13 +14,18 @@
 
 namespace llvm {
 class Loop;
+class Instruction;
 } // namespace llvm
 
 namespace iteratorrecognition {
+namespace dbg {
+
+std::string extract(const llvm::Instruction &I);
 
 using LoopDebugInfoT = std::tuple<unsigned, unsigned, std::string, std::string>;
 
-LoopDebugInfoT extractLoopDebugInfo(const llvm::Loop &CurLoop);
+LoopDebugInfoT extract(const llvm::Loop &CurLoop);
 
+} // namespace dbg
 } // namespace iteratorrecognition
 

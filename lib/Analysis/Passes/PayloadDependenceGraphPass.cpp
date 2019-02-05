@@ -8,6 +8,8 @@
 
 #include "IteratorRecognition/Debug.hpp"
 
+#include "IteratorRecognition/Exchange/JSONTransfer.hpp"
+
 #include "IteratorRecognition/Support/ShadowDependenceGraph.hpp"
 
 #include "IteratorRecognition/Analysis/ReversePostOrderTraversal.hpp"
