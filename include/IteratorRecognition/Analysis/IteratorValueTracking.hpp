@@ -215,6 +215,23 @@ public:
       if (res1 == IteratorVarianceValue::Variant ||
           res2 == IteratorVarianceValue::Variant) {
         if (srcNode->hasEdgeWith(dstNode)) {
+          auto infoOrEmpty = srcNode->getEdgeInfo(dstNode);
+
+          if (infoOrEmpty) {
+            auto info = *infoOrEmpty;
+
+            if (info.origins & pedigree::DependenceOrigin::Memory) {
+              // FIXME
+              // info.origins =
+              // static_cast<unsigned>(info.origins) &
+              //~static_cast<unsigned>(pedigree::DependenceOrigin::Memory);
+
+              // if (!info.origins) {
+              srcNode->removeDependentNode(dstNode);
+              //}
+            }
+          }
+
           if (JSONExport) {
             llvm::json::Object updateMapping;
             updateMapping["src"] = strconv::to_string(*dependence.first);
@@ -231,6 +248,12 @@ public:
       if (res1 == IteratorVarianceValue::Invariant ||
           res2 == IteratorVarianceValue::Invariant) {
         if (!srcNode->hasEdgeWith(dstNode)) {
+          auto info = determineHazard(*dependence.first, *dependence.second);
+
+          if (info.hazards) {
+            srcNode->addDependentNode(dstNode, info);
+          }
+
           if (JSONExport) {
             llvm::json::Object updateMapping;
             updateMapping["src"] = strconv::to_string(*dependence.first);
