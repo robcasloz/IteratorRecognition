@@ -61,6 +61,10 @@
 #include "llvm/ADT/DenseMap.h"
 // using llvm::DenseMap
 
+#include "llvm/Support/CommandLine.h"
+// using llvm::cl::opt
+// using llvm::cl::desc
+
 #include "llvm/Support/Debug.h"
 // using LLVM_DEBUG macro
 // using llvm::dbgs
@@ -101,6 +105,9 @@ static llvm::RegisterStandardPasses RegisterPayloadDependenceGraphPass(
     llvm::PassManagerBuilder::EP_EarlyAsPossible,
     registerPayloadDependenceGraphPass);
 
+static llvm::cl::opt<bool> Export("itr-export-updates",
+                                  llvm::cl::desc("export graph updates"));
+
 namespace iteratorrecognition {
 
 void PayloadDependenceGraphPass::getAnalysisUsage(
@@ -115,6 +122,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
   auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
                    .getIteratorRecognitionInfo();
   auto &AA = getAnalysis<llvm::AAResultsWrapperPass>().getAAResults();
+  unsigned loopCount = 0;
 
   LLVM_DEBUG({
     llvm::dbgs() << "payload dependence graph for function: "
@@ -245,8 +253,19 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
                    << " res2: " << static_cast<unsigned>(res2.get()) << '\n';
     }
 
-    IteratorVarianceGraphUpdater<DGType> ivgu{g, cidc.begin(), cidc.end(),
-                                              itVals, *e.getLoop()};
+    llvm::json::Object jsonInfo;
+
+    IteratorVarianceGraphUpdater<DGType> ivgu{g,      cidc.begin(), cidc.end(),
+                                              itVals, *e.getLoop(), &jsonInfo};
+
+    if (Export) {
+      WriteJSONToFile(std::move(jsonInfo),
+                      "graphupdates." + CurFunc.getName() + ".loop." +
+                          std::to_string(loopCount),
+                      ".");
+    }
+
+    loopCount++;
   }
 
   return false;
