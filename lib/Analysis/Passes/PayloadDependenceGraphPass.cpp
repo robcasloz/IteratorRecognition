@@ -70,6 +70,9 @@
 // using llvm::dbgs
 // using llvm::errs
 
+#include <algorithm>
+// using std::reverse
+
 #define DEBUG_TYPE "iterator-recognition-payload-graph"
 
 // namespace aliases
@@ -112,6 +115,7 @@ namespace iteratorrecognition {
 
 void PayloadDependenceGraphPass::getAnalysisUsage(
     llvm::AnalysisUsage &AU) const {
+  AU.addRequiredTransitive<llvm::LoopInfoWrapperPass>();
   AU.addRequiredTransitive<llvm::AAResultsWrapperPass>();
   AU.addRequiredTransitive<IteratorRecognitionWrapperPass>();
 
@@ -122,6 +126,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
   auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
                    .getIteratorRecognitionInfo();
   auto &AA = getAnalysis<llvm::AAResultsWrapperPass>().getAAResults();
+  auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
   unsigned loopCount = 0;
 
   LLVM_DEBUG({
@@ -132,8 +137,23 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
   llvm::SmallPtrSet<llvm::Instruction *, 8> itVals, pdVals, pdLiveVals,
       directItUsesInPayloadVals;
 
-  for (auto &e : info.getIteratorsInfo()) {
-    LLVM_DEBUG(llvm::dbgs() << "loop: " << *e.getLoop()->getHeader() << "\n";);
+  llvm::SmallVector<llvm::Loop *, 8> loopTraversal;
+  for (auto *e : LI.getLoopsInPreorder()) {
+    loopTraversal.push_back(e);
+  }
+  std::reverse(loopTraversal.begin(), loopTraversal.end());
+
+  // for (auto &e : info.getIteratorsInfo()) {
+  for (auto *curLoop : loopTraversal) {
+    // LLVM_DEBUG(llvm::dbgs() << "loop: " << *e.getLoop()->getHeader() <<
+    // "\n";);
+    LLVM_DEBUG(llvm::dbgs() << "loop: " << *curLoop->getHeader() << "\n";);
+    auto infoOrError = info.getIteratorInfoFor(curLoop);
+
+    if (!infoOrError) {
+      continue;
+    }
+    auto &e = *infoOrError;
 
     FindIteratorValues(e, itVals);
     FindPayloadValues(e, pdVals);
