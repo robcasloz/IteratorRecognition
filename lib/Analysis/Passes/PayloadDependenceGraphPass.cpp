@@ -147,24 +147,25 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
       return pdVals.count(e->unit()) != 0;
     };
 
-    SDependenceGraph<DGType> sg(g), sg2(g);
-    sg.computeNodes();
-    sg2.computeNodes();
-    for (const auto &n : DGT::nodes(&g)) {
-      if (!is_payload(n)) {
-        sg.removeNodeFor(n->unit());
-        sg2.removeNodeFor(n->unit());
-      }
-    }
+    // SDependenceGraph<DGType> sg(g);
+    // SDependenceGraph<DGType> sg2(g);
+    // sg.computeNodes();
+    // sg2.computeNodes();
+    // for (const auto &n : DGT::nodes(&g)) {
+    // if (!is_payload(n)) {
+    // sg.removeNodeFor(n->unit());
+    //// sg2.removeNodeFor(n->unit());
+    //}
+    //}
     // this does not work due to compiler
     // sg.computeNodesIf(is_payload);
 
-    sg.computeEdges();
-    sg2.computeEdges();
+    // sg.computeEdges();
+    // sg2.computeEdges();
 
-    llvm::dbgs() << g.size() << '\n';
-    llvm::dbgs() << sg.size() << '\n';
-    llvm::dbgs() << sg.numOutEdges() << '\n';
+    // llvm::dbgs() << g.size() << '\n';
+    // llvm::dbgs() << sg.size() << '\n';
+    // llvm::dbgs() << sg.numOutEdges() << '\n';
 
     // for (auto *n : sg.nodes()) {
     // if (!n->isNextIteration()) {
@@ -182,8 +183,8 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     //}
     //}
 
-    sg.computeNextIterationNodes();
-    sg.computeNextIterationEdges();
+    // sg.computeNextIterationNodes();
+    // sg.computeNextIterationEdges();
 
     // for (auto *n : sg.nodes()) {
     // if (n->isNextIteration()) {
@@ -202,35 +203,30 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     //}
 
     llvm::dbgs() << g.size() << '\n';
-    llvm::dbgs() << sg.size() << '\n';
-    llvm::dbgs() << sg.numOutEdges() << '\n';
+    // llvm::dbgs() << sg.size() << '\n';
+    // llvm::dbgs() << sg.numOutEdges() << '\n';
 
-    sg.computeCrossIterationEdges(itVals);
+    // sg.computeCrossIterationEdges(itVals);
 
-    llvm::dbgs() << sg.numOutEdges() << '\n';
+    // llvm::dbgs() << sg.numOutEdges() << '\n';
 
     //
 
-    llvm::Instruction *target = nullptr;
-    for (auto *n : sg.nodes()) {
-      for (auto *i : n->units()) {
-        if (llvm::isa<llvm::StoreInst>(i)) {
-          target = i;
-          break;
-        }
-      }
+    // llvm::Instruction *target = nullptr;
+    // for (auto *n : sg.nodes()) {
+    // for (auto *i : n->units()) {
+    // if (llvm::isa<llvm::StoreInst>(i)) {
+    // target = i;
+    // break;
+    //}
+    //}
 
-      if (target) {
-        break;
-      }
-    }
+    // if (target) {
+    // break;
+    //}
+    //}
 
-    llvm::SmallVector<llvm::Value *, 8> operations;
-    DetectOperationsOn(target, sg2, operations);
-
-    for (auto *e : operations) {
-      llvm::dbgs() << *e << '\n';
-    }
+    // step 1 graph update
 
     llvm::dbgs() << "#######\n";
     ModRefReversePostOrder pdModRefTraversal(*e.getLoop(), info.getLoopInfo(),
@@ -243,14 +239,14 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     CrossIterationDependencyChecker cidc(pdModRefTraversal.begin(),
                                          pdModRefTraversal.end(), AA);
 
-    for (auto &dep : cidc) {
-      auto res1 = GetIteratorVariance(dep.first, itVals, e.getLoop());
-      llvm::dbgs() << "I1: " << *dep.first
-                   << " res1: " << static_cast<unsigned>(res1.get()) << '\n';
-      auto res2 = GetIteratorVariance(dep.second, itVals, e.getLoop());
-      llvm::dbgs() << "I2: " << *dep.second
-                   << " res2: " << static_cast<unsigned>(res2.get()) << '\n';
-    }
+    // for (auto &dep : cidc) {
+    // auto res1 = GetIteratorVariance(dep.first, itVals, e.getLoop());
+    // llvm::dbgs() << "I1: " << *dep.first
+    //<< " res1: " << static_cast<unsigned>(res1.get()) << '\n';
+    // auto res2 = GetIteratorVariance(dep.second, itVals, e.getLoop());
+    // llvm::dbgs() << "I2: " << *dep.second
+    //<< " res2: " << static_cast<unsigned>(res2.get()) << '\n';
+    //}
 
     llvm::json::Object jsonInfo;
 
@@ -262,6 +258,50 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
                       "graphupdates." + CurFunc.getName() + ".loop." +
                           std::to_string(loopCount),
                       ".");
+    }
+
+    // step 2 create shadow graph
+
+    SDependenceGraph<DGType> sg2(g);
+    sg2.computeNodes();
+    for (const auto &n : DGT::nodes(&g)) {
+      if (!is_payload(n)) {
+        sg2.removeNodeFor(n->unit());
+      }
+    }
+    // this does not work due to compiler
+    // sg.computeNodesIf(is_payload);
+
+    sg2.computeEdges();
+
+    // step 3 detect operations
+
+    llvm::SmallVector<LoadModifyStore, 8> lms;
+    llvm::SmallPtrSet<llvm::Instruction *, 8> uniqueTargets;
+
+    for (auto &dep : cidc) {
+      if (uniqueTargets.count(dep.second)) {
+        continue;
+      }
+
+      uniqueTargets.insert(dep.second);
+      lms.emplace_back(LoadModifyStore{dep.second, {}, {}});
+    }
+
+    for (auto &e : lms) {
+      DetectOperationsOn(sg2, e);
+
+      llvm::dbgs() << "target: " << *e.Target << '\n';
+
+      llvm::dbgs() << "sources:\n";
+      for (auto *s : e.Sources) {
+        llvm::dbgs() << *s << '\n';
+      }
+
+      llvm::dbgs() << "ops:\n";
+      for (auto *o : e.Operations) {
+        llvm::dbgs() << *o << '\n';
+      }
     }
 
     loopCount++;
