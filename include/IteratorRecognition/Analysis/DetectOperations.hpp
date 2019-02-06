@@ -13,9 +13,6 @@
 
 #include "llvm/IR/Instructions.h"
 
-#include "llvm/ADT/SmallVector.h"
-// using llvm::SmallVectorImpl
-
 #include "llvm/ADT/SmallPtrSet.h"
 // using llvm::SmallPtrSet
 
@@ -26,9 +23,6 @@
 
 #include "llvm/Support/Debug.h"
 // using llvm::dbgs
-
-#include <iterator>
-// using std::back_inserter
 
 namespace iteratorrecognition {
 
@@ -58,14 +52,19 @@ namespace iteratorrecognition {
 //}
 //}
 
-template <typename GraphT>
-void DetectOperationsOn(llvm::Instruction *Target,
-                        const SDependenceGraph<GraphT> &SDG,
-                        llvm::SmallVectorImpl<llvm::Value *> &Operations) {
-  llvm::SetVector<llvm::Value *> workList;
-  llvm::SmallPtrSet<llvm::Value *, 32> visited, operations;
+struct LoadModifyStore {
+  llvm::Instruction *Target;
+  llvm::SmallPtrSet<llvm::Instruction *, 8> Sources;
+  llvm::SmallPtrSet<llvm::Instruction *, 16> Operations;
+};
 
-  workList.insert(Target);
+template <typename GraphT>
+void DetectOperationsOn(const SDependenceGraph<GraphT> &SDG,
+                        LoadModifyStore &LMS) {
+  llvm::SetVector<llvm::Value *> workList;
+  llvm::SmallPtrSet<llvm::Value *, 32> visited;
+
+  workList.insert(LMS.Target);
 
   while (!workList.empty()) {
     auto *curTarget =
@@ -88,8 +87,6 @@ void DetectOperationsOn(llvm::Instruction *Target,
       }
     }
 
-    operations.insert(curTarget);
-
     if (auto *ii = llvm::dyn_cast<llvm::StoreInst>(curTarget)) {
       // TODO maybe this should be the next target
       if (inverse_edge_units.count(ii->getValueOperand())) {
@@ -97,18 +94,21 @@ void DetectOperationsOn(llvm::Instruction *Target,
       }
     } else if (auto *ii = llvm::dyn_cast<llvm::LoadInst>(curTarget)) {
       // TODO maybe this should be the next target
+      LMS.Sources.insert(curTarget);
     } else if (auto *ii = llvm::dyn_cast<llvm::BinaryOperator>(curTarget)) {
       for (auto &op : ii->operands()) {
         if (inverse_edge_units.count(op.get())) {
           workList.insert(op);
         }
       }
+      LMS.Operations.insert(curTarget);
     } else if (auto *ii = llvm::dyn_cast<llvm::CmpInst>(curTarget)) {
       for (auto &op : ii->operands()) {
         if (inverse_edge_units.count(op.get())) {
           workList.insert(op);
         }
       }
+      LMS.Operations.insert(curTarget);
     } else if (auto *ii = llvm::dyn_cast<llvm::SelectInst>(curTarget)) {
       if (inverse_edge_units.count(ii->getTrueValue())) {
         workList.insert(ii->getTrueValue());
@@ -119,29 +119,26 @@ void DetectOperationsOn(llvm::Instruction *Target,
       // do not insert as operation
       // skip condition
       // just aggregate the operands to unify the cfg
-      operations.erase(curTarget);
     } else if (auto *ii = llvm::dyn_cast<llvm::GetElementPtrInst>(curTarget)) {
       for (auto &op : ii->operands()) {
         if (inverse_edge_units.count(op.get())) {
           workList.insert(op);
         }
       }
+      LMS.Operations.insert(curTarget);
     } else if (auto *ii = llvm::dyn_cast<llvm::PHINode>(curTarget)) {
       for (auto &op : ii->incoming_values()) {
         if (inverse_edge_units.count(op)) {
           workList.insert(op);
         }
       }
+      LMS.Sources.insert(curTarget);
     } else {
       llvm::dbgs() << "unhandled instruction: " << *curTarget << '\n';
       // TODO see what to do with this
-      operations.erase(curTarget);
       break;
     }
   } // work list iteration end
-
-  std::copy(operations.begin(), operations.end(),
-            std::back_inserter(Operations));
 }
 
 } // namespace iteratorrecognition
