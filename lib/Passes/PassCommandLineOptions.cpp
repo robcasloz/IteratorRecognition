@@ -22,6 +22,16 @@ llvm::cl::OptionCategory
                                   "Options for Iterator Recognition pass");
 
 llvm::cl::list<std::string>
-    FunctionWhitelist("itr-function-wl", llvm::cl::Hidden,
-                      llvm::cl::desc("process only the specified functions"));
+    FunctionWhiteList("itr-function-wl", llvm::cl::Hidden,
+                      llvm::cl::desc("process only the specified functions"),
+                      llvm::cl::cat(IteratorRecognitionCLCategory));
 
+llvm::cl::opt<unsigned>
+    LoopDepthMin("itr-loop-depth-min", llvm::cl::Hidden, llvm::cl::init(1),
+                 llvm::cl::desc("process loops at this depth or higher"),
+                 llvm::cl::cat(IteratorRecognitionCLCategory));
+
+llvm::cl::opt<unsigned>
+    LoopDepthMax("itr-loop-depth-max", llvm::cl::Hidden, llvm::cl::init(10),
+                 llvm::cl::desc("process loops of this depth or lower"),
+                 llvm::cl::cat(IteratorRecognitionCLCategory));

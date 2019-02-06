@@ -30,6 +30,8 @@
 
 #include "Pedigree/Analysis/Passes/PDGraphPass.hpp"
 
+#include "private/PassCommandLineOptions.hpp"
+
 #include "llvm/Pass.h"
 // using llvm::RegisterPass
 
@@ -123,6 +125,14 @@ void PayloadDependenceGraphPass::getAnalysisUsage(
 }
 
 bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
+  if (FunctionWhiteList.size()) {
+    auto found = std::find(FunctionWhiteList.begin(), FunctionWhiteList.end(),
+                           std::string{CurFunc.getName()});
+    if (found == FunctionWhiteList.end()) {
+      return false;
+    }
+  }
+
   auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
                    .getIteratorRecognitionInfo();
   auto &AA = getAnalysis<llvm::AAResultsWrapperPass>().getAAResults();
@@ -147,6 +157,11 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
   for (auto *curLoop : loopTraversal) {
     // LLVM_DEBUG(llvm::dbgs() << "loop: " << *e.getLoop()->getHeader() <<
     // "\n";);
+
+    if(curLoop->getLoopDepth() > LoopDepthMax) {
+      continue;
+    }
+
     LLVM_DEBUG(llvm::dbgs() << "loop: " << *curLoop->getHeader() << "\n";);
     auto infoOrError = info.getIteratorInfoFor(curLoop);
 

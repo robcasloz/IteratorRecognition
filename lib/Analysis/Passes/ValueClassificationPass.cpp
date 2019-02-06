@@ -96,14 +96,10 @@ void ValueClassificationPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 }
 
 bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
-  auto *DT = &getAnalysis<llvm::DominatorTreeWrapperPass>().getDomTree();
-  auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
-                   .getIteratorRecognitionInfo();
-
-  if (FunctionWhitelist.size()) {
-    auto found = std::find(FunctionWhitelist.begin(), FunctionWhitelist.end(),
+  if (FunctionWhiteList.size()) {
+    auto found = std::find(FunctionWhiteList.begin(), FunctionWhiteList.end(),
                            std::string{CurFunc.getName()});
-    if (found == FunctionWhitelist.end()) {
+    if (found == FunctionWhiteList.end()) {
       return false;
     }
   }
@@ -112,6 +108,10 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
     llvm::dbgs() << "iterator var classification for function: "
                  << CurFunc.getName() << "\n";
   });
+
+  auto *DT = &getAnalysis<llvm::DominatorTreeWrapperPass>().getDomTree();
+  auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
+                   .getIteratorRecognitionInfo();
 
   for (auto &e : info.getIteratorsInfo()) {
     using SetTy = llvm::SmallPtrSet<llvm::Instruction *, 8>;

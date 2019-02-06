@@ -10,6 +10,8 @@
 
 extern llvm::cl::OptionCategory IteratorRecognitionCLCategory;
 
-extern llvm::cl::list<std::string> FunctionWhitelist;
+extern llvm::cl::list<std::string> FunctionWhiteList;
+
+extern llvm::cl::opt<unsigned> LoopDepthMax;
 
 #endif // header
