@@ -155,7 +155,8 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     // LLVM_DEBUG(llvm::dbgs() << "loop: " << *e.getLoop()->getHeader() <<
     // "\n";);
 
-    if(curLoop->getLoopDepth() > LoopDepthMax) {
+    if (curLoop->getLoopDepth() > LoopDepthMax ||
+        curLoop->getLoopDepth() < LoopDepthMin) {
       continue;
     }
 

@@ -33,5 +33,6 @@ llvm::cl::opt<unsigned>
 
 llvm::cl::opt<unsigned>
     LoopDepthMax("itr-loop-depth-max", llvm::cl::Hidden, llvm::cl::init(10),
-                 llvm::cl::desc("process loops of this depth or lower"),
+                 llvm::cl::desc("process loops at this depth or lower"),
                  llvm::cl::cat(IteratorRecognitionCLCategory));
+
