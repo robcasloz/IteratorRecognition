@@ -225,8 +225,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
       }
     }
 
-    llvm::SmallVector<llvm::Instruction *, 8> operations;
-
+    llvm::SmallVector<llvm::Value *, 8> operations;
     DetectOperationsOn(target, sg2, operations);
 
     for (auto *e : operations) {
