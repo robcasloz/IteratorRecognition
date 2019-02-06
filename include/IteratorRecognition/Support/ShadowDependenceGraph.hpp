@@ -310,6 +310,13 @@ public:
     return n;
   }
 
+  decltype(auto) numInEdges() const {
+    decltype(std::declval<NodeType>().numInEdges()) n{};
+    std::for_each(std::begin(Nodes), std::end(Nodes),
+                  [&n](const auto &e) { n += e.get()->numInEdges(); });
+    return n;
+  }
+
   void addNodeFor(UnitType U) {
     auto sn{std::make_unique<NodeType>(U)};
     UnitToNode.emplace(U, sn.get());

@@ -198,7 +198,7 @@ public:
       // unhandled combination
       if (res1 == IteratorVarianceValue::Unknown ||
           res2 == IteratorVarianceValue::Unknown) {
-        llvm::dbgs() << "unhandled edge\n";
+        // TODO maybe be conservative here?
 
         if (JSONExport) {
           llvm::json::Object updateMapping;
