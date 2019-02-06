@@ -144,9 +144,6 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
                  << CurFunc.getName() << "\n";
   });
 
-  llvm::SmallPtrSet<llvm::Instruction *, 8> itVals, pdVals, pdLiveVals,
-      directItUsesInPayloadVals;
-
   llvm::SmallVector<llvm::Loop *, 8> loopTraversal;
   for (auto *e : LI.getLoopsInPreorder()) {
     loopTraversal.push_back(e);
@@ -162,8 +159,12 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
       continue;
     }
 
-    LLVM_DEBUG(llvm::dbgs() << "loop: " << *curLoop->getHeader() << "\n";);
+    LLVM_DEBUG(llvm::dbgs()
+                   << "loop: " << curLoop->getHeader()->getName() << "\n";);
     auto infoOrError = info.getIteratorInfoFor(curLoop);
+
+    llvm::SmallPtrSet<llvm::Instruction *, 8> itVals, pdVals, pdLiveVals,
+        directItUsesInPayloadVals;
 
     if (!infoOrError) {
       continue;
@@ -285,8 +286,8 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
 
     llvm::json::Object jsonInfo;
 
-    IteratorVarianceGraphUpdater<DGType> ivgu{g,      cidc.begin(), cidc.end(),
-                                              itVals, *e.getLoop(), &jsonInfo};
+    IteratorVarianceGraphUpdater<DGType> ivgu(g, cidc.begin(), cidc.end(),
+                                              itVals, *e.getLoop(), &jsonInfo);
 
     if (Export) {
       WriteJSONToFile(std::move(jsonInfo),
