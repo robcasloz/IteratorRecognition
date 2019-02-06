@@ -266,6 +266,19 @@ public:
   const auto &getIteratorsInfo() { return IteratorsInfo; }
   const auto &getIteratorsInfo() const { return IteratorsInfo; }
 
+  llvm::Optional<IteratorInfo> getIteratorInfoFor(const llvm::Loop *L) const {
+    assert(L && "Loop is null!");
+
+    auto found = std::find_if(IteratorsInfo.begin(), IteratorsInfo.end(),
+                              [&L](const auto &e) { return e.getLoop() == L; });
+
+    if (found != IteratorsInfo.end()) {
+      return *found;
+    } else {
+      return {};
+    }
+  }
+
   llvm::Optional<llvm::iterator_range<IteratorInfo::insts_iterator>>
   getIteratorsFor(const llvm::Loop *L) const {
     assert(L && "Loop is null!");
