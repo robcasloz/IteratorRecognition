@@ -126,6 +126,13 @@ void DetectOperationsOn(const SDependenceGraph<GraphT> &SDG,
         }
       }
       LMS.Operations.insert(curTarget);
+    } else if (auto *ii = llvm::dyn_cast<llvm::CastInst>(curTarget)) {
+      for (auto &op : ii->operands()) {
+        if (inverse_edge_units.count(op.get())) {
+          workList.insert(op);
+        }
+      }
+      LMS.Operations.insert(curTarget);
     } else if (auto *ii = llvm::dyn_cast<llvm::PHINode>(curTarget)) {
       for (auto &op : ii->incoming_values()) {
         if (inverse_edge_units.count(op)) {
