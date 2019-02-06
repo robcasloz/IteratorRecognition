@@ -342,6 +342,7 @@ public:
       auto found = std::find(n->Units.begin(), n->Units.end(), U);
 
       if (found != n->Units.end()) {
+        UnitToNode.erase(*found);
         n->Units.erase(found);
 
         if (n->Units.size() == 0) {
@@ -359,17 +360,33 @@ public:
     }
   }
 
-  template <typename PredT> void computeNodesIf(PredT &&Pred) {
-    for (const auto &n :
-         llvm::make_filter_range(GT::nodes(&OriginalGraph), Pred)) {
-      addNodeFor(n->unit());
+  // template <typename PredT> void computeNodesIf(PredT Pred) {
+  // for (const auto &n :
+  // llvm::make_filter_range(GT::nodes(&OriginalGraph), Pred)) {
+  // addNodeFor(n->unit());
+  //}
+  //}
+
+  template <typename PredT> void computeNodesIf(PredT Pred) {
+    for (const auto &n : GT::nodes(&OriginalGraph)) {
+      if (Pred(n)) {
+        addNodeFor(n->unit());
+      }
     }
   }
 
   void computeEdges() {
     for (const auto &n : GT::nodes(&OriginalGraph)) {
+      if (!UnitToNode.count(n->unit())) {
+        continue;
+      }
+
       auto &sn = UnitToNode[n->unit()];
       for (const auto &e : GT::children(n)) {
+        if (!UnitToNode.count(e->unit())) {
+          continue;
+        }
+
         auto &c = UnitToNode[e->unit()];
         sn->OutEdges.push_back(c);
         c->InEdges.push_back(sn);

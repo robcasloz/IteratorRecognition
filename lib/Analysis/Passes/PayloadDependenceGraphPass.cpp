@@ -160,6 +160,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
       continue;
     }
 
+    llvm::dbgs() << "#######\n";
     LLVM_DEBUG(llvm::dbgs()
                    << "loop: " << curLoop->getHeader()->getName() << "\n";);
     auto infoOrError = info.getIteratorInfoFor(curLoop);
@@ -177,6 +178,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     FindDirectUsesOfIn(itVals, pdVals, directItUsesInPayloadVals);
 
     auto &g = info.getGraph();
+    llvm::dbgs() << g.size() << '\n';
     using DGType = std::remove_reference_t<decltype(g)>;
     using DGT = llvm::GraphTraits<DGType *>;
 
@@ -239,7 +241,6 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     //}
     //}
 
-    llvm::dbgs() << g.size() << '\n';
     // llvm::dbgs() << sg.size() << '\n';
     // llvm::dbgs() << sg.numOutEdges() << '\n';
 
@@ -265,7 +266,6 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
 
     // step 1 graph update
 
-    llvm::dbgs() << "#######\n";
     ModRefReversePostOrder pdModRefTraversal(*e.getLoop(), info.getLoopInfo(),
                                              pdVals);
 
@@ -300,15 +300,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     // step 2 create shadow graph
 
     SDependenceGraph<DGType> sg2(g);
-    sg2.computeNodes();
-    for (const auto &n : DGT::nodes(&g)) {
-      if (!is_payload(n)) {
-        sg2.removeNodeFor(n->unit());
-      }
-    }
-    // this does not work due to compiler
-    // sg.computeNodesIf(is_payload);
-
+    sg2.computeNodesIf(is_payload);
     sg2.computeEdges();
 
     // step 3 detect operations
