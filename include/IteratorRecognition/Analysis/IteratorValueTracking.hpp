@@ -133,18 +133,26 @@ GetIteratorVariance(const llvm::Value *V,
       continue;
     }
 
-    if (auto *gepI = llvm::dyn_cast<llvm::GetElementPtrInst>(I)) {
-      workList.push_back(gepI->getPointerOperand());
-      for (auto &idx : gepI->indices()) {
+    if (auto *ii = llvm::dyn_cast<llvm::GetElementPtrInst>(I)) {
+      workList.push_back(ii->getPointerOperand());
+      for (auto &idx : ii->indices()) {
         workList.push_back(idx.get());
       }
-    } else if (auto *loadI = llvm::dyn_cast<llvm::LoadInst>(I)) {
-      workList.push_back(loadI->getPointerOperand());
-    } else if (auto *storeI = llvm::dyn_cast<llvm::StoreInst>(I)) {
-      workList.push_back(storeI->getPointerOperand());
-    } else if (auto *selectI = llvm::dyn_cast<llvm::SelectInst>(I)) {
-      workList.push_back(selectI->getOperand(1));
-      workList.push_back(selectI->getOperand(2));
+    } else if (auto *ii = llvm::dyn_cast<llvm::LoadInst>(I)) {
+      workList.push_back(ii->getPointerOperand());
+    } else if (auto *ii = llvm::dyn_cast<llvm::StoreInst>(I)) {
+      workList.push_back(ii->getPointerOperand());
+    } else if (auto *ii = llvm::dyn_cast<llvm::SelectInst>(I)) {
+      workList.push_back(ii->getOperand(1));
+      workList.push_back(ii->getOperand(2));
+    } else if (auto *ii = llvm::dyn_cast<llvm::PHINode>(I)) {
+      for (auto &op : ii->incoming_values()) {
+        workList.push_back(op);
+      }
+    } else if (auto *ii = llvm::dyn_cast<llvm::BinaryOperator>(I)) {
+      for (auto &op : ii->operands()) {
+        workList.push_back(op.get());
+      }
     } else {
       llvm::dbgs() << "Unhandled instruction: " << *I << '\n';
     }
