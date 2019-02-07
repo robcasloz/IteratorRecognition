@@ -44,6 +44,10 @@
 // using llvm::AAResultsWrapperPass
 // using llvm::AAResults
 
+#include "llvm/IR/Dominators.h"
+// using llvm::DominatorTreeWrapperPass
+// using llvm::DominatorTree
+
 #include "llvm/IR/Function.h"
 // using llvm::Function
 
@@ -117,6 +121,7 @@ namespace iteratorrecognition {
 
 void PayloadDependenceGraphPass::getAnalysisUsage(
     llvm::AnalysisUsage &AU) const {
+  AU.addRequired<llvm::DominatorTreeWrapperPass>();
   AU.addRequiredTransitive<llvm::LoopInfoWrapperPass>();
   AU.addRequiredTransitive<llvm::AAResultsWrapperPass>();
   AU.addRequiredTransitive<IteratorRecognitionWrapperPass>();
@@ -133,10 +138,11 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     }
   }
 
+  auto *DT = &getAnalysis<llvm::DominatorTreeWrapperPass>().getDomTree();
+  auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
+  auto &AA = getAnalysis<llvm::AAResultsWrapperPass>().getAAResults();
   auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
                    .getIteratorRecognitionInfo();
-  auto &AA = getAnalysis<llvm::AAResultsWrapperPass>().getAAResults();
-  auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
   unsigned loopCount = 0;
 
   LLVM_DEBUG({
@@ -166,6 +172,8 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     auto infoOrError = info.getIteratorInfoFor(curLoop);
 
     llvm::SmallPtrSet<llvm::Instruction *, 8> itVals, pdVals, pdLiveVals;
+    llvm::SmallPtrSet<llvm::Instruction *, 8> pdVirtRegLiveVals,
+        pdVirtRegLiveInVals, pdVirtRegLiveThruVals, pdVirtRegLiveOutVals;
 
     if (!infoOrError) {
       continue;
@@ -174,7 +182,11 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
 
     FindIteratorValues(e, itVals);
     FindPayloadValues(e, pdVals);
-    //FindDirectUsesOfIn(itVals, pdVals, directItUsesInPayloadVals);
+    // FindDirectUsesOfIn(itVals, pdVals, directItUsesInPayloadVals);
+    FindVirtRegPayloadLiveValues(e, pdVals, pdVirtRegLiveVals);
+    SplitVirtRegPayloadLiveValues(e, pdVals, pdVirtRegLiveVals, *DT,
+                                  pdVirtRegLiveInVals, pdVirtRegLiveThruVals,
+                                  pdVirtRegLiveOutVals);
 
     auto &g = info.getGraph();
     llvm::dbgs() << g.size() << '\n';
@@ -307,6 +319,10 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     llvm::SmallVector<LoadModifyStore, 8> lms;
     llvm::SmallPtrSet<llvm::Instruction *, 8> uniqueTargets;
 
+    for (auto *e : pdVirtRegLiveOutVals) {
+      lms.emplace_back(LoadModifyStore{e, {}, {}});
+    }
+
     for (auto &dep : cidc) {
       if (uniqueTargets.count(dep.second)) {
         continue;
@@ -317,7 +333,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     }
 
     for (auto &e : lms) {
-      DetectOperationsOn(sg2, e);
+      DetectOperationsOn(sg2, *curLoop, e);
 
       llvm::dbgs() << "target: " << *e.Target << '\n';
 
