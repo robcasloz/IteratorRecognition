@@ -153,6 +153,10 @@ GetIteratorVariance(const llvm::Value *V,
       for (auto &op : ii->operands()) {
         workList.push_back(op.get());
       }
+    } else if (auto *ii = llvm::dyn_cast<llvm::CastInst>(I)) {
+      for (auto &op : ii->operands()) {
+        workList.push_back(op.get());
+      }
     } else {
       llvm::dbgs() << "Unhandled instruction: " << *I << '\n';
     }

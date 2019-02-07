@@ -132,7 +132,7 @@ void DetectOperationsOn(const SDependenceGraph<GraphT> &SDG,
     } else if (auto *ii = llvm::dyn_cast<llvm::CastInst>(curTarget)) {
       for (auto &op : ii->operands()) {
         if (inverse_edge_units.count(op.get())) {
-          workList.insert(op);
+          workList.insert(op.get());
         }
       }
       LMS.Operations.insert(ii);
