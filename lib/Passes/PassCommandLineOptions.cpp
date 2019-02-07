@@ -22,7 +22,7 @@ llvm::cl::OptionCategory
                                   "Options for Iterator Recognition pass");
 
 llvm::cl::list<std::string>
-    FunctionWhiteList("itr-function-wl", llvm::cl::Hidden,
+    FunctionWhiteList("itr-func-wl", llvm::cl::Hidden,
                       llvm::cl::desc("process only the specified functions"),
                       llvm::cl::cat(IteratorRecognitionCLCategory));
 
