@@ -165,8 +165,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
                    << "loop: " << curLoop->getHeader()->getName() << "\n";);
     auto infoOrError = info.getIteratorInfoFor(curLoop);
 
-    llvm::SmallPtrSet<llvm::Instruction *, 8> itVals, pdVals, pdLiveVals,
-        directItUsesInPayloadVals;
+    llvm::SmallPtrSet<llvm::Instruction *, 8> itVals, pdVals, pdLiveVals;
 
     if (!infoOrError) {
       continue;
@@ -175,7 +174,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
 
     FindIteratorValues(e, itVals);
     FindPayloadValues(e, pdVals);
-    FindDirectUsesOfIn(itVals, pdVals, directItUsesInPayloadVals);
+    //FindDirectUsesOfIn(itVals, pdVals, directItUsesInPayloadVals);
 
     auto &g = info.getGraph();
     llvm::dbgs() << g.size() << '\n';
