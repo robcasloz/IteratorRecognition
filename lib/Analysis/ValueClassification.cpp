@@ -53,16 +53,10 @@ void FindMemPayloadLiveValues(
     llvm::SmallPtrSetImpl<llvm::Instruction *> &MemLiveOut) {
   for (const auto &e : PayloadValues) {
     if (e->mayReadFromMemory()) {
-      if (e->mayWriteToMemory()) {
-        llvm::report_fatal_error("Instruction cannot also write to memory!");
-      }
       MemLiveInThru.insert(e);
     }
 
     if (e->mayWriteToMemory()) {
-      if (e->mayReadFromMemory()) {
-        llvm::report_fatal_error("Instruction cannot also read from memory!");
-      }
       MemLiveOut.insert(e);
     }
   }
