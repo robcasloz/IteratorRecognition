@@ -18,6 +18,8 @@
 
 #include "IteratorRecognition/Analysis/DetectOperations.hpp"
 
+#include "IteratorRecognition/Analysis/StaticCommutativityAnalyzer.hpp"
+
 #include "IteratorRecognition/Analysis/IteratorValueTracking.hpp"
 
 #include "IteratorRecognition/Analysis/Passes/PayloadDependenceGraphPass.hpp"
@@ -347,6 +349,11 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
         llvm::dbgs() << *o << '\n';
       }
     }
+
+    // step 4 determine commutativity
+
+    StaticCommutativityAnalyzer sca;
+    sca.analyze(lms, itVals, *curLoop);
 
     loopCount++;
   }
