@@ -111,6 +111,7 @@ GetIteratorVariance(const llvm::Value *V,
     if (visited.count(V)) {
       continue;
     }
+    visited.insert(V);
 
     if (llvm::isa<llvm::Constant>(V) || llvm::isa<llvm::Argument>(V)) {
       status.mergeIn(IteratorVarianceValue::Invariant);
