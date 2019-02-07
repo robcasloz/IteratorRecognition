@@ -114,6 +114,13 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
                    .getIteratorRecognitionInfo();
 
   for (auto &e : info.getIteratorsInfo()) {
+    auto *curLoop = e.getLoop();
+
+    if (curLoop->getLoopDepth() > LoopDepthMax ||
+        curLoop->getLoopDepth() < LoopDepthMin) {
+      continue;
+    }
+
     using SetTy = llvm::SmallPtrSet<llvm::Instruction *, 8>;
     SetTy itVals, pdVals;
     SetTy directItUsesInPayloadVals, pdMemLiveInThruVals, pdMemLiveOutVals;
@@ -121,7 +128,7 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
         pdVirtRegLiveOutVals;
 
     LLVM_DEBUG(llvm::dbgs()
-                   << "loop: " << e.getLoop()->getHeader()->getName() << "\n";);
+                   << "loop: " << curLoop->getHeader()->getName() << "\n";);
 
     FindIteratorValues(e, itVals);
     FindPayloadValues(e, pdVals);
