@@ -214,22 +214,17 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
       }
     });
 
-    CrossIterationDependencyChecker cidc(pdModRefTraversal.begin(),
-                                         pdModRefTraversal.end(), AA);
+    DependenceCache dc(pdModRefTraversal.begin(), pdModRefTraversal.end(), AA);
 
-    // for (auto &dep : cidc) {
-    // auto res1 = GetIteratorVariance(dep.first, itVals, e.getLoop());
-    // llvm::dbgs() << "I1: " << *dep.first
-    //<< " res1: " << static_cast<unsigned>(res1.get()) << '\n';
-    // auto res2 = GetIteratorVariance(dep.second, itVals, e.getLoop());
-    // llvm::dbgs() << "I2: " << *dep.second
-    //<< " res2: " << static_cast<unsigned>(res2.get()) << '\n';
-    //}
+    LLVM_DEBUG({
+      llvm::dbgs() << "dependence cache:\n";
+      dc.print(llvm::dbgs());
+    });
 
     llvm::json::Object jsonInfo;
 
-    IteratorVarianceGraphUpdater<DGType> ivgu(g, cidc.begin(), cidc.end(),
-                                              itVals, *curLoop, &jsonInfo);
+    IteratorVarianceGraphUpdater<DGType> ivgu(g, dc.begin(), dc.end(), itVals,
+                                              *curLoop, &jsonInfo);
 
     if (Export) {
       WriteJSONToFile(std::move(jsonInfo),
@@ -253,7 +248,8 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
       lms.emplace_back(LoadModifyStore{e, {}, {}});
     }
 
-    for (auto &dep : cidc) {
+    for (auto &e : dc) {
+      auto &dep = e.first;
       if (uniqueTargets.count(dep.second)) {
         continue;
       }
@@ -287,6 +283,6 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
   }
 
   return false;
-}
+} // namespace iteratorrecognition
 
 } // namespace iteratorrecognition

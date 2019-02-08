@@ -200,7 +200,7 @@ public:
     llvm::json::Array updates;
 
     for (auto it = Begin, ei = End; it != ei; ++it) {
-      auto &dependence = *it;
+      auto &dependence = (*it).first;
 
       auto res1 = GetIteratorVariance(dependence.first, ItVals, &CurLoop);
       auto res2 = GetIteratorVariance(dependence.second, ItVals, &CurLoop);
