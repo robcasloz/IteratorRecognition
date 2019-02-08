@@ -13,44 +13,51 @@
 #include "llvm/Analysis/LoopIterator.h"
 // using llvm::LoopBlocksRPO
 
-#include "llvm/IR/Instruction.h"
-// using llvm::Instruction
-
 #include "llvm/ADT/SmallVector.h"
 // using llvm::SmallVector
 
-#include "llvm/ADT/SmallPtrSet.h"
-// using llvm::SmallPtrSetImpl
+namespace llvm {
+class Instruction;
+class BasicBlock;
+} // namespace llvm
 
 namespace iteratorrecognition {
 
-class ModRefReversePostOrder {
-  llvm::SmallVector<llvm::Instruction *, 8> order;
+class LoopRPO {
+  template <typename T> using OrderTy = llvm::SmallVector<T, 64>;
+
+  using InstOrderTy = OrderTy<llvm::Instruction *>;
+
+  InstOrderTy Order;
 
 public:
-  ModRefReversePostOrder(
-      const llvm::Loop &CurLoop, const llvm::LoopInfo &LI,
-      const llvm::SmallPtrSetImpl<llvm::Instruction *> &PartOf) {
+  LoopRPO() = default;
+  LoopRPO(const LoopRPO &) = default;
+  LoopRPO &operator=(const LoopRPO &) = default;
+
+  template <typename PredT>
+  LoopRPO(const llvm::Loop &CurLoop, const llvm::LoopInfo &LI,
+          PredT Pred = [](const auto &e) { return true; }) {
     llvm::LoopBlocksRPO rpot(const_cast<llvm::Loop *>(&CurLoop));
     rpot.perform(const_cast<llvm::LoopInfo *>(&LI));
 
     for (auto *bb : rpot) {
       for (auto &ii : *bb) {
-        if (ii.mayReadOrWriteMemory() && PartOf.count(&ii)) {
-          order.push_back(&ii);
+        if (Pred(ii)) {
+          Order.push_back(&ii);
         }
       }
     }
   }
 
-  using iterator = decltype(order)::iterator;
-  using const_iterator = decltype(order)::const_iterator;
+  using iterator = InstOrderTy::iterator;
+  using const_iterator = InstOrderTy::const_iterator;
 
-  decltype(auto) begin() { return order.begin(); }
-  decltype(auto) end() { return order.end(); }
+  decltype(auto) begin() { return Order.begin(); }
+  decltype(auto) end() { return Order.end(); }
 
-  decltype(auto) begin() const { return order.begin(); }
-  decltype(auto) end() const { return order.end(); }
+  decltype(auto) begin() const { return Order.begin(); }
+  decltype(auto) end() const { return Order.end(); }
 };
 
 } // namespace iteratorrecognition

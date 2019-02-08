@@ -279,12 +279,18 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
 
     // step 1 graph update
 
-    ModRefReversePostOrder pdModRefTraversal(*e.getLoop(), info.getLoopInfo(),
-                                             pdVals);
+    auto pdModRefFilter = [&set = pdVals](const llvm::Instruction &e) {
+      return e.mayReadOrWriteMemory() && set.count(&e);
+    };
 
-    for (auto *e : pdModRefTraversal) {
-      llvm::dbgs() << *e << '\n';
-    }
+    LoopRPO pdModRefTraversal(*e.getLoop(), info.getLoopInfo(), pdModRefFilter);
+
+    LLVM_DEBUG({
+      llvm::dbgs() << "payload ModRef RPO traversal:\n";
+      for (auto *e : pdModRefTraversal) {
+        llvm::dbgs() << *e << '\n';
+      }
+    });
 
     CrossIterationDependencyChecker cidc(pdModRefTraversal.begin(),
                                          pdModRefTraversal.end(), AA);
