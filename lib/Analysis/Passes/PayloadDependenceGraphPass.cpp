@@ -16,7 +16,7 @@
 
 #include "IteratorRecognition/Support/LoopRPO.hpp"
 
-#include "IteratorRecognition/Analysis/CrossIterationDependencyChecker.hpp"
+#include "IteratorRecognition/Analysis/DependenceCache.hpp"
 
 #include "IteratorRecognition/Analysis/DetectOperations.hpp"
 
