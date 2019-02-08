@@ -104,8 +104,7 @@ public:
 
       OS << "I1: " << strconv::to_string(*dep.first)
          << "\nI2: " << strconv::to_string(*dep.second)
-         << "\ndata: " << static_cast<std::underlying_type_t<DataT>>(data)
-         << '\n';
+         << "\ndata: " << static_cast<unsigned>(data) << '\n';
     }
   }
 };
