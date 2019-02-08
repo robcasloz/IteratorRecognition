@@ -222,9 +222,9 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     });
 
     llvm::json::Object jsonInfo;
-
-    IteratorVarianceGraphUpdater<DGType> ivgu(g, dc.begin(), dc.end(), itVals,
-                                              *curLoop, &jsonInfo);
+    IteratorVarianceAnalyzer iva(info);
+    IteratorVarianceGraphUpdater<DGType> ivgu(g, dc.begin(), dc.end(), iva,
+                                              &jsonInfo);
 
     if (Export) {
       WriteJSONToFile(std::move(jsonInfo),
@@ -277,7 +277,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     // step 4 determine commutativity
 
     StaticCommutativityAnalyzer sca;
-    sca.analyze(lms, itVals, *curLoop);
+    sca.analyze(lms, iva);
 
     loopCount++;
   }

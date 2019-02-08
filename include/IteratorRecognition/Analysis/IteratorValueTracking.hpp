@@ -10,7 +10,7 @@
 
 #include "IteratorRecognition/Support/Utils/StringConversion.hpp"
 
-#include "IteratorRecognition/Support/Utils/DebugInfo.hpp"
+#include "IteratorRecognition/Analysis/IteratorRecognition.hpp"
 
 #include "llvm/IR/Instruction.h"
 // using llvm::Instruction
@@ -32,6 +32,9 @@
 #include "llvm/ADT/SmallPtrSet.h"
 // using llvm::SmallPtrSetImpl
 // using llvm::SmallPtrSet
+
+#include "llvm/ADT/DenseMap.h"
+// using llvm::DenseMap
 
 #include "llvm/Support/JSON.h"
 // using json::Value
@@ -90,83 +93,7 @@ public:
   }
 };
 
-// TODO this might need a cache
-
-IteratorVariance
-GetIteratorVariance(const llvm::Value *V,
-                    const llvm::SmallPtrSetImpl<llvm::Instruction *> &Iterators,
-                    const llvm::Loop *CurLoop = nullptr) {
-  llvm::SmallVector<const llvm::Value *, 8> workList{V};
-  llvm::SmallPtrSet<const llvm::Value *, 8> visited;
-
-  IteratorVariance status{};
-
-  while (!workList.empty()) {
-    if (status == IteratorVarianceValue::Variant) {
-      break;
-    }
-
-    auto *V = workList.pop_back_val();
-
-    if (visited.count(V)) {
-      continue;
-    }
-    visited.insert(V);
-
-    if (llvm::isa<llvm::Constant>(V) || llvm::isa<llvm::Argument>(V)) {
-      status.mergeIn(IteratorVarianceValue::Invariant);
-      continue;
-    }
-
-    auto *I = llvm::dyn_cast<llvm::Instruction>(V);
-    if (!I) {
-      llvm::dbgs() << "Unhandled value: " << *V << '\n';
-    }
-
-    if (Iterators.count(I)) {
-      status.mergeIn(IteratorVarianceValue::Variant);
-      continue;
-    }
-
-    if (CurLoop && !CurLoop->contains(I)) {
-      status.mergeIn(IteratorVarianceValue::Invariant);
-      continue;
-    }
-
-    if (auto *ii = llvm::dyn_cast<llvm::GetElementPtrInst>(I)) {
-      workList.push_back(ii->getPointerOperand());
-      for (auto &idx : ii->indices()) {
-        workList.push_back(idx.get());
-      }
-    } else if (auto *ii = llvm::dyn_cast<llvm::LoadInst>(I)) {
-      workList.push_back(ii->getPointerOperand());
-    } else if (auto *ii = llvm::dyn_cast<llvm::StoreInst>(I)) {
-      workList.push_back(ii->getPointerOperand());
-    } else if (auto *ii = llvm::dyn_cast<llvm::SelectInst>(I)) {
-      workList.push_back(ii->getOperand(1));
-      workList.push_back(ii->getOperand(2));
-    } else if (auto *ii = llvm::dyn_cast<llvm::PHINode>(I)) {
-      for (auto &op : ii->incoming_values()) {
-        workList.push_back(op);
-      }
-    } else if (auto *ii = llvm::dyn_cast<llvm::BinaryOperator>(I)) {
-      for (auto &op : ii->operands()) {
-        workList.push_back(op.get());
-      }
-    } else if (auto *ii = llvm::dyn_cast<llvm::CastInst>(I)) {
-      for (auto &op : ii->operands()) {
-        workList.push_back(op.get());
-      }
-    } else {
-      llvm::dbgs() << "Unhandled instruction: " << *I << '\n';
-    }
-  }
-
-  return status;
-}
-
-//
-
+// TODO this needs to be moved, too much duplication
 decltype(auto) determineHazard(const llvm::Instruction &Src,
                                const llvm::Instruction &Dst) {
   using namespace pedigree;
@@ -189,21 +116,132 @@ decltype(auto) determineHazard(const llvm::Instruction &Src,
   return info;
 }
 
+//
+
+class IteratorVarianceAnalyzer {
+  IteratorInfo &Info;
+  llvm::DenseMap<llvm::Value *, IteratorVarianceValue> VarianceCache;
+
+public:
+  IteratorVarianceAnalyzer() = delete;
+
+  IteratorVarianceAnalyzer(const IteratorInfo &Info)
+      : Info(const_cast<IteratorInfo &>(Info)) {}
+
+  void reset() { VarianceCache.clear(); }
+
+  const IteratorInfo &getInfo() const { return Info; }
+
+  IteratorVarianceValue getVariance(const llvm::Value *Query) const {
+    llvm::SmallVector<const llvm::Value *, 8> workList{Query};
+    llvm::SmallPtrSet<const llvm::Value *, 8> visited;
+
+    IteratorVariance status{};
+
+    while (!workList.empty()) {
+      auto *curVal = workList.pop_back_val();
+
+      if (visited.count(curVal)) {
+        continue;
+      }
+      visited.insert(curVal);
+
+      if (status == IteratorVarianceValue::Variant) {
+        break;
+      }
+
+      if (llvm::isa<llvm::Constant>(curVal) ||
+          llvm::isa<llvm::Argument>(curVal)) {
+        status.mergeIn(IteratorVarianceValue::Invariant);
+        continue;
+      }
+
+      auto *curInst = llvm::dyn_cast<llvm::Instruction>(curVal);
+      if (!curInst) {
+        llvm::dbgs() << "Unhandled value: " << strconv::to_string(*curVal)
+                     << '\n';
+        status.mergeIn(IteratorVarianceValue::Unknown);
+        break;
+      }
+
+      if (!Info.getLoop()->contains(curInst)) {
+        status.mergeIn(IteratorVarianceValue::Invariant);
+        continue;
+      }
+
+      if (Info.isIterator(curInst)) {
+        status.mergeIn(IteratorVarianceValue::Variant);
+        continue;
+      }
+
+      if (auto *ii = llvm::dyn_cast<llvm::LoadInst>(curInst)) {
+        workList.push_back(ii->getPointerOperand());
+      } else if (auto *ii = llvm::dyn_cast<llvm::StoreInst>(curInst)) {
+        workList.push_back(ii->getPointerOperand());
+      } else if (auto *ii = llvm::dyn_cast<llvm::SelectInst>(curInst)) {
+        workList.push_back(ii->getOperand(1));
+        workList.push_back(ii->getOperand(2));
+      } else if (auto *ii = llvm::dyn_cast<llvm::PHINode>(curInst)) {
+        for (auto &op : ii->incoming_values()) {
+          workList.push_back(op);
+        }
+      } else if (auto *ii = llvm::dyn_cast<llvm::BinaryOperator>(curInst)) {
+        for (auto &op : ii->operands()) {
+          workList.push_back(op.get());
+        }
+      } else if (auto *ii = llvm::dyn_cast<llvm::CastInst>(curInst)) {
+        for (auto &op : ii->operands()) {
+          workList.push_back(op.get());
+        }
+      } else if (auto *ii = llvm::dyn_cast<llvm::GetElementPtrInst>(curInst)) {
+        workList.push_back(ii->getPointerOperand());
+        for (auto &idx : ii->indices()) {
+          workList.push_back(idx.get());
+        }
+      } else {
+        llvm::dbgs() << "Unhandled instruction: "
+                     << strconv::to_string(*curInst) << '\n';
+      }
+    }
+
+    return status.get();
+  }
+
+  IteratorVarianceValue getVariance(const llvm::Value *Query) {
+    return const_cast<IteratorVarianceAnalyzer *>(this)->getVariance(Query);
+  }
+
+  IteratorVarianceValue getOrInsertVariance(const llvm::Value *Query) {
+    auto found = VarianceCache.find(Query);
+
+    if (found == VarianceCache.end()) {
+      auto v = getVariance(Query);
+
+      found = VarianceCache
+                  .insert(std::make_pair(const_cast<llvm::Value *>(Query), v))
+                  .first;
+    }
+
+    return (*found).getSecond();
+  }
+};
+
+//
+
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
 class IteratorVarianceGraphUpdater {
 public:
   template <typename IteratorT>
-  IteratorVarianceGraphUpdater(
-      GraphT &G, IteratorT Begin, IteratorT End,
-      const llvm::SmallPtrSetImpl<llvm::Instruction *> &ItVals,
-      const llvm::Loop &CurLoop, llvm::json::Object *JSONExport = nullptr) {
+  IteratorVarianceGraphUpdater(GraphT &G, IteratorT Begin, IteratorT End,
+                               IteratorVarianceAnalyzer &IVA,
+                               llvm::json::Object *JSONExport = nullptr) {
     llvm::json::Array updates;
 
     for (auto it = Begin, ei = End; it != ei; ++it) {
       auto &dependence = (*it).first;
 
-      auto res1 = GetIteratorVariance(dependence.first, ItVals, &CurLoop);
-      auto res2 = GetIteratorVariance(dependence.second, ItVals, &CurLoop);
+      auto res1 = IVA.getOrInsertVariance(dependence.first);
+      auto res2 = IVA.getOrInsertVariance(dependence.second);
 
       auto *srcNode = G.getNode(dependence.first);
       auto *dstNode = G.getNode(dependence.second);
@@ -283,7 +321,7 @@ public:
 
     if (JSONExport) {
       llvm::json::Object infoMapping;
-      infoMapping["loop"] = llvm::toJSON(CurLoop);
+      infoMapping["loop"] = llvm::toJSON(*IVA.getInfo().getLoop());
       infoMapping["updates"] = std::move(updates);
       (*JSONExport)["loop updates"] = std::move(infoMapping);
     }
