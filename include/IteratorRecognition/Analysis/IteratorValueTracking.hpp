@@ -207,10 +207,6 @@ public:
     return status.get();
   }
 
-  IteratorVarianceValue getVariance(const llvm::Value *Query) {
-    return const_cast<IteratorVarianceAnalyzer *>(this)->getVariance(Query);
-  }
-
   IteratorVarianceValue getOrInsertVariance(const llvm::Value *Query) {
     auto found = VarianceCache.find(Query);
 
