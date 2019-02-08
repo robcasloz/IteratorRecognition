@@ -14,7 +14,7 @@
 
 #include "IteratorRecognition/Support/Utils/StringConversion.hpp"
 
-#include "IteratorRecognition/Analysis/ReversePostOrderTraversal.hpp"
+#include "IteratorRecognition/Support/LoopRPO.hpp"
 
 #include "IteratorRecognition/Analysis/CrossIterationDependencyChecker.hpp"
 
