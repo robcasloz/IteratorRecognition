@@ -11,12 +11,14 @@
 
 namespace llvm {
 class Instruction;
+class Loop;
 } // namespace llvm
 
 namespace iteratorrecognition {
 namespace strconv {
 
-std::string to_string(const llvm::Instruction &I);
+std::string to_string(const llvm::Instruction &);
+std::string to_string(const llvm::Loop &);
 
 } // namespace strconv
 } // namespace iteratorrecognition

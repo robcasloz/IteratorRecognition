@@ -12,6 +12,8 @@
 
 #include "IteratorRecognition/Support/ShadowDependenceGraph.hpp"
 
+#include "IteratorRecognition/Support/Utils/StringConversion.hpp"
+
 #include "IteratorRecognition/Analysis/ReversePostOrderTraversal.hpp"
 
 #include "IteratorRecognition/Analysis/CrossIterationDependencyChecker.hpp"
@@ -49,6 +51,9 @@
 #include "llvm/IR/Dominators.h"
 // using llvm::DominatorTreeWrapperPass
 // using llvm::DominatorTree
+
+#include "llvm/IR/Instruction.h"
+// using llvm::Instruction
 
 #include "llvm/IR/Function.h"
 // using llvm::Function
@@ -143,8 +148,8 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
   auto *DT = &getAnalysis<llvm::DominatorTreeWrapperPass>().getDomTree();
   auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
   auto &AA = getAnalysis<llvm::AAResultsWrapperPass>().getAAResults();
-  auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
-                   .getIteratorRecognitionInfo();
+  auto &IRI = getAnalysis<IteratorRecognitionWrapperPass>()
+                  .getIteratorRecognitionInfo();
   unsigned loopCount = 0;
 
   LLVM_DEBUG({
@@ -158,11 +163,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
   }
   std::reverse(loopTraversal.begin(), loopTraversal.end());
 
-  // for (auto &e : info.getIteratorsInfo()) {
   for (auto *curLoop : loopTraversal) {
-    // LLVM_DEBUG(llvm::dbgs() << "loop: " << *e.getLoop()->getHeader() <<
-    // "\n";);
-
     if (curLoop->getLoopDepth() > LoopDepthMax ||
         curLoop->getLoopDepth() < LoopDepthMin) {
       continue;
@@ -170,27 +171,26 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
 
     llvm::dbgs() << "#######\n";
     LLVM_DEBUG(llvm::dbgs()
-                   << "loop: " << curLoop->getHeader()->getName() << "\n";);
-    auto infoOrError = info.getIteratorInfoFor(curLoop);
+                   << "loop: " << strconv::to_string(*curLoop) << "\n";);
+
+    auto infoOrError = IRI.getIteratorInfoFor(curLoop);
+    if (!infoOrError) {
+      continue;
+    }
+    auto &info = *infoOrError;
 
     llvm::SmallPtrSet<llvm::Instruction *, 8> itVals, pdVals, pdLiveVals;
     llvm::SmallPtrSet<llvm::Instruction *, 8> pdVirtRegLiveVals,
         pdVirtRegLiveInVals, pdVirtRegLiveThruVals, pdVirtRegLiveOutVals;
 
-    if (!infoOrError) {
-      continue;
-    }
-    auto &e = *infoOrError;
-
-    FindIteratorValues(e, itVals);
-    FindPayloadValues(e, pdVals);
-    // FindDirectUsesOfIn(itVals, pdVals, directItUsesInPayloadVals);
-    FindVirtRegPayloadLiveValues(e, pdVals, pdVirtRegLiveVals);
-    SplitVirtRegPayloadLiveValues(e, pdVals, pdVirtRegLiveVals, *DT,
+    FindIteratorValues(info, itVals);
+    FindPayloadValues(info, pdVals);
+    FindVirtRegPayloadLiveValues(info, pdVals, pdVirtRegLiveVals);
+    SplitVirtRegPayloadLiveValues(info, pdVals, pdVirtRegLiveVals, *DT,
                                   pdVirtRegLiveInVals, pdVirtRegLiveThruVals,
                                   pdVirtRegLiveOutVals);
 
-    auto &g = info.getGraph();
+    auto &g = IRI.getGraph();
     llvm::dbgs() << g.size() << '\n';
     using DGType = std::remove_reference_t<decltype(g)>;
     using DGT = llvm::GraphTraits<DGType *>;
@@ -199,91 +199,13 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
       return pdVals.count(e->unit()) != 0;
     };
 
-    // SDependenceGraph<DGType> sg(g);
-    // SDependenceGraph<DGType> sg2(g);
-    // sg.computeNodes();
-    // sg2.computeNodes();
-    // for (const auto &n : DGT::nodes(&g)) {
-    // if (!is_payload(n)) {
-    // sg.removeNodeFor(n->unit());
-    //// sg2.removeNodeFor(n->unit());
-    //}
-    //}
-    // this does not work due to compiler
-    // sg.computeNodesIf(is_payload);
-
-    // sg.computeEdges();
-    // sg2.computeEdges();
-
-    // llvm::dbgs() << g.size() << '\n';
-    // llvm::dbgs() << sg.size() << '\n';
-    // llvm::dbgs() << sg.numOutEdges() << '\n';
-
-    // for (auto *n : sg.nodes()) {
-    // if (!n->isNextIteration()) {
-    // llvm::dbgs() << "node with units: \n";
-    // for (auto &u : n->units()) {
-    // llvm::dbgs() << "\t" << *u << '\n';
-    //}
-
-    // for (auto &e : n->edges()) {
-    // llvm::dbgs() << "\thas edge with node with units: \n";
-    // for (auto &u : e->units()) {
-    // llvm::dbgs() << "\t" << *u << '\n';
-    //}
-    //}
-    //}
-    //}
-
-    // sg.computeNextIterationNodes();
-    // sg.computeNextIterationEdges();
-
-    // for (auto *n : sg.nodes()) {
-    // if (n->isNextIteration()) {
-    // llvm::dbgs() << "node with units: \n";
-    // for (auto &u : n->units()) {
-    // llvm::dbgs() << "\t" << *u << '\n';
-    //}
-
-    // for (auto &e : n->edges()) {
-    // llvm::dbgs() << "\thas edge with node with units: \n";
-    // for (auto &u : e->units()) {
-    // llvm::dbgs() << "\t" << *u << '\n';
-    //}
-    //}
-    //}
-    //}
-
-    // llvm::dbgs() << sg.size() << '\n';
-    // llvm::dbgs() << sg.numOutEdges() << '\n';
-
-    // sg.computeCrossIterationEdges(itVals);
-
-    // llvm::dbgs() << sg.numOutEdges() << '\n';
-
-    //
-
-    // llvm::Instruction *target = nullptr;
-    // for (auto *n : sg.nodes()) {
-    // for (auto *i : n->units()) {
-    // if (llvm::isa<llvm::StoreInst>(i)) {
-    // target = i;
-    // break;
-    //}
-    //}
-
-    // if (target) {
-    // break;
-    //}
-    //}
-
     // step 1 graph update
 
-    auto pdModRefFilter = [&set = pdVals](const llvm::Instruction &e) {
-      return e.mayReadOrWriteMemory() && set.count(&e);
+    auto pdModRefFilter = [&set = pdVals](const llvm::Instruction &I) {
+      return I.mayReadOrWriteMemory() && set.count(&I);
     };
 
-    LoopRPO pdModRefTraversal(*e.getLoop(), info.getLoopInfo(), pdModRefFilter);
+    LoopRPO pdModRefTraversal(*curLoop, IRI.getLoopInfo(), pdModRefFilter);
 
     LLVM_DEBUG({
       llvm::dbgs() << "payload ModRef RPO traversal:\n";
@@ -307,7 +229,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     llvm::json::Object jsonInfo;
 
     IteratorVarianceGraphUpdater<DGType> ivgu(g, cidc.begin(), cidc.end(),
-                                              itVals, *e.getLoop(), &jsonInfo);
+                                              itVals, *curLoop, &jsonInfo);
 
     if (Export) {
       WriteJSONToFile(std::move(jsonInfo),

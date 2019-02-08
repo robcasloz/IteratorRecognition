@@ -25,7 +25,6 @@ namespace iteratorrecognition {
 
 class LoopRPO {
   template <typename T> using OrderTy = llvm::SmallVector<T, 64>;
-
   using InstOrderTy = OrderTy<llvm::Instruction *>;
 
   InstOrderTy Order;
