@@ -4,6 +4,9 @@
 
 #include "IteratorRecognition/Support/Utils/StringConversion.hpp"
 
+#include "llvm/IR/Value.h"
+// using llvm::Value
+
 #include "llvm/IR/Instruction.h"
 // using llvm::Instruction
 
@@ -15,6 +18,15 @@
 
 namespace iteratorrecognition {
 namespace strconv {
+
+std::string to_string(const llvm::Value &V) {
+  std::string outs;
+  llvm::raw_string_ostream ss(outs);
+
+  ss << V;
+
+  return ss.str();
+}
 
 std::string to_string(const llvm::Instruction &I) {
   std::string outs;
