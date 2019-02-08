@@ -354,12 +354,6 @@ public:
     }
   }
 
-  void computeNodes() {
-    for (const auto &n : GT::nodes(&OriginalGraph)) {
-      addNodeFor(n->unit());
-    }
-  }
-
   // template <typename PredT> void computeNodesIf(PredT Pred) {
   // for (const auto &n :
   // llvm::make_filter_range(GT::nodes(&OriginalGraph), Pred)) {
@@ -367,7 +361,8 @@ public:
   //}
   //}
 
-  template <typename PredT> void computeNodesIf(PredT Pred) {
+  template <typename PredT>
+  void computeNodes(PredT Pred = [](const auto &e) { return true; }) {
     for (const auto &n : GT::nodes(&OriginalGraph)) {
       if (Pred(n)) {
         addNodeFor(n->unit());

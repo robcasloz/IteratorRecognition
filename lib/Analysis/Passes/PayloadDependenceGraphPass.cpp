@@ -236,7 +236,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     // step 2 create shadow graph
 
     SDependenceGraph<DGType> sg2(g);
-    sg2.computeNodesIf(is_payload);
+    sg2.computeNodes(is_payload);
     sg2.computeEdges();
 
     // step 3 detect operations
