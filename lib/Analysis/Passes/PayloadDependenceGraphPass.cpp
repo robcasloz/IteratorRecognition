@@ -185,6 +185,12 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
 
     FindIteratorValues(info, itVals);
     FindPayloadValues(info, pdVals);
+
+    if (pdVals.empty()) {
+      LLVM_DEBUG(llvm::dbgs() << "no payload\n";);
+      continue;
+    }
+
     FindVirtRegPayloadLiveValues(info, pdVals, pdVirtRegLiveVals);
     SplitVirtRegPayloadLiveValues(info, pdVals, pdVirtRegLiveVals, *DT,
                                   pdVirtRegLiveInVals, pdVirtRegLiveThruVals,
