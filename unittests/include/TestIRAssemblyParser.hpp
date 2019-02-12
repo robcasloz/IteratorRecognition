@@ -35,15 +35,15 @@
 #include "llvm/ADT/StringRef.h"
 // using llvm::StringRef
 
-namespace itr {
+namespace iteratorrecognition {
 namespace testing {
 
 class TestIRAssemblyParser {
 public:
   TestIRAssemblyParser(bool shouldVerify = true,
                        llvm::StringRef dataDir = "./unittests/data/")
-      : m_shouldVerify(shouldVerify), TestModule{nullptr},
-        TestDataDir{dataDir} {
+      : m_shouldVerify(shouldVerify), TestModule{nullptr}, TestDataDir{
+                                                               dataDir} {
 #if (LLVM_VERSION_MAJOR >= 4) ||                                               \
     (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9)
     TestContext = &theContext;
@@ -99,6 +99,6 @@ protected:
 };
 
 } // namespace testing
-} // namespace itr
+} // namespace iteratorrecognition
 
 #endif // header

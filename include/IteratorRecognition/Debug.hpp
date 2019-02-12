@@ -17,7 +17,7 @@
 
 namespace boost {
 
-[[noreturn]] static inline void throw_exception(std::exception const &e) {
+inline void throw_exception(std::exception const &e) {
   std::cerr << e.what() << '\n';
 
   std::terminate();

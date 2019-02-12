@@ -12,7 +12,7 @@
 #include <array>
 // using std::array
 
-namespace itr {
+namespace iteratorrecognition {
 namespace testing {
 namespace {
 
@@ -37,4 +37,4 @@ INSTANTIATE_TEST_CASE_P(DefaultInstance, ExampleTest,
 
 } // unnamed namespace
 } // namespace testing
-} // namespace itr
+} // namespace iteratorrecognition

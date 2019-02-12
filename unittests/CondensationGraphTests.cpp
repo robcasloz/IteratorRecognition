@@ -4,11 +4,11 @@
 
 #include "TestCommon.hpp"
 
-#include "Support/GenericDependenceNode.hpp"
+#include "Pedigree/Support/GenericDependenceNode.hpp"
 
-#include "Support/GenericDependenceGraph.hpp"
+#include "Pedigree/Support/GenericDependenceGraph.hpp"
 
-#include "CondensationGraph.hpp"
+#include "IteratorRecognition/Support/CondensationGraph.hpp"
 
 #include "llvm/ADT/SCCIterator.h"
 // using llvm::scc_begin
@@ -23,7 +23,7 @@
 #include <iterator>
 // using std::distance
 
-namespace itr {
+namespace iteratorrecognition {
 namespace testing {
 namespace {
 
@@ -32,33 +32,43 @@ using TestGraphTy = pedigree::GenericDependenceGraph<TestNodeTy>;
 
 } // unnamed namespace
 } // namespace testing
-} // namespace itr
+} // namespace iteratorrecognition
+
+//
 
 namespace llvm {
 
 template <>
-struct GraphTraits<itr::testing::TestGraphTy *>
+struct GraphTraits<iteratorrecognition::testing::TestGraphTy *>
     : public pedigree::LLVMDependenceGraphTraitsHelperBase<
-          itr::testing::TestGraphTy *> {};
+          iteratorrecognition::testing::TestGraphTy *> {};
 
 template <>
-struct llvm::GraphTraits<itr::CondensationGraph<itr::testing::TestGraphTy *>>
-    : public itr::LLVMCondensationGraphTraitsHelperBase<
-          itr::CondensationGraph<itr::testing::TestGraphTy *>> {};
+struct GraphTraits<Inverse<iteratorrecognition::testing::TestGraphTy *>>
+    : public pedigree::LLVMDependenceInverseGraphTraitsHelperBase<
+          iteratorrecognition::testing::TestGraphTy *> {};
 
 template <>
-struct llvm::GraphTraits<
-    llvm::Inverse<itr::CondensationGraph<itr::testing::TestGraphTy *>>>
-    : public itr::LLVMCondensationInverseGraphTraitsHelperBase<
-          itr::CondensationGraph<itr::testing::TestGraphTy *>> {};
+struct llvm::GraphTraits<iteratorrecognition::CondensationGraph<
+    iteratorrecognition::testing::TestGraphTy *>>
+    : public iteratorrecognition::LLVMCondensationGraphTraitsHelperBase<
+          iteratorrecognition::CondensationGraph<
+              iteratorrecognition::testing::TestGraphTy *>> {};
+
+template <>
+struct llvm::GraphTraits<llvm::Inverse<iteratorrecognition::CondensationGraph<
+    iteratorrecognition::testing::TestGraphTy *>>>
+    : public iteratorrecognition::LLVMCondensationInverseGraphTraitsHelperBase<
+          iteratorrecognition::CondensationGraph<
+              iteratorrecognition::testing::TestGraphTy *>> {};
 
 } // namespace llvm
 
-namespace itr {
+//
+
+namespace iteratorrecognition {
 namespace testing {
 namespace {
-
-//
 
 struct CondensationGraphTest : public ::testing::Test {
   std::array<int, 6> TestNodes{{0, 1, 2, 3, 4, 5}};
@@ -111,13 +121,13 @@ TEST_F(CondensationGraphTest, CondensationsCount) {
 TEST_F(CondensationGraphTest, CondensationNodesCount) {
   CondensationGraph<TestGraphTy *> CG{llvm::scc_begin(&G1), llvm::scc_end(&G1)};
   auto found0 = CG.find(DepNodes1[0]);
-  auto SCC0NodesCount = std::distance(found0->begin(), found0->end());
+  auto SCC0NodesCount = std::distance((*found0)->begin(), (*found0)->end());
 
   auto found1 = CG.find(DepNodes1[3]);
-  auto SCC1NodesCount = std::distance(found1->begin(), found1->end());
+  auto SCC1NodesCount = std::distance((*found1)->begin(), (*found1)->end());
 
   auto found2 = CG.find(DepNodes1[5]);
-  auto SCC2NodesCount = std::distance(found2->begin(), found2->end());
+  auto SCC2NodesCount = std::distance((*found2)->begin(), (*found2)->end());
 
   EXPECT_EQ(3, SCC0NodesCount);
   EXPECT_EQ(2, SCC1NodesCount);
@@ -129,16 +139,16 @@ TEST_F(CondensationGraphTest, CondensationOutEdgesCount) {
   using GT = llvm::GraphTraits<decltype(CG)>;
 
   auto found0 = CG.find(DepNodes1[0]);
-  auto SCC0EdgesCount = std::distance(GT::child_edge_begin(&*found0),
-                                      GT::child_edge_end(&*found0));
+  auto SCC0EdgesCount =
+      std::distance(GT::child_edge_begin(*found0), GT::child_edge_end(*found0));
 
   auto found1 = CG.find(DepNodes1[3]);
-  auto SCC1EdgesCount = std::distance(GT::child_edge_begin(&*found1),
-                                      GT::child_edge_end(&*found1));
+  auto SCC1EdgesCount =
+      std::distance(GT::child_edge_begin(*found1), GT::child_edge_end(*found1));
 
   auto found2 = CG.find(DepNodes1[5]);
-  auto SCC2EdgesCount = std::distance(GT::child_edge_begin(&*found2),
-                                      GT::child_edge_end(&*found2));
+  auto SCC2EdgesCount =
+      std::distance(GT::child_edge_begin(*found2), GT::child_edge_end(*found2));
 
   EXPECT_EQ(2, SCC0EdgesCount);
   EXPECT_EQ(1, SCC1EdgesCount);
@@ -150,22 +160,22 @@ TEST_F(CondensationGraphTest, CondensationInEdgesCount) {
   using IGT = llvm::GraphTraits<llvm::Inverse<decltype(CG)>>;
 
   auto found0 = CG.find(DepNodes1[1]);
-  auto SCC0EdgesCount = std::distance(IGT::child_edge_begin(&*found0),
-                                      IGT::child_edge_end(&*found0));
+  auto SCC0EdgesCount = std::distance(IGT::child_edge_begin(*found0),
+                                      IGT::child_edge_end(*found0));
 
   auto found1 = CG.find(DepNodes1[3]);
-  auto SCC1EdgesCount = std::distance(IGT::child_edge_begin(&*found1),
-                                      IGT::child_edge_end(&*found1));
+  auto SCC1EdgesCount = std::distance(IGT::child_edge_begin(*found1),
+                                      IGT::child_edge_end(*found1));
 
   auto found2 = CG.find(DepNodes1[5]);
-  auto SCC2EdgesCount = std::distance(IGT::child_edge_begin(&*found2),
-                                      IGT::child_edge_end(&*found2));
+  auto SCC2EdgesCount = std::distance(IGT::child_edge_begin(*found2),
+                                      IGT::child_edge_end(*found2));
 
-  EXPECT_EQ(2, SCC0EdgesCount);
-  EXPECT_EQ(1, SCC1EdgesCount);
-  EXPECT_EQ(0, SCC2EdgesCount);
+  EXPECT_EQ(1, SCC0EdgesCount);
+  EXPECT_EQ(2, SCC1EdgesCount);
+  EXPECT_EQ(3, SCC2EdgesCount);
 }
 
 } // unnamed namespace
 } // namespace testing
-} // namespace itr
+} // namespace iteratorrecognition

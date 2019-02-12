@@ -2,8 +2,9 @@
 //
 //
 
-#ifndef TESTCOMMON_HPP
-#define TESTCOMMON_HPP
+#pragma once
+
+#include "IteratorRecognition/Debug.hpp"
 
 #include "llvm/Config/llvm-config.h"
 
@@ -22,7 +23,7 @@
 #include <string>
 // using std::string
 
-namespace itr {
+namespace iteratorrecognition {
 namespace testing {
 
 static llvm::LoopInfo calculateLoopInfo(llvm::Function &Func) {
@@ -50,6 +51,5 @@ inline std::ostream &operator<<(std::ostream &os, const ExampleTestData &td) {
 }
 
 } // namespace testing
-} // namespace itr
+} // namespace iteratorrecognition
 
-#endif // header
