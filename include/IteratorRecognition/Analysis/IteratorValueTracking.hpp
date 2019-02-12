@@ -46,6 +46,9 @@
 #include "llvm/Support/Debug.h"
 // using llvm::dbgs
 
+#include <utility>
+// using std::move
+
 namespace iteratorrecognition {
 
 enum class IteratorVarianceValue { Unknown, Invariant, Variant };
@@ -98,17 +101,16 @@ decltype(auto) determineHazard(const llvm::Instruction &Src,
                                const llvm::Instruction &Dst) {
   using namespace pedigree;
 
-  BasicDependenceInfo::value_type info{DependenceOrigin::Memory,
-                                       DependenceHazard::Unknown};
+  BasicDependenceInfo::value_type info;
 
   if (Src.mayReadFromMemory() && Dst.mayReadFromMemory()) {
     // do not add edge
   } else if (Src.mayReadFromMemory() && Dst.mayWriteToMemory()) {
-    info.hazards |= DependenceHazard::Anti;
+    info |= {DO_Memory, DH_Anti};
   } else if (Src.mayWriteToMemory() && Dst.mayReadFromMemory()) {
-    info.hazards |= DependenceHazard::Flow;
+    info |= {DO_Memory, DH_Flow};
   } else if (Src.mayWriteToMemory() && Dst.mayWriteToMemory()) {
-    info.hazards |= DependenceHazard::Out;
+    info |= {DO_Memory, DH_Out};
   } else {
     LLVM_DEBUG(llvm::dbgs() << "No appropriate hazard was found!");
   }
@@ -125,7 +127,7 @@ class IteratorVarianceAnalyzer {
 public:
   IteratorVarianceAnalyzer() = delete;
 
-  IteratorVarianceAnalyzer(const IteratorInfo &Info)
+  explicit IteratorVarianceAnalyzer(const IteratorInfo &Info)
       : Info(const_cast<IteratorInfo &>(Info)) {}
 
   void reset() { VarianceCache.clear(); }
@@ -267,7 +269,7 @@ public:
           if (infoOrEmpty) {
             auto info = *infoOrEmpty;
 
-            if (info.origins & pedigree::DependenceOrigin::Memory) {
+            if (info.has(pedigree::DO_Memory)) {
               // FIXME
               // info.origins =
               // static_cast<unsigned>(info.origins) &
@@ -297,7 +299,7 @@ public:
         if (!srcNode->hasEdgeWith(dstNode)) {
           auto info = determineHazard(*dependence.first, *dependence.second);
 
-          if (info.hazards) {
+          if (info) {
             srcNode->addDependentNode(dstNode, info);
           }
 

@@ -446,7 +446,7 @@ public:
 
             auto info = depSrc->getEdgeInfo(depDst);
 
-            if (info.value().origins & pedigree::DependenceOrigin::Memory) {
+            if (info.value().has(pedigree::DO_Memory)) {
               if (IsIteratorDependent(unitSrc, IteratorValues)) {
                 llvm::dbgs() << "test it dep: " << *unitSrc << "\n";
               }
