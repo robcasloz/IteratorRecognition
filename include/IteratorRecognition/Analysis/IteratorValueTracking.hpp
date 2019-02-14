@@ -6,7 +6,7 @@
 
 #include "IteratorRecognition/Config.hpp"
 
-#include "IteratorRecognition/Exchange/JSONTransfer.hpp"
+//#include "IteratorRecognition/Exchange/JSONTransfer.hpp"
 
 #include "IteratorRecognition/Support/Utils/StringConversion.hpp"
 
@@ -26,17 +26,15 @@
 // using llvm::Loop
 
 #include "llvm/ADT/SmallVector.h"
-// using llvm::SmallVectorImpl
 // using llvm::SmallVector
 
 #include "llvm/ADT/SmallPtrSet.h"
-// using llvm::SmallPtrSetImpl
 // using llvm::SmallPtrSet
 
 #include "llvm/ADT/DenseMap.h"
 // using llvm::DenseMap
 
-#include "llvm/Support/JSON.h"
+//#include "llvm/Support/JSON.h"
 // using json::Value
 // using json::Object
 // using json::Array
@@ -231,7 +229,7 @@ public:
 
 //
 
-template <typename GraphT> class IteratorVarianceGraphUpdater {
+/*template <typename GraphT> class IteratorVarianceGraphUpdater {
 public:
   template <typename IteratorT>
   IteratorVarianceGraphUpdater(GraphT &G, IteratorT Begin, IteratorT End,
@@ -328,6 +326,6 @@ public:
       (*JSONExport)["loop updates"] = std::move(infoMapping);
     }
   }
-};
+};*/
 
 } // namespace iteratorrecognition
