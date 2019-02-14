@@ -157,10 +157,12 @@ ConvertToJSON(llvm::StringRef PreambleText, llvm::StringRef SequenceText,
   llvm::json::Array updates;
 
   mapping[PreambleText] = llvm::json::toJSON(Preamble);
+  // TODO maybe detect if the pointee is a pointer itself with SFINAE in order
+  // to decide on the use of indirect_iterator or not
   std::transform(boost::make_indirect_iterator(Begin),
                  boost::make_indirect_iterator(End),
                  std::back_inserter(updates),
-                 [&](const auto &e) { return llvm::json::toJSON(e); });
+                 [](const auto &e) { return llvm::json::toJSON(e); });
   mapping[SequenceText] = std::move(updates);
 
   return std::move(mapping);
