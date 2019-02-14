@@ -186,8 +186,8 @@ public:
                   srcNode, dstNode, newInfo);
 
               undoUpdate = std::make_unique<
-                  GraphEdgeInfoUpdate<GraphNodeRefT, EdgeInfoT>>(
-                  srcNode, dstNode, newInfo);
+                  GraphEdgeInfoUpdate<GraphNodeRefT, EdgeInfoT>>(srcNode,
+                                                                 dstNode, info);
             } else {
               doUpdate = std::make_unique<GraphEdgeDisconnect<GraphNodeRefT>>(
                   srcNode, dstNode);
