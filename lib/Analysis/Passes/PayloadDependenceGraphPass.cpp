@@ -90,6 +90,9 @@
 // using llvm::dbgs
 // using llvm::errs
 
+#include <string>
+// using std::string
+
 #include <algorithm>
 // using std::for_each
 // using std::reverse
@@ -268,7 +271,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
           ConvertToJSON("loop", "updates", *curLoop, dos.begin(), dos.end());
 
       WriteJSONToFile(json,
-                      "itr.graph_updates." + CurFunc.getName() + "loop" +
+                      "itr.graph_updates." + CurFunc.getName() + ".loop." +
                           std::to_string(loopCount),
                       ReportsDir);
     }
