@@ -24,6 +24,8 @@
 
 #include "IteratorRecognition/Analysis/IteratorValueTracking.hpp"
 
+#include "IteratorRecognition/Analysis/GraphUpdater.hpp"
+
 #include "IteratorRecognition/Analysis/Passes/PayloadDependenceGraphPass.hpp"
 
 #include "IteratorRecognition/Analysis/IteratorRecognition.hpp"
@@ -227,16 +229,20 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
       dc.print(llvm::dbgs());
     });
 
-    llvm::json::Object jsonInfo;
     IteratorVarianceAnalyzer iva(info);
-    IteratorVarianceGraphUpdater<DGType> ivgu(g, dc.begin(), dc.end(), iva,
-                                              &jsonInfo);
+    IteratorVarianceGraphUpdateGenerator<DGType> ivgug{g, iva};
+    ActionQueueT dos, undos;
 
-    if (Export) {
-      WriteJSONToFile(std::move(jsonInfo),
-                      "graphupdates." + CurFunc.getName() + ".loop." +
-                          std::to_string(loopCount),
-                      ".");
+    for (auto &dep : dc) {
+      auto v = ivgug.create(dep.first.first, dep.first.second);
+      dos.push_back(std::move(v.first));
+      undos.push_back(std::move(v.second));
+    }
+
+    for (auto &a : dos) {
+      if(a) {
+        ExecuteAction(*a);
+      }
     }
 
     // step 2 create shadow graph
@@ -289,6 +295,6 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
   }
 
   return false;
-} // namespace iteratorrecognition
+}
 
 } // namespace iteratorrecognition

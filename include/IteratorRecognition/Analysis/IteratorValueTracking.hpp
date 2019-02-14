@@ -51,6 +51,33 @@
 
 namespace iteratorrecognition {
 
+// TODO this needs to be moved, too much duplication
+inline decltype(auto) determineHazard(const llvm::Instruction &Src,
+                                      const llvm::Instruction &Dst) {
+  using namespace pedigree;
+
+  BasicDependenceInfo::value_type info;
+
+  if (Src.mayReadFromMemory() && Dst.mayReadFromMemory()) {
+    // do not add edge
+  } else if (Src.mayReadFromMemory() && Dst.mayWriteToMemory()) {
+    info |= {DO_Memory, DH_Anti};
+  } else if (Src.mayWriteToMemory() && Dst.mayReadFromMemory()) {
+    info |= {DO_Memory, DH_Flow};
+  } else if (Src.mayWriteToMemory() && Dst.mayWriteToMemory()) {
+    info |= {DO_Memory, DH_Out};
+  } else {
+    LLVM_DEBUG(llvm::dbgs() << "No appropriate hazard was found!");
+  }
+
+  return info;
+}
+
+inline decltype(auto) determineHazard(const llvm::Instruction *Src,
+                                      const llvm::Instruction *Dst) {
+  return determineHazard(*Src, *Dst);
+}
+
 enum class IteratorVarianceValue { Unknown, Invariant, Variant };
 
 class IteratorVariance {
@@ -95,28 +122,6 @@ public:
     return hasChanged;
   }
 };
-
-// TODO this needs to be moved, too much duplication
-decltype(auto) determineHazard(const llvm::Instruction &Src,
-                               const llvm::Instruction &Dst) {
-  using namespace pedigree;
-
-  BasicDependenceInfo::value_type info;
-
-  if (Src.mayReadFromMemory() && Dst.mayReadFromMemory()) {
-    // do not add edge
-  } else if (Src.mayReadFromMemory() && Dst.mayWriteToMemory()) {
-    info |= {DO_Memory, DH_Anti};
-  } else if (Src.mayWriteToMemory() && Dst.mayReadFromMemory()) {
-    info |= {DO_Memory, DH_Flow};
-  } else if (Src.mayWriteToMemory() && Dst.mayWriteToMemory()) {
-    info |= {DO_Memory, DH_Out};
-  } else {
-    LLVM_DEBUG(llvm::dbgs() << "No appropriate hazard was found!");
-  }
-
-  return info;
-}
 
 //
 
@@ -226,8 +231,7 @@ public:
 
 //
 
-template <typename GraphT, typename GT = llvm::GraphTraits<GraphT>>
-class IteratorVarianceGraphUpdater {
+template <typename GraphT> class IteratorVarianceGraphUpdater {
 public:
   template <typename IteratorT>
   IteratorVarianceGraphUpdater(GraphT &G, IteratorT Begin, IteratorT End,
@@ -235,7 +239,7 @@ public:
                                llvm::json::Object *JSONExport = nullptr) {
     llvm::json::Array updates;
 
-    for (auto it = Begin, ei = End; it != ei; ++it) {
+    for (auto it = Begin; it != End; ++it) {
       auto &dependence = (*it).first;
 
       auto res1 = IVA.getOrInsertVariance(dependence.first);
