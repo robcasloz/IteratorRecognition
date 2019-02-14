@@ -35,7 +35,6 @@ using ActionQueueT = std::vector<std::unique_ptr<UpdateAction>>;
 //
 
 template <typename T> class GraphUpdate : public UpdateAction {
-
   T &underlying() { return static_cast<T &>(*this); }
   T const &underlying() const { return static_cast<T const &>(*this); }
 
@@ -43,9 +42,11 @@ public:
   void update() override { this->underlying().performUpdate(); }
 };
 
-class GraphNoop : public GraphUpdate<GraphNoop> {
+template <typename T> class GraphNoop : public GraphUpdate<GraphNoop<T>> {
+  T Src, Dst;
+
 public:
-  GraphNoop() = default;
+  GraphNoop(T Src, T Dst) : Src(Src), Dst(Dst) {}
   GraphNoop(const GraphNoop &) = default;
 
   void performUpdate() {}
@@ -113,8 +114,8 @@ public:
 
     if (srcIV == IteratorVarianceValue::Unknown ||
         dstIV == IteratorVarianceValue::Unknown) {
-      doUpdate = std::make_unique<GraphNoop>();
-      undoUpdate = std::make_unique<GraphNoop>();
+      doUpdate = std::make_unique<GraphNoop<GraphNodeRefT>>(srcNode, dstNode);
+      undoUpdate = std::make_unique<GraphNoop<GraphNodeRefT>>(srcNode, dstNode);
     } else if (srcIV == IteratorVarianceValue::Variant ||
                dstIV == IteratorVarianceValue::Variant) {
       if (auto infoOrEmpty = srcNode->getEdgeInfo(dstNode)) {
