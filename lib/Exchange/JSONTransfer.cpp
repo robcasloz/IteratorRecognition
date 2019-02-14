@@ -134,5 +134,7 @@ toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
   return std::move(root);
 }
 
+json::Value toJSON(const itr::UpdateAction &UA) { return UA.toJSON(); }
+
 } // namespace llvm
 

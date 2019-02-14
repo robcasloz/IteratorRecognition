@@ -8,6 +8,12 @@
 
 #include "IteratorRecognition/Analysis/IteratorValueTracking.hpp"
 
+#include "IteratorRecognition/Support/Utils/StringConversion.hpp"
+
+#include "llvm/Support/JSON.h"
+// using json::Value
+// using json::Object
+
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
 
@@ -26,6 +32,7 @@ namespace iteratorrecognition {
 
 struct UpdateAction {
   virtual void update() = 0;
+  virtual llvm::json::Value toJSON() const = 0;
 };
 
 inline void ExecuteAction(UpdateAction &UA) { UA.update(); }
@@ -40,6 +47,10 @@ template <typename T> class GraphUpdate : public UpdateAction {
 
 public:
   void update() override { this->underlying().performUpdate(); }
+
+  llvm::json::Value toJSON() const override {
+    return this->underlying().convertToJSON();
+  }
 };
 
 template <typename T> class GraphNoop : public GraphUpdate<GraphNoop<T>> {
@@ -50,6 +61,17 @@ public:
   GraphNoop(const GraphNoop &) = default;
 
   void performUpdate() {}
+
+  llvm::json::Value convertToJSON() const {
+    llvm::json::Object mapping;
+
+    // TODO this maybe needs to be restricted with has_unit_t
+    mapping["src"] = strconv::to_string(*Src->unit());
+    mapping["dst"] = strconv::to_string(*Dst->unit());
+    mapping["remark"] = "unknown relation";
+
+    return std::move(mapping);
+  }
 };
 
 template <typename T, typename InfoT>
@@ -62,6 +84,17 @@ public:
   GraphEdgeConnect(const GraphEdgeConnect &) = default;
 
   void performUpdate() { Src->addDependentNode(Dst, Info); }
+
+  llvm::json::Value convertToJSON() const {
+    llvm::json::Object mapping;
+
+    // TODO this maybe needs to be restricted with has_unit_t
+    mapping["src"] = strconv::to_string(*Src->unit());
+    mapping["dst"] = strconv::to_string(*Dst->unit());
+    mapping["remark"] = "connect";
+
+    return std::move(mapping);
+  }
 };
 
 template <typename T>
@@ -73,6 +106,17 @@ public:
   GraphEdgeDisconnect(const GraphEdgeDisconnect &) = default;
 
   void performUpdate() { Src->removeDependentNode(Dst); }
+
+  llvm::json::Value convertToJSON() const {
+    llvm::json::Object mapping;
+
+    // TODO this maybe needs to be restricted with has_unit_t
+    mapping["src"] = strconv::to_string(*Src->unit());
+    mapping["dst"] = strconv::to_string(*Dst->unit());
+    mapping["remark"] = "disconnect";
+
+    return std::move(mapping);
+  }
 };
 
 template <typename T, typename InfoT>
@@ -86,6 +130,17 @@ public:
   GraphEdgeInfoUpdate(const GraphEdgeInfoUpdate &) = default;
 
   void performUpdate() { Src->setEdgeInfo(Dst, Info); }
+
+  llvm::json::Value convertToJSON() const {
+    llvm::json::Object mapping;
+
+    // TODO this maybe needs to be restricted with has_unit_t
+    mapping["src"] = strconv::to_string(*Src->unit());
+    mapping["dst"] = strconv::to_string(*Dst->unit());
+    mapping["remark"] = "update info";
+
+    return std::move(mapping);
+  }
 };
 
 //

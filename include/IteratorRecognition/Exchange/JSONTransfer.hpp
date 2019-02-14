@@ -12,6 +12,8 @@
 
 #include "IteratorRecognition/Support/CondensationGraph.hpp"
 
+#include "IteratorRecognition/Analysis/GraphUpdater.hpp"
+
 #include "IteratorRecognition/Analysis/IteratorRecognition.hpp"
 
 #include "llvm/Support/JSON.h"
@@ -129,6 +131,8 @@ json::Value toJSON(const itr::dbg::LoopDebugInfoT &Info);
 
 json::Value
 toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map);
+
+json::Value toJSON(const itr::UpdateAction &UA);
 
 } // namespace llvm
 
