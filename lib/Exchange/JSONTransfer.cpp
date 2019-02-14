@@ -75,18 +75,18 @@ void WriteJSONToFile(const llvm::json::Value &V,
 namespace llvm {
 namespace json {
 
-json::Value toJSON(const Instruction &I) {
+Value toJSON(const Instruction &I) {
   std::string outs;
   raw_string_ostream ss(outs);
 
   ss << I;
-  json::Value info{ss.str()};
+  Value info{ss.str()};
 
   return std::move(info);
 }
 
-json::Value toJSON(const Loop &CurLoop) {
-  json::Object infoMapping;
+Value toJSON(const Loop &CurLoop) {
+  Object infoMapping;
 
   std::string outs;
   raw_string_ostream ss(outs);
@@ -100,8 +100,8 @@ json::Value toJSON(const Loop &CurLoop) {
   return std::move(infoMapping);
 }
 
-json::Value toJSON(const itr::dbg::LoopDebugInfoT &Info) {
-  json::Object infoMapping;
+Value toJSON(const itr::dbg::LoopDebugInfoT &Info) {
+  Object infoMapping;
 
   infoMapping["line"] = std::get<0>(Info);
   infoMapping["column"] = std::get<1>(Info);
@@ -111,10 +111,9 @@ json::Value toJSON(const itr::dbg::LoopDebugInfoT &Info) {
   return std::move(infoMapping);
 }
 
-json::Value
-toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
-  json::Object root;
-  json::Array condensations;
+Value toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
+  Object root;
+  Array condensations;
 
   for (const auto &e : Map) {
     const auto &cn = *e.getFirst();
@@ -122,7 +121,7 @@ toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
 
     auto mapping = std::move(*toJSON(cn).getAsObject());
 
-    json::Array loopsArray;
+    Array loopsArray;
     std::transform(loops.begin(), loops.end(), std::back_inserter(loopsArray),
                    [&](const auto &e) { return std::move(toJSON(*e)); });
     mapping["loops"] = std::move(loopsArray);
@@ -135,7 +134,7 @@ toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
   return std::move(root);
 }
 
-json::Value toJSON(const itr::UpdateAction &UA) { return UA.toJSON(); }
+Value toJSON(const itr::UpdateAction &UA) { return UA.toJSON(); }
 
 } // namespace json
 } // namespace llvm

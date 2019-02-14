@@ -81,15 +81,15 @@ class Loop;
 namespace json {
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT *>>
-std::enable_if_t<itr::has_unit_t<typename GT::NodeRef>::value, json::Value>
+std::enable_if_t<itr::has_unit_t<typename GT::NodeRef>::value, Value>
 toJSON(const itr::CondensationGraphNode<GraphT *> &CGN) {
-  json::Object root;
+  Object root;
 
-  json::Object mapping;
+  Object mapping;
   std::string outs;
   raw_string_ostream ss(outs);
 
-  json::Array condensationsArray;
+  Array condensationsArray;
   br::transform(CGN | ba::filtered(itr::is_not_null_unit),
                 std::back_inserter(condensationsArray), [&](const auto &e) {
                   outs.clear();
@@ -103,17 +103,17 @@ toJSON(const itr::CondensationGraphNode<GraphT *> &CGN) {
 }
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT *>>
-std::enable_if_t<!itr::has_unit_t<typename GT::NodeRef>::value, json::Value>
+std::enable_if_t<!itr::has_unit_t<typename GT::NodeRef>::value, Value>
 toJSON(const itr::CondensationGraphNode<GraphT *> &CGN) {
-  json::Object root;
+  Object root;
 
-  json::Object mapping;
+  Object mapping;
   std::string outs;
   raw_string_ostream ss(outs);
 
-  json::Array condensationsArray;
+  Array condensationsArray;
   br::transform(CGN, std::back_inserter(condensationsArray),
-                [&](const auto &e) { return json::toJSON(*e); });
+                [&](const auto &e) { return toJSON(*e); });
   mapping["condensation"] = std::move(condensationsArray);
   root = std::move(mapping);
 
@@ -121,9 +121,9 @@ toJSON(const itr::CondensationGraphNode<GraphT *> &CGN) {
 }
 
 template <typename GraphT>
-json::Value toJSON(const itr::CondensationGraph<GraphT *> &G) {
-  json::Object root;
-  json::Array condensations;
+Value toJSON(const itr::CondensationGraph<GraphT *> &G) {
+  Object root;
+  Array condensations;
 
   for (const auto &cn : G) {
     condensations.push_back(toJSON(*cn));
@@ -134,16 +134,15 @@ json::Value toJSON(const itr::CondensationGraph<GraphT *> &G) {
   return std::move(root);
 }
 
-json::Value toJSON(const Instruction &Instruction);
+Value toJSON(const Instruction &Instruction);
 
-json::Value toJSON(const Loop &CurLoop);
+Value toJSON(const Loop &CurLoop);
 
-json::Value toJSON(const itr::dbg::LoopDebugInfoT &Info);
+Value toJSON(const itr::dbg::LoopDebugInfoT &Info);
 
-json::Value
-toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map);
+Value toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map);
 
-json::Value toJSON(const itr::UpdateAction &UA);
+Value toJSON(const itr::UpdateAction &UA);
 
 } // namespace json
 } // namespace llvm
