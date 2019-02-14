@@ -24,6 +24,13 @@
 #include <vector>
 // using std::vector
 
+#include <tuple>
+// using std::tie
+
+#include <utility>
+// using std::pair
+// using std::make_pair
+
 #include <memory>
 // using std::unique_ptr
 // using std::make_unique
@@ -154,6 +161,34 @@ template <typename GraphT> class IteratorVarianceGraphUpdateGenerator {
   using UnitT = typename GraphNodeT::UnitType;
   using EdgeInfoT = typename GraphNodeT::EdgeInfoType::value_type;
 
+  using UpdateActionPairT =
+      std::pair<std::unique_ptr<UpdateAction>, std::unique_ptr<UpdateAction>>;
+
+  decltype(auto) createConnect(GraphNodeRefT Src, GraphNodeRefT Dst,
+                               EdgeInfoT Info) {
+    return std::make_pair(
+        std::make_unique<GraphEdgeConnect<GraphNodeRefT, EdgeInfoT>>(Src, Dst,
+                                                                     Info),
+        std::make_unique<GraphEdgeDisconnect<GraphNodeRefT>>(Src, Dst));
+  }
+
+  decltype(auto) createDisconnect(GraphNodeRefT Src, GraphNodeRefT Dst,
+                                  EdgeInfoT Info) {
+    return std::make_pair(
+        std::make_unique<GraphEdgeDisconnect<GraphNodeRefT>>(Src, Dst),
+        std::make_unique<GraphEdgeConnect<GraphNodeRefT, EdgeInfoT>>(Src, Dst,
+                                                                     Info));
+  }
+
+  decltype(auto) createUpdate(GraphNodeRefT Src, GraphNodeRefT Dst,
+                              EdgeInfoT NewInfo, EdgeInfoT OldInfo) {
+    return std::make_pair(
+        std::make_unique<GraphEdgeInfoUpdate<GraphNodeRefT, EdgeInfoT>>(
+            Src, Dst, NewInfo),
+        std::make_unique<GraphEdgeInfoUpdate<GraphNodeRefT, EdgeInfoT>>(
+            Src, Dst, OldInfo));
+  }
+
 public:
   IteratorVarianceGraphUpdateGenerator(GraphT &G, IteratorVarianceAnalyzer &IVA)
       : G(G), IVA(IVA) {}
@@ -165,12 +200,14 @@ public:
     auto *srcNode = G.getNode(Src);
     auto *dstNode = G.getNode(Dst);
 
-    std::unique_ptr<UpdateAction> doUpdate, undoUpdate;
+    UpdateActionPairT actions;
 
     if (srcIV == IteratorVarianceValue::Unknown ||
         dstIV == IteratorVarianceValue::Unknown) {
-      doUpdate = std::make_unique<GraphNoop<GraphNodeRefT>>(srcNode, dstNode);
-      undoUpdate = std::make_unique<GraphNoop<GraphNodeRefT>>(srcNode, dstNode);
+      actions.first =
+          std::make_unique<GraphNoop<GraphNodeRefT>>(srcNode, dstNode);
+      actions.second =
+          std::make_unique<GraphNoop<GraphNodeRefT>>(srcNode, dstNode);
     } else if (srcIV == IteratorVarianceValue::Variant ||
                dstIV == IteratorVarianceValue::Variant) {
       if (auto infoOrEmpty = srcNode->getEdgeInfo(dstNode)) {
@@ -181,20 +218,9 @@ public:
 
           if (memInfo) {
             if (newInfo) {
-              doUpdate = std::make_unique<
-                  GraphEdgeInfoUpdate<GraphNodeRefT, EdgeInfoT>>(
-                  srcNode, dstNode, newInfo);
-
-              undoUpdate = std::make_unique<
-                  GraphEdgeInfoUpdate<GraphNodeRefT, EdgeInfoT>>(srcNode,
-                                                                 dstNode, info);
+              actions = createUpdate(srcNode, dstNode, newInfo, info);
             } else {
-              doUpdate = std::make_unique<GraphEdgeDisconnect<GraphNodeRefT>>(
-                  srcNode, dstNode);
-
-              undoUpdate =
-                  std::make_unique<GraphEdgeConnect<GraphNodeRefT, EdgeInfoT>>(
-                      srcNode, dstNode, memInfo);
+              actions = createDisconnect(srcNode, dstNode, memInfo);
             }
           }
         }
@@ -203,17 +229,12 @@ public:
                dstIV == IteratorVarianceValue::Invariant) {
       if (!srcNode->hasEdgeWith(dstNode)) {
         if (auto newInfo = determineHazard(Src, Dst)) {
-          doUpdate =
-              std::make_unique<GraphEdgeConnect<GraphNodeRefT, EdgeInfoT>>(
-                  srcNode, dstNode, newInfo);
-
-          undoUpdate = std::make_unique<GraphEdgeDisconnect<GraphNodeRefT>>(
-              srcNode, dstNode);
+          actions = createConnect(srcNode, dstNode, newInfo);
         }
       }
     }
 
-    return std::make_pair(std::move(doUpdate), std::move(undoUpdate));
+    return actions;
   }
 };
 
