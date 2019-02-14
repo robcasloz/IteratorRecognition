@@ -97,6 +97,9 @@
 #include <system_error>
 // using std::error_code
 
+#include <cassert>
+// using assert
+
 #define DEBUG_TYPE "iterator-recognition-payload-graph"
 
 // namespace aliases
@@ -244,8 +247,10 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
 
     for (auto &dep : dc) {
       auto v = ivgug.create(dep.first.first, dep.first.second);
-      dos.push_back(std::move(v.first));
-      undos.push_back(std::move(v.second));
+      if (v.first && v.second) {
+        dos.push_back(std::move(v.first));
+        undos.push_back(std::move(v.second));
+      }
     }
 
     if (Export) {
@@ -269,9 +274,8 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     }
 
     std::for_each(dos.begin(), dos.end(), [](const auto &e) {
-      if (e) {
-        ExecuteAction(*e);
-      }
+      assert(e && "Smart pointer is empty!");
+      ExecuteAction(*e);
     });
 
     // step 2 create shadow graph
