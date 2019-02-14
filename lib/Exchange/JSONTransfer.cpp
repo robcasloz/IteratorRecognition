@@ -73,6 +73,7 @@ void WriteJSONToFile(const llvm::json::Value &V,
 //
 
 namespace llvm {
+namespace json {
 
 json::Value toJSON(const Instruction &I) {
   std::string outs;
@@ -136,5 +137,6 @@ toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
 
 json::Value toJSON(const itr::UpdateAction &UA) { return UA.toJSON(); }
 
+} // namespace json
 } // namespace llvm
 

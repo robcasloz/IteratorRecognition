@@ -21,11 +21,17 @@
 // using json::Object
 // using json::Array
 
+#include "llvm/ADT/StringRef.h"
+// using llvm::StringRef
+
 #include <llvm/ADT/GraphTraits.h>
 // using llvm::GraphTraits
 
 #include "llvm/Support/raw_ostream.h"
 // using llvm::raw_string_ostream
+
+#include "boost/iterator/indirect_iterator.hpp"
+// using boost::make_indirect_iterator
 
 #include "boost/range/adaptors.hpp"
 // using boost::adaptors::filtered
@@ -36,8 +42,12 @@
 #include <string>
 // using std::string
 
+#include <algorithm>
+// using std::transform
+
 #include <iterator>
 // using std::back_inserter
+// using std::make_move_iterator
 
 #include <utility>
 // using std::move
@@ -64,6 +74,11 @@ void WriteJSONToFile(const llvm::json::Value &V,
 //
 
 namespace llvm {
+
+class Instruction;
+class Loop;
+
+namespace json {
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT *>>
 std::enable_if_t<itr::has_unit_t<typename GT::NodeRef>::value, json::Value>
@@ -98,7 +113,7 @@ toJSON(const itr::CondensationGraphNode<GraphT *> &CGN) {
 
   json::Array condensationsArray;
   br::transform(CGN, std::back_inserter(condensationsArray),
-                [&](const auto &e) { return toJSON(*e); });
+                [&](const auto &e) { return json::toJSON(*e); });
   mapping["condensation"] = std::move(condensationsArray);
   root = std::move(mapping);
 
@@ -119,11 +134,7 @@ json::Value toJSON(const itr::CondensationGraph<GraphT *> &G) {
   return std::move(root);
 }
 
-class Instruction;
-
 json::Value toJSON(const Instruction &Instruction);
-
-class Loop;
 
 json::Value toJSON(const Loop &CurLoop);
 
@@ -134,5 +145,27 @@ toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map);
 
 json::Value toJSON(const itr::UpdateAction &UA);
 
+} // namespace json
 } // namespace llvm
+
+namespace iteratorrecognition {
+
+template <typename PreambleT, typename IteratorT>
+llvm::json::Value
+ConvertToJSON(llvm::StringRef PreambleText, llvm::StringRef SequenceText,
+              const PreambleT &Preamble, IteratorT Begin, IteratorT End) {
+  llvm::json::Object mapping;
+  llvm::json::Array updates;
+
+  mapping[PreambleText] = llvm::json::toJSON(Preamble);
+  std::transform(boost::make_indirect_iterator(Begin),
+                 boost::make_indirect_iterator(End),
+                 std::back_inserter(updates),
+                 [&](const auto &e) { return llvm::json::toJSON(e); });
+  mapping[SequenceText] = std::move(updates);
+
+  return std::move(mapping);
+}
+
+} // namespace iteratorrecognition
 

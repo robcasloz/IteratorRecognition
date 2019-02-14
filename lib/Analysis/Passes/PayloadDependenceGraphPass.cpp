@@ -16,6 +16,8 @@
 
 #include "IteratorRecognition/Support/LoopRPO.hpp"
 
+#include "IteratorRecognition/Support/FileSystem.hpp"
+
 #include "IteratorRecognition/Analysis/DependenceCache.hpp"
 
 #include "IteratorRecognition/Analysis/DetectOperations.hpp"
@@ -80,13 +82,20 @@
 // using llvm::cl::opt
 // using llvm::cl::desc
 
+#include "llvm/Support/ErrorHandling.h"
+// using llvm::report_fatal_error
+
 #include "llvm/Support/Debug.h"
 // using LLVM_DEBUG macro
 // using llvm::dbgs
 // using llvm::errs
 
 #include <algorithm>
+// using std::for_each
 // using std::reverse
+
+#include <system_error>
+// using std::error_code
 
 #define DEBUG_TYPE "iterator-recognition-payload-graph"
 
@@ -239,11 +248,31 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
       undos.push_back(std::move(v.second));
     }
 
-    for (auto &a : dos) {
-      if(a) {
-        ExecuteAction(*a);
+    if (Export) {
+      // TODO factor this out
+      auto dirOrErr = CreateDirectory(ReportsDir);
+      if (std::error_code ec = dirOrErr.getError()) {
+        llvm::errs() << "Error: " << ec.message() << '\n';
+        llvm::report_fatal_error("Failed to create reports directory" +
+                                 ReportsDir);
       }
+
+      ReportsDir = dirOrErr.get();
+
+      const auto &json =
+          ConvertToJSON("loop", "updates", *curLoop, dos.begin(), dos.end());
+
+      WriteJSONToFile(json,
+                      "itr.graph_updates." + CurFunc.getName() + "loop" +
+                          std::to_string(loopCount),
+                      ReportsDir);
     }
+
+    std::for_each(dos.begin(), dos.end(), [](const auto &e) {
+      if (e) {
+        ExecuteAction(*e);
+      }
+    });
 
     // step 2 create shadow graph
 
