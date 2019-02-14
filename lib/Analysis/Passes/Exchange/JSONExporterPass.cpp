@@ -89,10 +89,6 @@ static llvm::RegisterStandardPasses
 
 //
 
-static llvm::cl::opt<std::string>
-    ReportsDir("itr-reports-dir", llvm::cl::desc("output reports directory"),
-               llvm::cl::cat(IteratorRecognitionCLCategory));
-
 enum class ReportComponent { Condensation, CondensationToLoop };
 
 static llvm::cl::bits<ReportComponent> ReportComponentOption(

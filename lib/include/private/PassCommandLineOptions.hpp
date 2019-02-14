@@ -10,6 +10,8 @@
 
 extern llvm::cl::OptionCategory IteratorRecognitionCLCategory;
 
+extern llvm::cl::opt<std::string> ReportsDir;
+
 extern llvm::cl::list<std::string> FunctionWhiteList;
 
 extern llvm::cl::opt<unsigned> LoopDepthMin;

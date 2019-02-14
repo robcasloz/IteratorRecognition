@@ -21,6 +21,10 @@ llvm::cl::OptionCategory
     IteratorRecognitionCLCategory("Iterator Recognition Pass",
                                   "Options for Iterator Recognition pass");
 
+llvm::cl::opt<std::string>
+    ReportsDir("itr-reports-dir", llvm::cl::desc("output reports directory"),
+               llvm::cl::cat(IteratorRecognitionCLCategory));
+
 llvm::cl::list<std::string>
     FunctionWhiteList("itr-func-wl", llvm::cl::Hidden,
                       llvm::cl::desc("process only the specified functions"),
