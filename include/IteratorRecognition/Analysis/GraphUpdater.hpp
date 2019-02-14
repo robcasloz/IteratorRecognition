@@ -28,7 +28,7 @@ struct UpdateAction {
   virtual void update() = 0;
 };
 
-void ExecuteAction(UpdateAction &UA) { UA.update(); }
+inline void ExecuteAction(UpdateAction &UA) { UA.update(); }
 
 using ActionQueueT = std::vector<std::unique_ptr<UpdateAction>>;
 
