@@ -327,6 +327,13 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     StaticCommutativityAnalyzer sca;
     sca.analyze(lms, iva);
 
+    // step 5 reverse graph updates
+
+    std::for_each(undos.rbegin(), undos.rend(), [](const auto &e) {
+      assert(e && "Smart pointer is empty!");
+      ExecuteAction(*e);
+    });
+
     loopCount++;
   }
 
