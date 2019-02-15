@@ -34,11 +34,6 @@
 #include "llvm/ADT/DenseMap.h"
 // using llvm::DenseMap
 
-//#include "llvm/Support/JSON.h"
-// using json::Value
-// using json::Object
-// using json::Array
-
 #include "llvm/Support/raw_ostream.h"
 
 #include "llvm/Support/Debug.h"
@@ -226,106 +221,5 @@ public:
     return (*found).getSecond();
   }
 };
-
-//
-
-/*template <typename GraphT> class IteratorVarianceGraphUpdater {
-public:
-  template <typename IteratorT>
-  IteratorVarianceGraphUpdater(GraphT &G, IteratorT Begin, IteratorT End,
-                               IteratorVarianceAnalyzer &IVA,
-                               llvm::json::Object *JSONExport = nullptr) {
-    llvm::json::Array updates;
-
-    for (auto it = Begin; it != End; ++it) {
-      auto &dependence = (*it).first;
-
-      auto res1 = IVA.getOrInsertVariance(dependence.first);
-      auto res2 = IVA.getOrInsertVariance(dependence.second);
-
-      auto *srcNode = G.getNode(dependence.first);
-      auto *dstNode = G.getNode(dependence.second);
-
-      // unhandled combination
-      if (res1 == IteratorVarianceValue::Unknown ||
-          res2 == IteratorVarianceValue::Unknown) {
-        // TODO maybe be conservative here?
-
-        if (JSONExport) {
-          llvm::json::Object updateMapping;
-          updateMapping["src"] = strconv::to_string(*dependence.first);
-          updateMapping["dst"] = strconv::to_string(*dependence.second);
-          updateMapping["remark"] = "unknown relation to iterator";
-
-          updates.push_back(std::move(updateMapping));
-        }
-
-        continue;
-      }
-
-      if (res1 == IteratorVarianceValue::Variant ||
-          res2 == IteratorVarianceValue::Variant) {
-        if (srcNode->hasEdgeWith(dstNode)) {
-          auto infoOrEmpty = srcNode->getEdgeInfo(dstNode);
-
-          if (infoOrEmpty) {
-            auto info = *infoOrEmpty;
-
-            if (info.has(pedigree::DO_Memory)) {
-              // FIXME
-              // info.origins =
-              // static_cast<unsigned>(info.origins) &
-              //~static_cast<unsigned>(pedigree::DependenceOrigin::Memory);
-
-              // if (!info.origins) {
-              srcNode->removeDependentNode(dstNode);
-              //}
-            }
-          }
-
-          if (JSONExport) {
-            llvm::json::Object updateMapping;
-            updateMapping["src"] = strconv::to_string(*dependence.first);
-            updateMapping["dst"] = strconv::to_string(*dependence.second);
-            updateMapping["remark"] = "disconnect because of iterator variance";
-
-            updates.push_back(std::move(updateMapping));
-          }
-        }
-
-        continue;
-      }
-
-      if (res1 == IteratorVarianceValue::Invariant ||
-          res2 == IteratorVarianceValue::Invariant) {
-        if (!srcNode->hasEdgeWith(dstNode)) {
-          auto info = determineHazard(*dependence.first, *dependence.second);
-
-          if (info) {
-            srcNode->addDependentNode(dstNode, info);
-          }
-
-          if (JSONExport) {
-            llvm::json::Object updateMapping;
-            updateMapping["src"] = strconv::to_string(*dependence.first);
-            updateMapping["dst"] = strconv::to_string(*dependence.second);
-            updateMapping["remark"] = "connect because of iterator invariance";
-
-            updates.push_back(std::move(updateMapping));
-          }
-        }
-
-        continue;
-      }
-    }
-
-    if (JSONExport) {
-      llvm::json::Object infoMapping;
-      infoMapping["loop"] = llvm::toJSON(*IVA.getInfo().getLoop());
-      infoMapping["updates"] = std::move(updates);
-      (*JSONExport)["loop updates"] = std::move(infoMapping);
-    }
-  }
-};*/
 
 } // namespace iteratorrecognition
