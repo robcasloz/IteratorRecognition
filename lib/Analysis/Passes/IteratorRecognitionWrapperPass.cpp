@@ -112,14 +112,15 @@ namespace iteratorrecognition {
 void IteratorRecognitionWrapperPass::getAnalysisUsage(
     llvm::AnalysisUsage &AU) const {
   AU.addRequiredTransitive<llvm::LoopInfoWrapperPass>();
-  AU.addRequired<pedigree::PDGraphPass>();
+  AU.addRequired<pedigree::PDGraphWrapperPass>();
 
   AU.setPreservesAll();
 }
 
 bool IteratorRecognitionWrapperPass::runOnFunction(llvm::Function &CurFunc) {
   const auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
-  pedigree::PDGraph &Graph{getAnalysis<pedigree::PDGraphPass>().getGraph()};
+  pedigree::PDGraph &Graph{
+      getAnalysis<pedigree::PDGraphWrapperPass>().getGraph()};
   Graph.connectRootNode();
 
 #ifdef LLVM_ENABLE_STATS
