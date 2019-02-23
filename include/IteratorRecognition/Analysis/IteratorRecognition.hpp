@@ -248,9 +248,6 @@ private:
   }
 
 public:
-  IteratorRecognitionInfo() = delete;
-  IteratorRecognitionInfo(const IteratorRecognitionInfo &) = delete;
-
   IteratorRecognitionInfo(const llvm::LoopInfo &CurLI, BaseGraphT &CurPDG)
       : LI(CurLI), PDG(CurPDG), CG{llvm::scc_begin(&PDG), llvm::scc_end(&PDG)} {
     MapCondensationToLoops();

@@ -215,9 +215,11 @@ public:
       llvm::mapped_iterator<typename decltype(Nodes)::const_iterator,
                             decltype(&GetNodeConstPtr)>;
 
-  CondensationGraph() = delete;
-  CondensationGraph(const CondensationGraph &) = delete;
-  CondensationGraph &operator=(const CondensationGraph &) = delete;
+  CondensationGraph(CondensationGraph &&) = default;
+
+  //CondensationGraph() = delete;
+  //CondensationGraph(const CondensationGraph &) = delete;
+  //CondensationGraph &operator=(const CondensationGraph &) = delete;
 
   template <typename IteratorT>
   explicit CondensationGraph(IteratorT Begin, IteratorT End) {
