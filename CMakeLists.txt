@@ -134,6 +134,7 @@ endif()
 #
 
 set(LIB_SOURCES
+  "lib/Passes/RegisterPasses.cpp"
   "lib/Support/Utils/DebugInfo.cpp"
   "lib/Support/Utils/StringConversion.cpp"
   "lib/Analysis/ValueClassification.cpp"
