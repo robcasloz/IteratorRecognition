@@ -94,20 +94,13 @@ static llvm::RegisterStandardPasses
 
 namespace iteratorrecognition {
 
-void AnnotatorLegacyPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-  AU.addRequiredTransitive<IteratorRecognitionWrapperPass>();
+// new passmanager pass
 
-  AU.setPreservesAll();
-}
-
-bool AnnotatorLegacyPass::runOnFunction(llvm::Function &CurFunc) {
+bool AnnotatorPass::run(llvm::Function &F, IteratorRecognitionInfo &Info) {
   bool hasChanged = false;
-  auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
-                   .getIteratorRecognitionInfo();
-
   MetadataAnnotationWriter annotator;
 
-  for (auto &e : info.getIteratorsInfo()) {
+  for (auto &e : Info.getIteratorsInfo()) {
     llvm::Loop &curLoop = const_cast<llvm::Loop &>(*e.getLoop());
 
     if (curLoop.getLoopDepth() >= AnnotateLoopLevel) {
@@ -135,6 +128,31 @@ bool AnnotatorLegacyPass::runOnFunction(llvm::Function &CurFunc) {
   }
 
   return hasChanged;
+}
+
+llvm::PreservedAnalyses AnnotatorPass::run(llvm::Function &F,
+                                           llvm::FunctionAnalysisManager &FAM) {
+  if (run(F, FAM.getResult<IteratorRecognitionAnalysis>(F))) {
+    return llvm::PreservedAnalyses::none();
+  }
+
+  return llvm::PreservedAnalyses::all();
+}
+
+// legacy passmanager pass
+
+void AnnotatorLegacyPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.addRequiredTransitive<IteratorRecognitionWrapperPass>();
+
+  AU.setPreservesAll();
+}
+
+bool AnnotatorLegacyPass::runOnFunction(llvm::Function &F) {
+  auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
+                   .getIteratorRecognitionInfo();
+  AnnotatorPass ap;
+
+  return ap.run(F, info);
 }
 
 } // namespace iteratorrecognition
