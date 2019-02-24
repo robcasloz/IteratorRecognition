@@ -142,7 +142,7 @@ set(LIB_SOURCES
   "lib/Exchange/JSONTransfer.cpp"
   "lib/Passes/PassCommandLineOptions.cpp"
   "lib/Support/FileSystem.cpp"
-  "lib/Analysis/Passes/IteratorRecognitionWrapperPass.cpp"
+  "lib/Analysis/Passes/IteratorRecognitionPass.cpp"
   "lib/Analysis/Passes/ValueClassificationPass.cpp"
   "lib/Analysis/Passes/PayloadDependenceGraphPass.cpp"
   "lib/Analysis/Passes/Exchange/JSONExporterPass.cpp"

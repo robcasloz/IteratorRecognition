@@ -19,6 +19,8 @@ namespace llvm {
 class Function;
 } // namespace llvm
 
+#define ITR_ANNOTATE_PASS_NAME "itr-annotate"
+
 namespace iteratorrecognition {
 
 // new passmanager pass

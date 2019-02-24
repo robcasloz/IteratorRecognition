@@ -10,7 +10,7 @@
 
 #include "IteratorRecognition/Analysis/Passes/AnnotatorPass.hpp"
 
-#include "IteratorRecognition/Analysis/Passes/IteratorRecognitionWrapperPass.hpp"
+#include "IteratorRecognition/Analysis/Passes/IteratorRecognitionPass.hpp"
 
 #include "IteratorRecognition/Exchange/MetadataAnnotation.hpp"
 

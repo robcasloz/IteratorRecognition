@@ -12,7 +12,7 @@
 
 #include "IteratorRecognition/Analysis/IteratorRecognition.hpp"
 
-#include "IteratorRecognition/Analysis/Passes/IteratorRecognitionWrapperPass.hpp"
+#include "IteratorRecognition/Analysis/Passes/IteratorRecognitionPass.hpp"
 
 #include "IteratorRecognition/Analysis/ValueClassification.hpp"
 

@@ -6,7 +6,7 @@
 
 #include "IteratorRecognition/Util.hpp"
 
-#include "IteratorRecognition/Analysis/Passes/IteratorRecognitionWrapperPass.hpp"
+#include "IteratorRecognition/Analysis/Passes/IteratorRecognitionPass.hpp"
 
 #include "llvm/IR/PassManager.h"
 // using llvm::FunctionAnalysisManager
