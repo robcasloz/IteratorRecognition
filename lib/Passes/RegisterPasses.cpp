@@ -8,6 +8,8 @@
 
 #include "IteratorRecognition/Analysis/Passes/IteratorRecognitionPass.hpp"
 
+#include "IteratorRecognition/Analysis/Passes/AnnotatorPass.hpp"
+
 #include "llvm/IR/PassManager.h"
 // using llvm::FunctionAnalysisManager
 
@@ -64,8 +66,24 @@ void registerITRRecognizeCallbacks(llvm::PassBuilder &PB) {
       });
 }
 
+void registerITRAnnotateCallbacks(llvm::PassBuilder &PB) {
+  PB.registerPipelineParsingCallback(
+      [](llvm::StringRef Name, llvm::FunctionPassManager &FPM,
+         llvm::ArrayRef<llvm::PassBuilder::PipelineElement>) {
+        if (Name == ITR_ANNOTATE_PASS_NAME) {
+          LLVM_DEBUG(llvm::dbgs() << "registering pass parser for "
+                                  << ITR_ANNOTATE_PASS_NAME << "\n";);
+
+          FPM.addPass(itr::AnnotatorPass());
+          return true;
+        }
+        return false;
+      });
+}
+
 void registerCallbacks(llvm::PassBuilder &PB) {
   registerITRRecognizeCallbacks(PB);
+  registerITRAnnotateCallbacks(PB);
 }
 
 } // namespace

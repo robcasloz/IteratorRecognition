@@ -49,7 +49,7 @@
 // using std::begin
 // using std::end
 
-#define DEBUG_TYPE "iterator-recognition-annotate"
+#define DEBUG_TYPE ITR_ANNOTATE_PASS_NAME
 
 // namespace aliases
 
@@ -60,8 +60,8 @@ namespace itr = iteratorrecognition;
 char itr::AnnotatorLegacyPass::ID = 0;
 
 static llvm::RegisterPass<itr::AnnotatorLegacyPass>
-    X("itr-annotate", PRJ_CMDLINE_DESC("iterator recognition annotator pass"),
-      false, false);
+    X(ITR_ANNOTATE_PASS_NAME,
+      PRJ_CMDLINE_DESC("iterator recognition annotator pass"), false, false);
 
 static llvm::cl::opt<bool> AnnotatePayload(
     "itr-annotate-payload", llvm::cl::init(false), llvm::cl::Hidden,
