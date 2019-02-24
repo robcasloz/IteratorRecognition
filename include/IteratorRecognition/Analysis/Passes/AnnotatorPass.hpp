@@ -15,12 +15,14 @@ class Function;
 
 namespace iteratorrecognition {
 
-class AnnotatorPass : public llvm::FunctionPass {
+// legacy passmanager pass
+
+class AnnotatorLegacyPass : public llvm::FunctionPass {
 public:
   static char ID;
 
   void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-  AnnotatorPass() : llvm::FunctionPass(ID) {}
+  AnnotatorLegacyPass() : llvm::FunctionPass(ID) {}
 
   bool runOnFunction(llvm::Function &CurFunc) override;
 };

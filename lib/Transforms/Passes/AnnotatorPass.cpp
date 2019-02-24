@@ -57,8 +57,9 @@ namespace itr = iteratorrecognition;
 
 // plugin registration for opt
 
-char itr::AnnotatorPass::ID = 0;
-static llvm::RegisterPass<itr::AnnotatorPass>
+char itr::AnnotatorLegacyPass::ID = 0;
+
+static llvm::RegisterPass<itr::AnnotatorLegacyPass>
     X("itr-annotate", PRJ_CMDLINE_DESC("iterator recognition annotator pass"),
       false, false);
 
@@ -78,28 +79,28 @@ static llvm::cl::opt<unsigned> AnnotateLoopLevel(
 // add an instance of this pass and a static instance of the
 // RegisterStandardPasses class
 
-static void registerAnnotatorPass(const llvm::PassManagerBuilder &Builder,
-                                  llvm::legacy::PassManagerBase &PM) {
-  PM.add(new itr::AnnotatorPass());
+static void registerAnnotatorLegacyPass(const llvm::PassManagerBuilder &Builder,
+                                        llvm::legacy::PassManagerBase &PM) {
+  PM.add(new itr::AnnotatorLegacyPass());
 
   return;
 }
 
 static llvm::RegisterStandardPasses
-    RegisterAnnotatorPass(llvm::PassManagerBuilder::EP_EarlyAsPossible,
-                          registerAnnotatorPass);
+    RegisterAnnotatorLegacyPass(llvm::PassManagerBuilder::EP_EarlyAsPossible,
+                                registerAnnotatorLegacyPass);
 
 //
 
 namespace iteratorrecognition {
 
-void AnnotatorPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+void AnnotatorLegacyPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.addRequiredTransitive<IteratorRecognitionWrapperPass>();
 
   AU.setPreservesAll();
 }
 
-bool AnnotatorPass::runOnFunction(llvm::Function &CurFunc) {
+bool AnnotatorLegacyPass::runOnFunction(llvm::Function &CurFunc) {
   bool hasChanged = false;
   auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
                    .getIteratorRecognitionInfo();
