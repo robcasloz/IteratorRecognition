@@ -36,25 +36,25 @@ void registerITRRecognizeCallbacks(llvm::PassBuilder &PB) {
   PB.registerAnalysisRegistrationCallback(
       [](llvm::FunctionAnalysisManager &FAM) {
         LLVM_DEBUG(llvm::dbgs() << "registering analysis "
-                                << ITR_RECOGNITION_PASS_NAME << "\n";);
+                                << ITR_RECOGNIZE_PASS_NAME << "\n";);
         FAM.registerPass([]() { return itr::IteratorRecognitionAnalysis(); });
       });
   PB.registerPipelineParsingCallback(
       [](llvm::StringRef Name, llvm::FunctionPassManager &FPM,
          llvm::ArrayRef<llvm::PassBuilder::PipelineElement>) {
-        if (Name == "require<" ITR_RECOGNITION_PASS_NAME ">") {
+        if (Name == "require<" ITR_RECOGNIZE_PASS_NAME ">") {
           LLVM_DEBUG(llvm::dbgs() << "registering require analysis parser for "
-                                  << ITR_RECOGNITION_PASS_NAME << "\n";);
+                                  << ITR_RECOGNIZE_PASS_NAME << "\n";);
 
           FPM.addPass(
               llvm::RequireAnalysisPass<itr::IteratorRecognitionAnalysis,
                                         llvm::Function>());
           return true;
         }
-        if (Name == "invalidate<" ITR_RECOGNITION_PASS_NAME ">") {
+        if (Name == "invalidate<" ITR_RECOGNIZE_PASS_NAME ">") {
           LLVM_DEBUG(llvm::dbgs()
                          << "registering invalidate analysis parser for "
-                         << ITR_RECOGNITION_PASS_NAME << "\n";);
+                         << ITR_RECOGNIZE_PASS_NAME << "\n";);
 
           FPM.addPass(
               llvm::InvalidateAnalysisPass<itr::IteratorRecognitionAnalysis>());

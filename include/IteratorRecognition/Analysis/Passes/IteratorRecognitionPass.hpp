@@ -27,7 +27,7 @@ class Loop;
 class Function;
 } // namespace llvm
 
-#define ITR_RECOGNITION_PASS_NAME "itr-recognize"
+#define ITR_RECOGNIZE_PASS_NAME "itr-recognize"
 
 namespace iteratorrecognition {
 

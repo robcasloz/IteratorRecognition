@@ -68,7 +68,7 @@
 #include <system_error>
 // using std::error_code
 
-#define DEBUG_TYPE ITR_RECOGNITION_PASS_NAME
+#define DEBUG_TYPE ITR_RECOGNIZE_PASS_NAME
 
 // namespace aliases
 
@@ -82,7 +82,7 @@ STATISTIC(NumInseparable, "Number of inseparable top-level loops found");
 
 char itr::IteratorRecognitionWrapperPass::ID = 0;
 static llvm::RegisterPass<itr::IteratorRecognitionWrapperPass>
-    X(ITR_RECOGNITION_PASS_NAME, PRJ_CMDLINE_DESC("iterator recognition pass"),
+    X(ITR_RECOGNIZE_PASS_NAME, PRJ_CMDLINE_DESC("iterator recognition pass"),
       false, false);
 
 // plugin registration for clang
