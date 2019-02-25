@@ -9,6 +9,10 @@
 #include "llvm/Pass.h"
 // using llvm::FunctionPass
 
+#include "llvm/IR/PassManager.h"
+// using llvm::FunctionAnalysisManager
+// using llvm::AnalysisInfoMixin
+
 namespace llvm {
 class Function;
 class DominatorTree;
@@ -20,6 +24,26 @@ namespace iteratorrecognition {
 
 class IteratorRecognitionInfo;
 
+// new passmanager pass
+class PayloadDependenceGraphAnalysis
+    : public llvm::AnalysisInfoMixin<PayloadDependenceGraphAnalysis> {
+  friend AnalysisInfoMixin<PayloadDependenceGraphAnalysis>;
+
+  static llvm::AnalysisKey Key;
+
+public:
+  // TODO change this to something meaningful
+  using Result = void;
+
+  PayloadDependenceGraphAnalysis() = default;
+
+  Result run(llvm::Function &F, llvm::FunctionAnalysisManager &FAM);
+
+  bool run(llvm::Function &F, llvm::DominatorTree &DT, llvm::LoopInfo &LI,
+           llvm::AAResults &AA, IteratorRecognitionInfo &Info);
+};
+
+// legacy passmanager pass
 class PayloadDependenceGraphLegacyPass : public llvm::FunctionPass {
 public:
   static char ID;
@@ -28,9 +52,6 @@ public:
   PayloadDependenceGraphLegacyPass() : llvm::FunctionPass(ID) {}
 
   bool runOnFunction(llvm::Function &F) override;
-
-  bool run(llvm::Function &F, llvm::DominatorTree &DT, llvm::LoopInfo &LI,
-           llvm::AAResults &AA, IteratorRecognitionInfo &Info);
 };
 
 } // namespace iteratorrecognition

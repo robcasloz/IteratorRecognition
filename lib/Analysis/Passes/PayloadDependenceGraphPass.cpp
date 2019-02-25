@@ -141,33 +141,27 @@ static llvm::RegisterStandardPasses RegisterPayloadDependenceGraphLegacyPass(
 static llvm::cl::opt<bool> Export("itr-export-updates",
                                   llvm::cl::desc("export graph updates"));
 
+//
+
+llvm::AnalysisKey itr::PayloadDependenceGraphAnalysis::Key;
+
 namespace iteratorrecognition {
 
-void PayloadDependenceGraphLegacyPass::getAnalysisUsage(
-    llvm::AnalysisUsage &AU) const {
-  AU.addRequired<llvm::DominatorTreeWrapperPass>();
-  AU.addRequiredTransitive<llvm::LoopInfoWrapperPass>();
-  AU.addRequiredTransitive<llvm::AAResultsWrapperPass>();
-  AU.addRequiredTransitive<IteratorRecognitionWrapperPass>();
+// new passmanager pass
 
-  AU.setPreservesAll();
+PayloadDependenceGraphAnalysis::Result
+PayloadDependenceGraphAnalysis::run(llvm::Function &F,
+                                    llvm::FunctionAnalysisManager &FAM) {
+  run(F, FAM.getResult<llvm::DominatorTreeAnalysis>(F),
+      FAM.getResult<llvm::LoopAnalysis>(F), FAM.getResult<llvm::AAManager>(F),
+      FAM.getResult<IteratorRecognitionAnalysis>(F));
 }
 
-bool PayloadDependenceGraphLegacyPass::runOnFunction(llvm::Function &F) {
-  auto &DT = getAnalysis<llvm::DominatorTreeWrapperPass>().getDomTree();
-  auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
-  auto &AA = getAnalysis<llvm::AAResultsWrapperPass>().getAAResults();
-  auto &IRI = getAnalysis<IteratorRecognitionWrapperPass>()
-                  .getIteratorRecognitionInfo();
-
-  return run(F, DT, LI, AA, IRI);
-}
-
-bool PayloadDependenceGraphLegacyPass::run(llvm::Function &F,
-                                           llvm::DominatorTree &DT,
-                                           llvm::LoopInfo &LI,
-                                           llvm::AAResults &AA,
-                                           IteratorRecognitionInfo &Info) {
+bool PayloadDependenceGraphAnalysis::run(llvm::Function &F,
+                                         llvm::DominatorTree &DT,
+                                         llvm::LoopInfo &LI,
+                                         llvm::AAResults &AA,
+                                         IteratorRecognitionInfo &Info) {
   if (FunctionWhiteList.size()) {
     auto found = std::find(FunctionWhiteList.begin(), FunctionWhiteList.end(),
                            std::string{F.getName()});
@@ -347,6 +341,29 @@ bool PayloadDependenceGraphLegacyPass::run(llvm::Function &F,
   }
 
   return false;
+}
+
+// legacy passmanager pass
+
+void PayloadDependenceGraphLegacyPass::getAnalysisUsage(
+    llvm::AnalysisUsage &AU) const {
+  AU.addRequired<llvm::DominatorTreeWrapperPass>();
+  AU.addRequiredTransitive<llvm::LoopInfoWrapperPass>();
+  AU.addRequiredTransitive<llvm::AAResultsWrapperPass>();
+  AU.addRequiredTransitive<IteratorRecognitionWrapperPass>();
+
+  AU.setPreservesAll();
+}
+
+bool PayloadDependenceGraphLegacyPass::runOnFunction(llvm::Function &F) {
+  auto &DT = getAnalysis<llvm::DominatorTreeWrapperPass>().getDomTree();
+  auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
+  auto &AA = getAnalysis<llvm::AAResultsWrapperPass>().getAAResults();
+  auto &IRI = getAnalysis<IteratorRecognitionWrapperPass>()
+                  .getIteratorRecognitionInfo();
+  PayloadDependenceGraphAnalysis pdga{};
+
+  return pdga.run(F, DT, LI, AA, IRI);
 }
 
 } // namespace iteratorrecognition
