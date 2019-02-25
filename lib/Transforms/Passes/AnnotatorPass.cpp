@@ -14,6 +14,8 @@
 
 #include "IteratorRecognition/Exchange/MetadataAnnotation.hpp"
 
+#include "IteratorRecognition/Support/Utils/StringConversion.hpp"
+
 #include "private/PassCommandLineOptions.hpp"
 
 #include "llvm/Pass.h"
@@ -41,6 +43,10 @@
 // using llvm::Loop
 // using llvm::LoopInfo
 // using llvm::LoopInfoWrapperPass
+
+#include "llvm/Support/Debug.h"
+// using LLVM_DEBUG macro
+// using llvm::dbgs
 
 #include <algorithm>
 // using std::find
@@ -104,6 +110,9 @@ bool AnnotatorPass::run(llvm::Function &F, IteratorRecognitionInfo &Info) {
     llvm::Loop &curLoop = const_cast<llvm::Loop &>(*e.getLoop());
 
     if (curLoop.getLoopDepth() >= AnnotateLoopLevel) {
+      LLVM_DEBUG(llvm::dbgs() << "annotating with iterator loop: "
+                              << strconv::to_string(curLoop) << '\n';);
+
       hasChanged |= annotator.append(e, DefaultIteratorInstructionKey, curLoop,
                                      DefaultLoopKey);
     }
@@ -116,6 +125,9 @@ bool AnnotatorPass::run(llvm::Function &F, IteratorRecognitionInfo &Info) {
     };
 
     if (AnnotatePayload) {
+      LLVM_DEBUG(llvm::dbgs() << "annotating with payload loop: "
+                              << strconv::to_string(curLoop) << '\n';);
+
       for (auto &block : curLoop.blocks()) {
         for (auto &inst : *block) {
           if (is_not_in(&inst, e)) {

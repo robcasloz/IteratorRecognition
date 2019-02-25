@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "IteratorRecognition/Support/Utils/StringConversion.hpp"
+
 #include "llvm/IR/Instruction.h"
 // using llvm::Instruction
 
@@ -21,6 +23,10 @@
 #include "llvm/ADT/SmallVector.h"
 // using llvm::SmallVector
 
+#include "llvm/Support/Debug.h"
+// using LLVM_DEBUG macro
+// using llvm::dbgs
+
 #include "boost/range/algorithm.hpp"
 // using boost::make_iterator_range
 // using boost::find_if
@@ -36,6 +42,8 @@
 
 #include <iterator>
 // using std::back_inserter
+
+#define DEBUG_TYPE "itr-annotator"
 
 namespace iteratorrecognition {
 
@@ -93,6 +101,10 @@ public:
         data ? llvm::MDNode::concatenate(data, AdditionalData) : AdditionalData;
     Inst.setMetadata(Key, data);
 
+    LLVM_DEBUG(llvm::dbgs()
+                   << "annotated instruction: " << strconv::to_string(Inst)
+                   << " with key: " << Key << '\n';);
+
     return true;
   }
 
@@ -123,3 +135,4 @@ public:
 
 } // namespace iteratorrecognition
 
+#undef DEBUG_TYPE
