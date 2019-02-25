@@ -10,6 +10,8 @@
 
 #include "IteratorRecognition/Analysis/Passes/AnnotatorPass.hpp"
 
+#include "IteratorRecognition/Analysis/Passes/PayloadDependenceGraphPass.hpp"
+
 #include "llvm/IR/PassManager.h"
 // using llvm::FunctionAnalysisManager
 
@@ -66,6 +68,39 @@ void registerITRRecognizeCallbacks(llvm::PassBuilder &PB) {
       });
 }
 
+void registerITRPayloadAnalysisCallbacks(llvm::PassBuilder &PB) {
+  PB.registerAnalysisRegistrationCallback(
+      [](llvm::FunctionAnalysisManager &FAM) {
+        LLVM_DEBUG(llvm::dbgs() << "registering analysis "
+                                << ITR_PAYLOAD_ANALYSIS_PASS_NAME << "\n";);
+        FAM.registerPass(
+            []() { return itr::PayloadDependenceGraphAnalysis(); });
+      });
+  PB.registerPipelineParsingCallback(
+      [](llvm::StringRef Name, llvm::FunctionPassManager &FPM,
+         llvm::ArrayRef<llvm::PassBuilder::PipelineElement>) {
+        if (Name == "require<" ITR_PAYLOAD_ANALYSIS_PASS_NAME ">") {
+          LLVM_DEBUG(llvm::dbgs() << "registering require analysis parser for "
+                                  << ITR_PAYLOAD_ANALYSIS_PASS_NAME << "\n";);
+
+          FPM.addPass(
+              llvm::RequireAnalysisPass<itr::PayloadDependenceGraphAnalysis,
+                                        llvm::Function>());
+          return true;
+        }
+        if (Name == "invalidate<" ITR_PAYLOAD_ANALYSIS_PASS_NAME ">") {
+          LLVM_DEBUG(llvm::dbgs()
+                         << "registering invalidate analysis parser for "
+                         << ITR_PAYLOAD_ANALYSIS_PASS_NAME << "\n";);
+
+          FPM.addPass(llvm::InvalidateAnalysisPass<
+                      itr::PayloadDependenceGraphAnalysis>());
+          return true;
+        }
+        return false;
+      });
+}
+
 void registerITRAnnotateCallbacks(llvm::PassBuilder &PB) {
   PB.registerPipelineParsingCallback(
       [](llvm::StringRef Name, llvm::FunctionPassManager &FPM,
@@ -83,6 +118,7 @@ void registerITRAnnotateCallbacks(llvm::PassBuilder &PB) {
 
 void registerCallbacks(llvm::PassBuilder &PB) {
   registerITRRecognizeCallbacks(PB);
+  registerITRPayloadAnalysisCallbacks(PB);
   registerITRAnnotateCallbacks(PB);
 }
 
