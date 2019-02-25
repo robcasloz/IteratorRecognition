@@ -20,12 +20,12 @@ namespace iteratorrecognition {
 
 class IteratorRecognitionInfo;
 
-class PayloadDependenceGraphPass : public llvm::FunctionPass {
+class PayloadDependenceGraphLegacyPass : public llvm::FunctionPass {
 public:
   static char ID;
 
   void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-  PayloadDependenceGraphPass() : llvm::FunctionPass(ID) {}
+  PayloadDependenceGraphLegacyPass() : llvm::FunctionPass(ID) {}
 
   bool runOnFunction(llvm::Function &F) override;
 
