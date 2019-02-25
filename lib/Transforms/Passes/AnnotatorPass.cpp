@@ -144,9 +144,7 @@ bool AnnotatorPass::run(llvm::Function &F, IteratorRecognitionInfo &Info) {
 
 llvm::PreservedAnalyses AnnotatorPass::run(llvm::Function &F,
                                            llvm::FunctionAnalysisManager &FAM) {
-  if (run(F, FAM.getResult<IteratorRecognitionAnalysis>(F))) {
-    return llvm::PreservedAnalyses::none();
-  }
+  run(F, FAM.getResult<IteratorRecognitionAnalysis>(F));
 
   return llvm::PreservedAnalyses::all();
 }
