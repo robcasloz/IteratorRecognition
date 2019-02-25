@@ -153,25 +153,32 @@ void PayloadDependenceGraphPass::getAnalysisUsage(
   AU.setPreservesAll();
 }
 
-bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
+bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &F) {
+  auto &DT = getAnalysis<llvm::DominatorTreeWrapperPass>().getDomTree();
+  auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
+  auto &AA = getAnalysis<llvm::AAResultsWrapperPass>().getAAResults();
+  auto &IRI = getAnalysis<IteratorRecognitionWrapperPass>()
+                  .getIteratorRecognitionInfo();
+
+  return run(F, DT, LI, AA, IRI);
+}
+
+bool PayloadDependenceGraphPass::run(llvm::Function &F, llvm::DominatorTree &DT,
+                                     llvm::LoopInfo &LI, llvm::AAResults &AA,
+                                     IteratorRecognitionInfo &Info) {
   if (FunctionWhiteList.size()) {
     auto found = std::find(FunctionWhiteList.begin(), FunctionWhiteList.end(),
-                           std::string{CurFunc.getName()});
+                           std::string{F.getName()});
     if (found == FunctionWhiteList.end()) {
       return false;
     }
   }
 
-  auto *DT = &getAnalysis<llvm::DominatorTreeWrapperPass>().getDomTree();
-  auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
-  auto &AA = getAnalysis<llvm::AAResultsWrapperPass>().getAAResults();
-  auto &IRI = getAnalysis<IteratorRecognitionWrapperPass>()
-                  .getIteratorRecognitionInfo();
   unsigned loopCount = 0;
 
   LLVM_DEBUG({
-    llvm::dbgs() << "payload dependence graph for function: "
-                 << CurFunc.getName() << "\n";
+    llvm::dbgs() << "payload dependence graph for function: " << F.getName()
+                 << "\n";
   });
 
   llvm::SmallVector<llvm::Loop *, 8> loopTraversal;
@@ -190,7 +197,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     LLVM_DEBUG(llvm::dbgs()
                    << "loop: " << strconv::to_string(*curLoop) << "\n";);
 
-    auto infoOrError = IRI.getIteratorInfoFor(curLoop);
+    auto infoOrError = Info.getIteratorInfoFor(curLoop);
     if (!infoOrError) {
       continue;
     }
@@ -209,11 +216,11 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
     }
 
     FindVirtRegPayloadLiveValues(info, pdVals, pdVirtRegLiveVals);
-    SplitVirtRegPayloadLiveValues(info, pdVals, pdVirtRegLiveVals, *DT,
+    SplitVirtRegPayloadLiveValues(info, pdVals, pdVirtRegLiveVals, DT,
                                   pdVirtRegLiveInVals, pdVirtRegLiveThruVals,
                                   pdVirtRegLiveOutVals);
 
-    auto &g = IRI.getGraph();
+    auto &g = Info.getGraph();
     llvm::dbgs() << g.size() << '\n';
     using DGType = std::remove_reference_t<decltype(g)>;
     using DGT = llvm::GraphTraits<DGType *>;
@@ -228,7 +235,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
       return I.mayReadOrWriteMemory() && set.count(&I);
     };
 
-    LoopRPO pdModRefTraversal(*curLoop, IRI.getLoopInfo(), pdModRefFilter);
+    LoopRPO pdModRefTraversal(*curLoop, Info.getLoopInfo(), pdModRefFilter);
 
     LLVM_DEBUG({
       llvm::dbgs() << "payload ModRef RPO traversal:\n";
@@ -271,7 +278,7 @@ bool PayloadDependenceGraphPass::runOnFunction(llvm::Function &CurFunc) {
           ConvertToJSON("loop", "updates", *curLoop, dos.begin(), dos.end());
 
       WriteJSONToFile(json,
-                      "itr.graph_updates." + CurFunc.getName() + ".loop." +
+                      "itr.graph_updates." + F.getName() + ".loop." +
                           std::to_string(loopCount),
                       ReportsDir);
     }

@@ -11,9 +11,14 @@
 
 namespace llvm {
 class Function;
+class DominatorTree;
+class LoopInfo;
+class AAResults;
 } // namespace llvm
 
 namespace iteratorrecognition {
+
+class IteratorRecognitionInfo;
 
 class PayloadDependenceGraphPass : public llvm::FunctionPass {
 public:
@@ -22,7 +27,10 @@ public:
   void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
   PayloadDependenceGraphPass() : llvm::FunctionPass(ID) {}
 
-  bool runOnFunction(llvm::Function &CurFunc) override;
+  bool runOnFunction(llvm::Function &F) override;
+
+  bool run(llvm::Function &F, llvm::DominatorTree &DT, llvm::LoopInfo &LI,
+           llvm::AAResults &AA, IteratorRecognitionInfo &Info);
 };
 
 } // namespace iteratorrecognition
