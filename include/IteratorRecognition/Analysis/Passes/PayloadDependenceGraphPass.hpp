@@ -13,6 +13,8 @@
 // using llvm::FunctionAnalysisManager
 // using llvm::AnalysisInfoMixin
 
+#define ITR_PAYLOAD_ANALYSIS_PASS_NAME "itr-payload-graph"
+
 namespace llvm {
 class Function;
 class DominatorTree;

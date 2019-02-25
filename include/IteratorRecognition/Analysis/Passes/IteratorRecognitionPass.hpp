@@ -21,13 +21,13 @@
 #include <memory>
 // using std::unique_ptr
 
+#define ITR_RECOGNIZE_PASS_NAME "itr-recognize"
+
 namespace llvm {
 class Instruction;
 class Loop;
 class Function;
 } // namespace llvm
-
-#define ITR_RECOGNIZE_PASS_NAME "itr-recognize"
 
 namespace iteratorrecognition {
 

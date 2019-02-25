@@ -103,7 +103,7 @@
 #include <cassert>
 // using assert
 
-#define DEBUG_TYPE "iterator-recognition-payload-graph"
+#define DEBUG_TYPE ITR_PAYLOAD_ANALYSIS_PASS_NAME
 
 // namespace aliases
 
@@ -113,9 +113,8 @@ namespace itr = iteratorrecognition;
 
 char itr::PayloadDependenceGraphLegacyPass::ID = 0;
 static llvm::RegisterPass<itr::PayloadDependenceGraphLegacyPass>
-    X("itr-payload-graph",
-      PRJ_CMDLINE_DESC(
-          "payload dependene graph (based on iterator recognition) pass"),
+    X(ITR_PAYLOAD_ANALYSIS_PASS_NAME,
+      PRJ_CMDLINE_DESC("payload analysis (based on iterator recognition) pass"),
       false, false);
 
 // plugin registration for clang
