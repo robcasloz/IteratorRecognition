@@ -56,6 +56,7 @@
 // using std::end
 
 #define DEBUG_TYPE ITR_ANNOTATE_PASS_NAME
+#define PASS_CMDLINE_OPTIONS_ENVVAR "ITR_ANNOTATE_CMDLINE_OPTIONS"
 
 // namespace aliases
 
@@ -144,6 +145,9 @@ bool AnnotatorPass::run(llvm::Function &F, IteratorRecognitionInfo &Info) {
 
 llvm::PreservedAnalyses AnnotatorPass::run(llvm::Function &F,
                                            llvm::FunctionAnalysisManager &FAM) {
+  llvm::cl::ParseEnvironmentOptions(ITR_ANNOTATE_PASS_NAME,
+                                    PASS_CMDLINE_OPTIONS_ENVVAR);
+
   run(F, FAM.getResult<IteratorRecognitionAnalysis>(F));
 
   return llvm::PreservedAnalyses::all();

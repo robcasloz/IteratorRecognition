@@ -69,6 +69,7 @@
 // using std::error_code
 
 #define DEBUG_TYPE ITR_RECOGNIZE_PASS_NAME
+#define PASS_CMDLINE_OPTIONS_ENVVAR "ITR_RECOGNIZE_ANALYSIS_CMDLINE_OPTIONS"
 
 // namespace aliases
 
@@ -116,6 +117,9 @@ namespace iteratorrecognition {
 IteratorRecognitionAnalysis::Result
 IteratorRecognitionAnalysis::run(llvm::Function &F,
                                  llvm::FunctionAnalysisManager &FAM) {
+  llvm::cl::ParseEnvironmentOptions(ITR_RECOGNIZE_PASS_NAME,
+                                    PASS_CMDLINE_OPTIONS_ENVVAR);
+
   const auto &LI{FAM.getResult<llvm::LoopAnalysis>(F)};
   pedigree::PDGraph &Graph{*FAM.getResult<pedigree::PDGraphAnalysis>(F)};
   Graph.connectRootNode();

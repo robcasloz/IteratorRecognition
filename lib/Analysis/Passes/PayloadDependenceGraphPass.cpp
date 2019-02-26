@@ -104,6 +104,7 @@
 // using assert
 
 #define DEBUG_TYPE ITR_PAYLOAD_ANALYSIS_PASS_NAME
+#define PASS_CMDLINE_OPTIONS_ENVVAR "ITR_PAYLOAD_ANALYSIS_CMDLINE_OPTIONS"
 
 // namespace aliases
 
@@ -151,6 +152,9 @@ namespace iteratorrecognition {
 PayloadDependenceGraphAnalysis::Result
 PayloadDependenceGraphAnalysis::run(llvm::Function &F,
                                     llvm::FunctionAnalysisManager &FAM) {
+  llvm::cl::ParseEnvironmentOptions(ITR_PAYLOAD_ANALYSIS_PASS_NAME,
+                                    PASS_CMDLINE_OPTIONS_ENVVAR);
+
   run(F, FAM.getResult<llvm::DominatorTreeAnalysis>(F),
       FAM.getResult<llvm::LoopAnalysis>(F), FAM.getResult<llvm::AAManager>(F),
       FAM.getResult<IteratorRecognitionAnalysis>(F));
