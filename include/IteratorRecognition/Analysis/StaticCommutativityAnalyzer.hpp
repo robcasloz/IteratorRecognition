@@ -14,6 +14,9 @@
 
 #include "IteratorRecognition/Support/Utils/StringConversion.hpp"
 
+#include "llvm/IR/Instruction.h"
+// using llvm::Instruction
+
 #include "llvm/Support/Debug.h"
 // using LLVM_DEBUG macro
 // using llvm::dbgs
@@ -21,6 +24,19 @@
 #define DEBUG_TYPE "itr-sca"
 
 namespace iteratorrecognition {
+
+bool isCommutative(const llvm::Instruction &Inst) {
+  bool status = false;
+
+  status |= Inst.isBinaryOp() || llvm::isa<llvm::UnaryInstruction>(&Inst);
+
+  LLVM_DEBUG(if (!status) {
+    llvm::dbgs() << "instruction: " << strconv::to_string(Inst)
+                 << " is not commutative\n";
+  });
+
+  return status;
+}
 
 class StaticCommutativityAnalyzer {
 public:
