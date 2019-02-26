@@ -35,7 +35,7 @@ class PayloadDependenceGraphAnalysis
 
 public:
   // TODO change this to something meaningful
-  using Result = void;
+  using Result = struct Empty {};
 
   PayloadDependenceGraphAnalysis() = default;
 

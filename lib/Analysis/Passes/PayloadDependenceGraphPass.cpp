@@ -154,6 +154,8 @@ PayloadDependenceGraphAnalysis::run(llvm::Function &F,
   run(F, FAM.getResult<llvm::DominatorTreeAnalysis>(F),
       FAM.getResult<llvm::LoopAnalysis>(F), FAM.getResult<llvm::AAManager>(F),
       FAM.getResult<IteratorRecognitionAnalysis>(F));
+
+  return {};
 }
 
 bool PayloadDependenceGraphAnalysis::run(llvm::Function &F,
