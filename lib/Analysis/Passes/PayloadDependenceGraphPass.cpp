@@ -194,9 +194,8 @@ bool PayloadDependenceGraphAnalysis::run(llvm::Function &F,
       continue;
     }
 
-    llvm::dbgs() << "#######\n";
-    LLVM_DEBUG(llvm::dbgs()
-                   << "loop: " << strconv::to_string(*curLoop) << "\n";);
+    LLVM_DEBUG(llvm::dbgs() << "#######\nloop: " << strconv::to_string(*curLoop)
+                            << "\n";);
 
     auto infoOrError = Info.getIteratorInfoFor(curLoop);
     if (!infoOrError) {
@@ -222,7 +221,6 @@ bool PayloadDependenceGraphAnalysis::run(llvm::Function &F,
                                   pdVirtRegLiveOutVals);
 
     auto &g = Info.getGraph();
-    llvm::dbgs() << g.size() << '\n';
     using DGType = std::remove_reference_t<decltype(g)>;
     using DGT = llvm::GraphTraits<DGType *>;
 

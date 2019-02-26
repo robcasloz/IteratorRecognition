@@ -27,6 +27,8 @@
 #include "llvm/Support/Debug.h"
 // using llvm::dbgs
 
+#define DEBUG_TYPE "itr-detectops"
+
 namespace iteratorrecognition {
 
 // bool ArePointersIteratorDependent(const llvm::Value *V1,
@@ -148,7 +150,8 @@ void DetectOperationsOn(const SDependenceGraph<GraphT> &SDG,
         LMS.Operations.insert(ii);
       }
     } else {
-      llvm::dbgs() << "unhandled instruction: " << *curTarget << '\n';
+      LLVM_DEBUG(llvm::dbgs()
+                     << "unhandled instruction: " << *curTarget << '\n';);
       // TODO see what to do with this
       break;
     }
@@ -158,3 +161,5 @@ void DetectOperationsOn(const SDependenceGraph<GraphT> &SDG,
 }
 
 } // namespace iteratorrecognition
+
+#undef DEBUG_TYPE
