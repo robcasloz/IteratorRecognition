@@ -67,56 +67,51 @@ public:
       }
     };);
 
-    bool isSet = false;
-    bool commutativityCount = false;
+    bool hasCommutativeOps = false;
+    bool stopProcessing = false;
 
     for (auto &lms : LMS) {
-      isSet = false;
-      commutativityCount = false;
+      if (stopProcessing || lms.Sources.empty()) {
+        hasCommutativeOps = false;
+        break;
+      }
 
       auto res1 = IVA.getOrInsertVariance(lms.Target);
 
       for (auto *src : lms.Sources) {
         auto res2 = IVA.getOrInsertVariance(src);
 
-        if (isSet && !commutativityCount) {
-          break;
-        }
-
         if (res1 == IteratorVarianceValue::Invariant &&
             res2 == IteratorVarianceValue::Invariant) {
           LLVM_DEBUG(llvm::dbgs() << "assuming commutativity\n";);
+          hasCommutativeOps = true;
 
-          if (!isSet) {
-            commutativityCount = true;
-            isSet = true;
-          }
           continue;
         }
 
         if (res1 == IteratorVarianceValue::Variant ||
             res2 == IteratorVarianceValue::Variant) {
-
           if (std::all_of(lms.Operations.begin(), lms.Operations.end(),
                           [](const auto &e) { return isCommutative(*e); })) {
-            if (!isSet) {
-              commutativityCount = true;
-              isSet = true;
-            }
+            hasCommutativeOps = true;
           } else {
-            isSet = true;
-            commutativityCount = false;
+            hasCommutativeOps = false;
+            stopProcessing = true;
+            break;
           }
+
           continue;
         }
 
-        isSet = true;
-        commutativityCount = false;
         LLVM_DEBUG(llvm::dbgs() << "unhandled case\n";);
+        hasCommutativeOps = false;
+        stopProcessing = true;
+
+        break;
       }
     }
 
-    if (isSet && commutativityCount) {
+    if (hasCommutativeOps) {
       LLVM_DEBUG(llvm::dbgs() << "+++ commutative\n");
     }
   }
