@@ -53,9 +53,9 @@ public:
   decltype(auto) size() const { return Properties.size(); }
 
   decltype(auto) begin() { return Properties.begin(); }
-  decltype(auto) end() { return Properties.begin(); }
+  decltype(auto) end() { return Properties.end(); }
 
-  decltype(auto) begin() const { return Properties.end(); }
+  decltype(auto) begin() const { return Properties.begin(); }
   decltype(auto) end() const { return Properties.end(); }
 };
 

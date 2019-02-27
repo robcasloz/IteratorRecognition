@@ -57,7 +57,9 @@ public:
   bool runOnFunction(llvm::Function &CurFunc) override;
 
   IteratorRecognitionInfo &getIteratorRecognitionInfo() { return *Info; }
-  IteratorRecognitionInfo &getIteratorRecognitionInfo() const { return *Info; }
+  const IteratorRecognitionInfo &getIteratorRecognitionInfo() const {
+    return *Info;
+  }
 };
 
 } // namespace iteratorrecognition
