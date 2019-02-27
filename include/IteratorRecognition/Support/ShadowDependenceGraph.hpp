@@ -261,6 +261,9 @@ public:
 
   explicit SDependenceGraph(GraphT &G) : OriginalGraph(G) {}
 
+  GraphT &getGraph() { return OriginalGraph; }
+  const GraphT &getGraph() const { return OriginalGraph; }
+
   decltype(auto) begin() {
     return nodes_iterator(Nodes.begin(), nodes_iterator_map);
   }

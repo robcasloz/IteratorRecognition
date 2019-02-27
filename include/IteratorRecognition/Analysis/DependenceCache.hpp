@@ -45,6 +45,7 @@ public:
 
 private:
   ContainerT Dependences;
+  llvm::SmallPtrSet<llvm::Instruction *, 32> DistinctInstructions;
 
 public:
   // TODO allow to use another object of same type to populate the cache
@@ -59,6 +60,7 @@ public:
 
     for (auto it1 = Begin, ie1 = End; it1 != ie1; ++it1) {
       auto &i1 = *it1;
+
       for (auto it2 = std::next(it1), ie2 = ie1; it2 != ie2; ++it2) {
         auto &i2 = *it2;
 
@@ -66,6 +68,8 @@ public:
 
         if (llvm::isModSet(mri)) {
           Dependences.insert({{i1, i2}, mri});
+          DistinctInstructions.insert(i1);
+          DistinctInstructions.insert(i2);
         }
       }
     }
@@ -86,6 +90,14 @@ public:
   getData(const llvm::Instruction *I1, const llvm::Instruction *I2) const {
     return getData(std::make_pair(const_cast<llvm::Instruction *>(I1),
                                   const_cast<llvm::Instruction *>(I2)));
+  }
+
+  bool contains(const llvm::Instruction *I) {
+    return DistinctInstructions.count(I);
+  }
+
+  bool contains(const llvm::Instruction &I) {
+    return DistinctInstructions.count(&I);
   }
 
   using iterator = ContainerT::iterator;
