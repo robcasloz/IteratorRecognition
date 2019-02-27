@@ -312,8 +312,9 @@ bool PayloadDependenceGraphAnalysis::run(llvm::Function &F,
       lms.emplace_back(LoadModifyStore{dep.second, {}, {}});
     }
 
+    MutationDetector md;
     for (auto &e : lms) {
-      DetectOperationsOn(sg2, *curLoop, e);
+      md.process(sg2, *curLoop, e);
     }
 
     // step 4 determine commutativity
