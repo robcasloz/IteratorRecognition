@@ -138,8 +138,12 @@ static llvm::RegisterStandardPasses RegisterPayloadDependenceGraphLegacyPass(
     llvm::PassManagerBuilder::EP_EarlyAsPossible,
     registerPayloadDependenceGraphLegacyPass);
 
-static llvm::cl::opt<bool> Export("itr-export-updates",
-                                  llvm::cl::desc("export graph updates"));
+static llvm::cl::opt<bool>
+    ExportGraphUpdates("itr-export-updates",
+                       llvm::cl::desc("export graph updates"));
+
+static llvm::cl::opt<bool> ExportResults("itr-export-results",
+                                         llvm::cl::desc("export results"));
 
 //
 
@@ -165,6 +169,17 @@ PayloadDependenceGraphAnalysis::Result
 PayloadDependenceGraphAnalysis::run(llvm::Function &F, llvm::DominatorTree &DT,
                                     llvm::LoopInfo &LI, llvm::AAResults &AA,
                                     IteratorRecognitionInfo &Info) {
+  if (ExportGraphUpdates || ExportResults) {
+    auto dirOrErr = CreateDirectory(ReportsDir);
+    if (std::error_code ec = dirOrErr.getError()) {
+      llvm::errs() << "Error: " << ec.message() << '\n';
+      llvm::report_fatal_error("Failed to create reports directory" +
+                               ReportsDir);
+    }
+
+    ReportsDir = dirOrErr.get();
+  }
+
   Result result;
 
   if (FunctionWhiteList.size()) {
@@ -262,17 +277,7 @@ PayloadDependenceGraphAnalysis::run(llvm::Function &F, llvm::DominatorTree &DT,
       }
     }
 
-    if (Export) {
-      // TODO factor this out
-      auto dirOrErr = CreateDirectory(ReportsDir);
-      if (std::error_code ec = dirOrErr.getError()) {
-        llvm::errs() << "Error: " << ec.message() << '\n';
-        llvm::report_fatal_error("Failed to create reports directory" +
-                                 ReportsDir);
-      }
-
-      ReportsDir = dirOrErr.get();
-
+    if (ExportGraphUpdates) {
       const auto &json =
           ConvertToJSON("loop", "updates", *curLoop, dos.begin(), dos.end());
 
@@ -334,6 +339,11 @@ PayloadDependenceGraphAnalysis::run(llvm::Function &F, llvm::DominatorTree &DT,
     });
 
     loopCount++;
+  }
+
+  if (ExportResults) {
+    WriteJSONToFile(llvm::json::toJSON(result), "sca." + F.getName(),
+                    ReportsDir);
   }
 
   return result;
