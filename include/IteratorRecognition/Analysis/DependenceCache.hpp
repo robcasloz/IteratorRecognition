@@ -65,8 +65,9 @@ public:
         auto &i2 = *it2;
 
         auto mri = AA.getModRefInfo(i2, llvm::MemoryLocation::getOrNone(i1));
+        auto rmri = AA.getModRefInfo(i1, llvm::MemoryLocation::getOrNone(i2));
 
-        if (llvm::isModSet(mri)) {
+        if (llvm::isModSet(mri) && !llvm::isNoModRef(rmri)) {
           Dependences.insert({{i1, i2}, mri});
           DistinctInstructions.insert(i1);
           DistinctInstructions.insert(i2);
