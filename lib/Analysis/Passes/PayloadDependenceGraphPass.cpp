@@ -337,7 +337,7 @@ PayloadDependenceGraphAnalysis::run(llvm::Function &F, llvm::DominatorTree &DT,
   }
 
   return result;
-} // namespace iteratorrecognition
+}
 
 // legacy passmanager pass
 

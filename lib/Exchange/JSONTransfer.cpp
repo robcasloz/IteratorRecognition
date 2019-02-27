@@ -136,6 +136,28 @@ Value toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
 
 Value toJSON(const itr::UpdateAction &UA) { return UA.toJSON(); }
 
+Value toJSON(const itr::StaticCommutativityProperty &SCP) {
+  Object infoMapping;
+
+  infoMapping["loop"] = toJSON(*SCP.CurLoop);
+  infoMapping["commutative"] = SCP.HasProperty;
+  infoMapping["remark"] = SCP.Remark;
+
+  return std::move(infoMapping);
+}
+
+Value toJSON(const itr::StaticCommutativityResult &SCR) {
+  Object root;
+  Array loopsArray;
+
+  std::transform(SCR.begin(), SCR.end(), std::back_inserter(loopsArray),
+                 [&](const auto &e) { return std::move(toJSON(e)); });
+
+  root["static commutativity"] = std::move(loopsArray);
+
+  return std::move(root);
+}
+
 } // namespace json
 } // namespace llvm
 

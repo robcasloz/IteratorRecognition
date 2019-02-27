@@ -16,6 +16,8 @@
 
 #include "IteratorRecognition/Analysis/IteratorRecognition.hpp"
 
+#include "IteratorRecognition/Analysis/Passes/PayloadDependenceGraphPass.hpp"
+
 #include "llvm/Support/JSON.h"
 // using json::Value
 // using json::Object
@@ -143,6 +145,10 @@ Value toJSON(const itr::dbg::LoopDebugInfoT &Info);
 Value toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map);
 
 Value toJSON(const itr::UpdateAction &UA);
+
+Value toJSON(const itr::StaticCommutativityProperty &SCP);
+
+Value toJSON(const itr::StaticCommutativityResult &SCR);
 
 } // namespace json
 } // namespace llvm

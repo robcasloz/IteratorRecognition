@@ -160,7 +160,7 @@ public:
         }
       } else {
         LLVM_DEBUG(llvm::dbgs()
-                       << "unhandled instruction: " << *curTarget << '\n';);
+                       << "Unhandled instruction: " << *curTarget << '\n';);
         // TODO see what to do with this
         break;
       }
