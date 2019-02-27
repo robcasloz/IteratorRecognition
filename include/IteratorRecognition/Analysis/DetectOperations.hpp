@@ -8,6 +8,8 @@
 
 #include "IteratorRecognition/Support/ShadowDependenceGraph.hpp"
 
+#include "IteratorRecognition/Analysis/DependenceCache.hpp"
+
 #include "llvm/Analysis/LoopInfo.h"
 // using llvm::Loop
 
@@ -37,14 +39,37 @@ struct LoadModifyStore {
   llvm::SmallPtrSet<llvm::Instruction *, 16> Operations;
 };
 
-class MutationDetector {
+template <typename GraphT> class MutationDetector {
+  DependenceCache DC;
+  const SDependenceGraph<GraphT> *SDG = nullptr;
+  const SDependenceGraphNode<GraphT> *curTargetNode = nullptr;
+  llvm::SetVector<llvm::Value *> workList;
+
+  bool processCall(llvm::CallInst &CI) {
+    auto found = DC.contains(CI);
+
+    // no side-effects call
+    if (!found) {
+      for (auto &e : CI.arg_operands()) {
+        llvm::dbgs() << *e << '\n';
+        workList.insert(e);
+      }
+      return true;
+    }
+
+    return false;
+  }
+
 public:
-  template <typename GraphT>
+  explicit MutationDetector(const DependenceCache &DC) : DC(DC) {}
+
   void process(const SDependenceGraph<GraphT> &SDG, const llvm::Loop &CurLoop,
                LoadModifyStore &LMS) {
-    llvm::SetVector<llvm::Value *> workList;
-    llvm::SmallPtrSet<llvm::Value *, 32> visited;
+    workList.clear();
+    curTargetNode = nullptr;
+    this->SDG = &SDG;
 
+    llvm::SmallPtrSet<llvm::Value *, 32> visited;
     workList.insert(LMS.Target);
 
     while (!workList.empty()) {
@@ -56,7 +81,7 @@ public:
       }
       visited.insert(curTarget);
 
-      const auto *curTargetNode = SDG.findNodeFor(curTarget);
+      curTargetNode = SDG.findNodeFor(curTarget);
       if (!curTargetNode) {
         continue;
       }
@@ -125,6 +150,13 @@ public:
             }
           }
           LMS.Operations.insert(ii);
+        }
+      } else if (auto *ii = llvm::dyn_cast<llvm::CallInst>(curTarget)) {
+        bool wasProcessed = processCall(*ii);
+
+        if (!wasProcessed) {
+          LLVM_DEBUG(llvm::dbgs()
+                         << "Unhandled instruction: " << *curTarget << '\n';);
         }
       } else {
         LLVM_DEBUG(llvm::dbgs()

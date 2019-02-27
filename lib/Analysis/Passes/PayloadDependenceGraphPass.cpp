@@ -312,7 +312,7 @@ bool PayloadDependenceGraphAnalysis::run(llvm::Function &F,
       lms.emplace_back(LoadModifyStore{dep.second, {}, {}});
     }
 
-    MutationDetector md;
+    MutationDetector<DGType> md{dc};
     for (auto &e : lms) {
       md.process(sg2, *curLoop, e);
     }
