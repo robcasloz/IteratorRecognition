@@ -21,6 +21,9 @@
 // using LLVM_DEBUG macro
 // using llvm::dbgs
 
+#include <algorithm>
+// using std::all_of
+
 #define DEBUG_TYPE "itr-sca"
 
 namespace iteratorrecognition {
@@ -44,59 +47,78 @@ public:
 
   void analyze(const llvm::SmallVectorImpl<LoadModifyStore> &LMS,
                IteratorVarianceAnalyzer &IVA) {
-    LLVM_DEBUG(llvm::dbgs() << "=============\n";
-               llvm::dbgs()
-               << "loop: " << strconv::to_string(*IVA.getInfo().getLoop())
-               << "\n";
+    LLVM_DEBUG({
+      llvm::dbgs() << "=============\n";
+      llvm::dbgs() << "loop: " << strconv::to_string(*IVA.getInfo().getLoop())
+                   << "\n";
 
-               for (auto &e
-                    : LMS) {
-                 llvm::dbgs() << "target: " << *e.Target << '\n';
+      for (auto &e : LMS) {
+        llvm::dbgs() << "target: " << *e.Target << '\n';
 
-                 llvm::dbgs() << "sources:\n";
-                 for (auto *s : e.Sources) {
-                   llvm::dbgs() << *s << '\n';
-                 }
+        llvm::dbgs() << "sources:\n";
+        for (auto *s : e.Sources) {
+          llvm::dbgs() << *s << '\n';
+        }
 
-                 llvm::dbgs() << "ops:\n";
-                 for (auto *o : e.Operations) {
-                   llvm::dbgs() << *o << '\n';
-                 }
-               };);
+        llvm::dbgs() << "ops:\n";
+        for (auto *o : e.Operations) {
+          llvm::dbgs() << *o << '\n';
+        }
+      }
+    };);
+
+    bool isSet = false;
+    bool commutativityCount = false;
 
     for (auto &lms : LMS) {
-      llvm::dbgs() << "checking lms:\n";
+      isSet = false;
+      commutativityCount = false;
 
       auto res1 = IVA.getOrInsertVariance(lms.Target);
-
-      if (lms.Sources.empty()) {
-        LLVM_DEBUG(llvm::dbgs()
-                       << "unhandled case because of empty sources\n";);
-        continue;
-      }
 
       for (auto *src : lms.Sources) {
         auto res2 = IVA.getOrInsertVariance(src);
 
+        if (isSet && !commutativityCount) {
+          break;
+        }
+
         if (res1 == IteratorVarianceValue::Invariant &&
             res2 == IteratorVarianceValue::Invariant) {
           LLVM_DEBUG(llvm::dbgs() << "assuming commutativity\n";);
+
+          if (!isSet) {
+            commutativityCount = true;
+            isSet = true;
+          }
           continue;
         }
 
         if (res1 == IteratorVarianceValue::Variant ||
             res2 == IteratorVarianceValue::Variant) {
-          LLVM_DEBUG(llvm::dbgs()
-                         << "check operations to determine commutativity\n";);
+
+          if (std::all_of(lms.Operations.begin(), lms.Operations.end(),
+                          [](const auto &e) { return isCommutative(*e); })) {
+            if (!isSet) {
+              commutativityCount = true;
+              isSet = true;
+            }
+          } else {
+            isSet = true;
+            commutativityCount = false;
+          }
           continue;
         }
 
+        isSet = true;
+        commutativityCount = false;
         LLVM_DEBUG(llvm::dbgs() << "unhandled case\n";);
       }
     }
 
-    LLVM_DEBUG(llvm::dbgs() << "=============\n");
-    ;
+    if (isSet && commutativityCount) {
+      LLVM_DEBUG(llvm::dbgs() << "+++ commutative\n");
+    }
   }
 };
 

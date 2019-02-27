@@ -314,18 +314,6 @@ bool PayloadDependenceGraphAnalysis::run(llvm::Function &F,
 
     for (auto &e : lms) {
       DetectOperationsOn(sg2, *curLoop, e);
-
-      llvm::dbgs() << "target: " << *e.Target << '\n';
-
-      llvm::dbgs() << "sources:\n";
-      for (auto *s : e.Sources) {
-        llvm::dbgs() << *s << '\n';
-      }
-
-      llvm::dbgs() << "ops:\n";
-      for (auto *o : e.Operations) {
-        llvm::dbgs() << *o << '\n';
-      }
     }
 
     // step 4 determine commutativity
@@ -344,7 +332,7 @@ bool PayloadDependenceGraphAnalysis::run(llvm::Function &F,
   }
 
   return false;
-}
+} // namespace iteratorrecognition
 
 // legacy passmanager pass
 
