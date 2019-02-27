@@ -155,23 +155,23 @@ PayloadDependenceGraphAnalysis::run(llvm::Function &F,
   llvm::cl::ParseEnvironmentOptions(ITR_PAYLOAD_ANALYSIS_PASS_NAME,
                                     PASS_CMDLINE_OPTIONS_ENVVAR);
 
-  run(F, FAM.getResult<llvm::DominatorTreeAnalysis>(F),
-      FAM.getResult<llvm::LoopAnalysis>(F), FAM.getResult<llvm::AAManager>(F),
-      FAM.getResult<IteratorRecognitionAnalysis>(F));
-
-  return {};
+  return run(F, FAM.getResult<llvm::DominatorTreeAnalysis>(F),
+             FAM.getResult<llvm::LoopAnalysis>(F),
+             FAM.getResult<llvm::AAManager>(F),
+             FAM.getResult<IteratorRecognitionAnalysis>(F));
 }
 
-bool PayloadDependenceGraphAnalysis::run(llvm::Function &F,
-                                         llvm::DominatorTree &DT,
-                                         llvm::LoopInfo &LI,
-                                         llvm::AAResults &AA,
-                                         IteratorRecognitionInfo &Info) {
+PayloadDependenceGraphAnalysis::Result
+PayloadDependenceGraphAnalysis::run(llvm::Function &F, llvm::DominatorTree &DT,
+                                    llvm::LoopInfo &LI, llvm::AAResults &AA,
+                                    IteratorRecognitionInfo &Info) {
+  Result result;
+
   if (FunctionWhiteList.size()) {
     auto found = std::find(FunctionWhiteList.begin(), FunctionWhiteList.end(),
                            std::string{F.getName()});
     if (found == FunctionWhiteList.end()) {
-      return false;
+      return result;
     }
   }
 
@@ -320,7 +320,11 @@ bool PayloadDependenceGraphAnalysis::run(llvm::Function &F,
     // step 4 determine commutativity
 
     StaticCommutativityAnalyzer sca;
-    sca.analyze(lms, iva);
+    bool isCommutative = sca.analyze(lms, iva);
+    LLVM_DEBUG(llvm::dbgs() << "loop: " << strconv::to_string(*curLoop)
+                            << " commutativity: " << isCommutative << '\n';);
+
+    result.Properties.push_back({curLoop, isCommutative, ""});
 
     // step 5 reverse graph updates
 
@@ -332,7 +336,7 @@ bool PayloadDependenceGraphAnalysis::run(llvm::Function &F,
     loopCount++;
   }
 
-  return false;
+  return result;
 } // namespace iteratorrecognition
 
 // legacy passmanager pass
@@ -355,7 +359,9 @@ bool PayloadDependenceGraphLegacyPass::runOnFunction(llvm::Function &F) {
                   .getIteratorRecognitionInfo();
   PayloadDependenceGraphAnalysis pdga{};
 
-  return pdga.run(F, DT, LI, AA, IRI);
+  Result = pdga.run(F, DT, LI, AA, IRI);
+
+  return false;
 }
 
 } // namespace iteratorrecognition

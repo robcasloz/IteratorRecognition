@@ -45,7 +45,7 @@ class StaticCommutativityAnalyzer {
 public:
   StaticCommutativityAnalyzer() = default;
 
-  void analyze(const llvm::SmallVectorImpl<LoadModifyStore> &LMS,
+  bool analyze(const llvm::SmallVectorImpl<LoadModifyStore> &LMS,
                IteratorVarianceAnalyzer &IVA) {
     LLVM_DEBUG({
       llvm::dbgs() << "=============\n";
@@ -111,9 +111,7 @@ public:
       }
     }
 
-    if (hasCommutativeOps) {
-      LLVM_DEBUG(llvm::dbgs() << "+++ commutative\n");
-    }
+    return hasCommutativeOps;
   }
 };
 
