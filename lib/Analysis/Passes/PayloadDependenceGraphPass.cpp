@@ -155,13 +155,15 @@ namespace iteratorrecognition {
 
 // new passmanager pass
 
-PayloadDependenceGraphAnalysis::Result
-PayloadDependenceGraphAnalysis::run(llvm::Function &F,
-                                    llvm::FunctionAnalysisManager &FAM) {
+PayloadDependenceGraphAnalysis::PayloadDependenceGraphAnalysis() {
   llvm::cl::ResetAllOptionOccurrences();
   llvm::cl::ParseEnvironmentOptions(ITR_PAYLOAD_ANALYSIS_PASS_NAME,
                                     PASS_CMDLINE_OPTIONS_ENVVAR);
+}
 
+PayloadDependenceGraphAnalysis::Result
+PayloadDependenceGraphAnalysis::run(llvm::Function &F,
+                                    llvm::FunctionAnalysisManager &FAM) {
   return run(F, FAM.getResult<llvm::DominatorTreeAnalysis>(F),
              FAM.getResult<llvm::LoopAnalysis>(F),
              FAM.getResult<llvm::AAManager>(F),

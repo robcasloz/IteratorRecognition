@@ -69,10 +69,9 @@ class PayloadDependenceGraphAnalysis
 public:
   using Result = StaticCommutativityResult;
 
-  PayloadDependenceGraphAnalysis() = default;
+  PayloadDependenceGraphAnalysis();
 
   Result run(llvm::Function &F, llvm::FunctionAnalysisManager &FAM);
-
   Result run(llvm::Function &F, llvm::DominatorTree &DT, llvm::LoopInfo &LI,
              llvm::AAResults &AA, IteratorRecognitionInfo &Info);
 };

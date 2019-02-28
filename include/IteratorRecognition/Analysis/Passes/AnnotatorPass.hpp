@@ -26,9 +26,9 @@ namespace iteratorrecognition {
 // new passmanager pass
 class AnnotatorPass : public llvm::PassInfoMixin<AnnotatorPass> {
 public:
-  AnnotatorPass() = default;
-  bool run(llvm::Function &F, IteratorRecognitionInfo &Info);
+  AnnotatorPass();
 
+  bool run(llvm::Function &F, IteratorRecognitionInfo &Info);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &FAM);
 };

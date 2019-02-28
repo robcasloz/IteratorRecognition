@@ -110,6 +110,12 @@ namespace iteratorrecognition {
 
 // new passmanager pass
 
+AnnotatorPass::AnnotatorPass() {
+  llvm::cl::ResetAllOptionOccurrences();
+  llvm::cl::ParseEnvironmentOptions(ITR_ANNOTATE_PASS_NAME,
+                                    PASS_CMDLINE_OPTIONS_ENVVAR);
+}
+
 bool AnnotatorPass::run(llvm::Function &F, IteratorRecognitionInfo &Info) {
   bool hasChanged = false;
   MetadataAnnotationWriter annotator;
@@ -152,10 +158,6 @@ bool AnnotatorPass::run(llvm::Function &F, IteratorRecognitionInfo &Info) {
 
 llvm::PreservedAnalyses AnnotatorPass::run(llvm::Function &F,
                                            llvm::FunctionAnalysisManager &FAM) {
-  llvm::cl::ResetAllOptionOccurrences();
-  llvm::cl::ParseEnvironmentOptions(ITR_ANNOTATE_PASS_NAME,
-                                    PASS_CMDLINE_OPTIONS_ENVVAR);
-
   run(F, FAM.getResult<IteratorRecognitionAnalysis>(F));
 
   return llvm::PreservedAnalyses::all();
