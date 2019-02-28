@@ -18,7 +18,7 @@
 
 #include "private/PassCommandLineOptions.hpp"
 
-#include "IteratorRecognition/Analysis/Passes/Exchange/JSONExporterPass.hpp"
+#include "IteratorRecognition/Exchange/Passes/JSONExporterPass.hpp"
 
 #include "llvm/Config/llvm-config.h"
 // version macros
