@@ -95,6 +95,9 @@
 #include <string>
 // using std::string
 
+#include <tuple>
+// using std::tie
+
 #include <algorithm>
 // using std::for_each
 // using std::reverse
@@ -330,11 +333,13 @@ PayloadDependenceGraphAnalysis::run(llvm::Function &F, llvm::DominatorTree &DT,
     // step 4 determine commutativity
 
     StaticCommutativityAnalyzer sca;
-    bool isCommutative = sca.analyze(lms, iva);
+    bool isCommutative = false;
+    std::string analysisRemark{""};
+    std::tie(isCommutative, analysisRemark) = sca.analyze(lms, iva);
     LLVM_DEBUG(llvm::dbgs() << "loop: " << strconv::to_string(*curLoop)
                             << " commutativity: " << isCommutative << '\n';);
 
-    result.Properties.push_back({curLoop, isCommutative, ""});
+    result.Properties.push_back({curLoop, isCommutative, analysisRemark});
 
     // step 5 reverse graph updates
 

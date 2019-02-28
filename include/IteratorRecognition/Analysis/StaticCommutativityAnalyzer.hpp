@@ -24,6 +24,13 @@
 #include <algorithm>
 // using std::all_of
 
+#include <string>
+// using std::string
+
+#include <utility>
+// using std::pair
+// using std::make_pair
+
 #define DEBUG_TYPE "itr-sca"
 
 namespace iteratorrecognition {
@@ -45,10 +52,11 @@ class StaticCommutativityAnalyzer {
 public:
   StaticCommutativityAnalyzer() = default;
 
-  bool analyze(const llvm::SmallVectorImpl<LoadModifyStore> &LMS,
-               IteratorVarianceAnalyzer &IVA) {
+  std::pair<bool, std::string>
+  analyze(const llvm::SmallVectorImpl<LoadModifyStore> &LMS,
+          IteratorVarianceAnalyzer &IVA) {
     LLVM_DEBUG({
-      llvm::dbgs() << "=============\n";
+      llvm::dbgs() << "SCA processing: \n";
       llvm::dbgs() << "loop: " << strconv::to_string(*IVA.getInfo().getLoop())
                    << "\n";
 
@@ -65,10 +73,12 @@ public:
           llvm::dbgs() << *o << '\n';
         }
       }
+      llvm::dbgs() << "---\n";
     };);
 
     bool hasCommutativeOps = false;
     bool stopProcessing = false;
+    std::string message{""};
 
     for (auto &lms : LMS) {
       if (stopProcessing || lms.Sources.empty()) {
@@ -83,9 +93,10 @@ public:
 
         if (res1 == IteratorVarianceValue::Invariant &&
             res2 == IteratorVarianceValue::Invariant) {
-          LLVM_DEBUG(llvm::dbgs() << "assuming commutativity\n";);
           hasCommutativeOps = true;
+          message = "assuming commutativity due to iterator variance";
 
+          LLVM_DEBUG(llvm::dbgs() << message << '\n';);
           continue;
         }
 
@@ -94,24 +105,31 @@ public:
           if (std::all_of(lms.Operations.begin(), lms.Operations.end(),
                           [](const auto &e) { return isCommutative(*e); })) {
             hasCommutativeOps = true;
+            message = "commutativity due to operations";
+
+            LLVM_DEBUG(llvm::dbgs() << message << '\n';);
           } else {
             hasCommutativeOps = false;
+            message = "non-commutativity due to operations";
             stopProcessing = true;
+
+            LLVM_DEBUG(llvm::dbgs() << message << '\n';);
             break;
           }
 
           continue;
         }
 
-        LLVM_DEBUG(llvm::dbgs() << "unhandled case\n";);
         hasCommutativeOps = false;
+        message = "non-commutativity due to unhandled case";
         stopProcessing = true;
 
+        LLVM_DEBUG(llvm::dbgs() << message << '\n';);
         break;
       }
     }
 
-    return hasCommutativeOps;
+    return std::make_pair(hasCommutativeOps, message);
   }
 };
 
