@@ -17,6 +17,12 @@
 #include "llvm/IR/Instruction.h"
 // using llvm::Instruction
 
+#include "llvm/ADT/StringRef.h"
+// using llvm::StringRef
+
+#include "llvm/ADT/DenseSet.h"
+// using llvm::SmallDenseSet
+
 #include "llvm/Support/Debug.h"
 // using LLVM_DEBUG macro
 // using llvm::dbgs
@@ -78,11 +84,15 @@ public:
 
     bool hasCommutativeOps = false;
     bool stopProcessing = false;
-    std::string message{""};
+    llvm::SmallDenseSet<llvm::StringRef> usedMessages;
 
     for (auto &lms : LMS) {
       if (stopProcessing || lms.Sources.empty()) {
         hasCommutativeOps = false;
+        llvm::StringRef msg = "non-commutativity due to empty sources";
+        usedMessages.insert(msg);
+
+        LLVM_DEBUG(llvm::dbgs() << msg << '\n';);
         break;
       }
 
@@ -94,9 +104,11 @@ public:
         if (res1 == IteratorVarianceValue::Invariant &&
             res2 == IteratorVarianceValue::Invariant) {
           hasCommutativeOps = true;
-          message = "assuming commutativity due to iterator variance";
+          llvm::StringRef msg =
+              "assuming commutativity due to iterator variance";
+          usedMessages.insert(msg);
 
-          LLVM_DEBUG(llvm::dbgs() << message << '\n';);
+          LLVM_DEBUG(llvm::dbgs() << msg << '\n';);
           continue;
         }
 
@@ -105,15 +117,17 @@ public:
           if (std::all_of(lms.Operations.begin(), lms.Operations.end(),
                           [](const auto &e) { return isCommutative(*e); })) {
             hasCommutativeOps = true;
-            message = "commutativity due to operations";
+            llvm::StringRef msg = "commutativity due to operations";
+            usedMessages.insert(msg);
 
-            LLVM_DEBUG(llvm::dbgs() << message << '\n';);
+            LLVM_DEBUG(llvm::dbgs() << msg << '\n';);
           } else {
             hasCommutativeOps = false;
-            message = "non-commutativity due to operations";
+            llvm::StringRef msg = "non-commutativity due to operations";
+            usedMessages.insert(msg);
             stopProcessing = true;
 
-            LLVM_DEBUG(llvm::dbgs() << message << '\n';);
+            LLVM_DEBUG(llvm::dbgs() << msg << '\n';);
             break;
           }
 
@@ -121,12 +135,18 @@ public:
         }
 
         hasCommutativeOps = false;
-        message = "non-commutativity due to unhandled case";
+        llvm::StringRef msg = "non-commutativity due to unhandled case";
+        usedMessages.insert(msg);
         stopProcessing = true;
 
-        LLVM_DEBUG(llvm::dbgs() << message << '\n';);
+        LLVM_DEBUG(llvm::dbgs() << msg << '\n';);
         break;
       }
+    }
+
+    std::string message;
+    for (auto &msg : usedMessages) {
+      message += " " + msg.str();
     }
 
     return std::make_pair(hasCommutativeOps, message);
