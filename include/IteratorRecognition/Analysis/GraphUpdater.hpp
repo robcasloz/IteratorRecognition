@@ -10,6 +10,8 @@
 
 #include "IteratorRecognition/Support/Utils/StringConversion.hpp"
 
+#include "Pedigree/Analysis/Hazards.hpp"
+
 #include "llvm/Support/JSON.h"
 // using json::Value
 // using json::Object
@@ -228,7 +230,7 @@ public:
     } else if (srcIV == IteratorVarianceValue::Invariant ||
                dstIV == IteratorVarianceValue::Invariant) {
       if (!srcNode->hasEdgeWith(dstNode)) {
-        if (auto newInfo = determineHazard(Src, Dst)) {
+        if (auto newInfo = pedigree::DetermineHazard(Src, Dst)) {
           actions = createConnect(srcNode, dstNode, newInfo);
         }
       }
