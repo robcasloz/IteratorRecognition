@@ -326,20 +326,22 @@ PayloadDependenceGraphAnalysis::run(llvm::Function &F, llvm::DominatorTree &DT,
     }
 
     MutationDetector<DGType> md{dc};
+    std::string mdRemark;
     for (auto &e : lms) {
-      md.process(sg2, *curLoop, e);
+      std::tie(std::ignore, mdRemark) = md.process(sg2, *curLoop, e);
     }
 
     // step 4 determine commutativity
 
     StaticCommutativityAnalyzer sca;
     bool isCommutative = false;
-    std::string analysisRemark{""};
-    std::tie(isCommutative, analysisRemark) = sca.analyze(lms, iva);
+    std::string scaRemark;
+    std::tie(isCommutative, scaRemark) = sca.analyze(lms, iva);
     LLVM_DEBUG(llvm::dbgs() << "loop: " << strconv::to_string(*curLoop)
                             << " commutativity: " << isCommutative << '\n';);
 
-    result.Properties.push_back({curLoop, isCommutative, analysisRemark});
+    result.Properties.push_back(
+        {curLoop, isCommutative, mdRemark + " " + scaRemark});
 
     // step 5 reverse graph updates
 

@@ -25,9 +25,18 @@
 // using llvm::SetVector
 
 #include "llvm/Support/raw_ostream.h"
+// using llvm::raw_string_ostream
 
 #include "llvm/Support/Debug.h"
+// using LLVM_DEBUG macro
 // using llvm::dbgs
+
+#include <string>
+// using std::string
+
+#include <utility>
+// using std::pair
+// using std::make_pair
 
 #define DEBUG_TYPE "itr-detectops"
 
@@ -63,8 +72,12 @@ template <typename GraphT> class MutationDetector {
 public:
   explicit MutationDetector(const DependenceCache &DC) : DC(DC) {}
 
-  void process(const SDependenceGraph<GraphT> &SDG, const llvm::Loop &CurLoop,
-               LoadModifyStore &LMS) {
+  std::pair<bool, std::string> process(const SDependenceGraph<GraphT> &SDG,
+                                       const llvm::Loop &CurLoop,
+                                       LoadModifyStore &LMS) {
+    bool wasProcessed = true;
+    std::string message;
+
     workList.clear();
     curTargetNode = nullptr;
     this->SDG = &SDG;
@@ -152,21 +165,28 @@ public:
           LMS.Operations.insert(ii);
         }
       } else if (auto *ii = llvm::dyn_cast<llvm::CallInst>(curTarget)) {
-        bool wasProcessed = processCall(*ii);
+        wasProcessed = processCall(*ii);
 
         if (!wasProcessed) {
-          LLVM_DEBUG(llvm::dbgs()
-                         << "Unhandled instruction: " << *curTarget << '\n';);
+          llvm::raw_string_ostream os(message);
+          os << "Unhandled call: " << *curTarget;
+
+          LLVM_DEBUG(llvm::dbgs() << message << '\n';);
+          break;
         }
       } else {
-        LLVM_DEBUG(llvm::dbgs()
-                       << "Unhandled instruction: " << *curTarget << '\n';);
-        // TODO see what to do with this
+        wasProcessed = false;
+        llvm::raw_string_ostream os(message);
+        os << "Unhandled instruction: " << *curTarget;
+
+        LLVM_DEBUG(llvm::dbgs() << message << '\n';);
         break;
       }
     } // work list iteration end
 
     LMS.Operations.erase(LMS.Target);
+
+    return std::make_pair(wasProcessed, message);
   }
 };
 
