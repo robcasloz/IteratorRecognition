@@ -60,7 +60,7 @@ template <typename GraphT> class MutationDetector {
     // no side-effects call
     if (!found) {
       for (auto &e : CI.arg_operands()) {
-        llvm::dbgs() << *e << '\n';
+        LLVM_DEBUG(llvm::dbgs() << *e << '\n';);
         workList.insert(e);
       }
       return true;

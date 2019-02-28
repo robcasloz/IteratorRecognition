@@ -37,10 +37,13 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include "llvm/Support/Debug.h"
+// using LLVM_DEBUG macro
 // using llvm::dbgs
 
 #include <utility>
 // using std::move
+
+#define DEBUG_TYPE "itr-iva"
 
 namespace iteratorrecognition {
 
@@ -131,8 +134,8 @@ public:
 
       auto *curInst = llvm::dyn_cast<llvm::Instruction>(curVal);
       if (!curInst) {
-        llvm::dbgs() << "Unhandled value: " << strconv::to_string(*curVal)
-                     << '\n';
+        LLVM_DEBUG(llvm::dbgs() << "Unhandled value: "
+                                << strconv::to_string(*curVal) << '\n';);
         status.mergeIn(IteratorVarianceValue::Unknown);
         break;
       }
@@ -172,8 +175,8 @@ public:
           workList.push_back(idx.get());
         }
       } else {
-        llvm::dbgs() << "Unhandled instruction: "
-                     << strconv::to_string(*curInst) << '\n';
+        LLVM_DEBUG(llvm::dbgs() << "Unhandled instruction: "
+                                << strconv::to_string(*curInst) << '\n';);
       }
     }
 
@@ -196,3 +199,5 @@ public:
 };
 
 } // namespace iteratorrecognition
+
+#undef DEBUG_TYPE
