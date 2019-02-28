@@ -81,6 +81,8 @@
 #include "llvm/Support/CommandLine.h"
 // using llvm::cl::opt
 // using llvm::cl::desc
+// using llvm::cl::ParseEnvironmentOptions
+// using llvm::cl::ResetAllOptionOccurrences
 
 #include "llvm/Support/ErrorHandling.h"
 // using llvm::report_fatal_error
@@ -156,6 +158,7 @@ namespace iteratorrecognition {
 PayloadDependenceGraphAnalysis::Result
 PayloadDependenceGraphAnalysis::run(llvm::Function &F,
                                     llvm::FunctionAnalysisManager &FAM) {
+  llvm::cl::ResetAllOptionOccurrences();
   llvm::cl::ParseEnvironmentOptions(ITR_PAYLOAD_ANALYSIS_PASS_NAME,
                                     PASS_CMDLINE_OPTIONS_ENVVAR);
 

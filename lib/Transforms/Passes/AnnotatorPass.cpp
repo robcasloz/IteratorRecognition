@@ -44,6 +44,13 @@
 // using llvm::LoopInfo
 // using llvm::LoopInfoWrapperPass
 
+#include "llvm/Support/CommandLine.h"
+// using llvm::cl::opt
+// using llvm::cl::desc
+// using llvm::cl::init
+// using llvm::cl::ParseEnvironmentOptions
+// using llvm::cl::ResetAllOptionOccurrences
+
 #include "llvm/Support/Debug.h"
 // using LLVM_DEBUG macro
 // using llvm::dbgs
@@ -145,6 +152,7 @@ bool AnnotatorPass::run(llvm::Function &F, IteratorRecognitionInfo &Info) {
 
 llvm::PreservedAnalyses AnnotatorPass::run(llvm::Function &F,
                                            llvm::FunctionAnalysisManager &FAM) {
+  llvm::cl::ResetAllOptionOccurrences();
   llvm::cl::ParseEnvironmentOptions(ITR_ANNOTATE_PASS_NAME,
                                     PASS_CMDLINE_OPTIONS_ENVVAR);
 
