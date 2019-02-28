@@ -328,7 +328,12 @@ PayloadDependenceGraphAnalysis::run(llvm::Function &F, llvm::DominatorTree &DT,
     MutationDetector<DGType> md{dc};
     std::string mdRemark;
     for (auto &e : lms) {
-      std::tie(std::ignore, mdRemark) = md.process(sg2, *curLoop, e);
+      bool status;
+      std::string msg;
+      std::tie(status, msg) = md.process(sg2, *curLoop, e);
+      if (!status) {
+        mdRemark += msg;
+      }
     }
 
     // step 4 determine commutativity
