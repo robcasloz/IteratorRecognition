@@ -3,23 +3,36 @@
 
 """
 
+from __future__ import print_function
+
 import sys
+import os
 import logging
+import logging.config
 import json
+import yaml
 import gspread
 import time
 import re
 
-from __future__ import print_function
 from argparse import ArgumentParser
 
-from oauth2client.client import SignedJwtAssertionCredentials
-from Naked.toolshed.shell import muterun_rb
 
-logging.basicConfig(
-    filename='/var/log/gspread.log',
-    format='%(asctime)s %(levelname)s:%(message)s',
-    level=logging.INFO)
+def setup_logging(default_path='logging.yaml',
+                  default_level=logging.INFO,
+                  env_key='LOG_CFG'):
+    """Setup logging configuration
+    """
+    path = default_path
+    value = os.getenv(env_key, None)
+    if value:
+        path = value
+    if os.path.exists(path):
+        with open(path, 'rt') as f:
+            config = yaml.safe_load(f.read())
+        logging.config.dictConfig(config)
+    else:
+        logging.basicConfig(level=default_level)
 
 
 class ResultParser(object):
@@ -42,22 +55,22 @@ class ResultParser(object):
                 }
         """
         scope = ['https://spreadsheets.google.com/feeds']
-        credentials = SignedJwtAssertionCredentials(
-            json_key['client_email'], json_key['private_key'], scope)
+        credentials = ServiceAccountCredentials(json_key['client_email'],
+                                                json_key['private_key'], scope)
         gc = gspread.authorize(credentials)
         if gc:
-            logging.info('OAuth succeeded')
+            self.logger.info('OAuth succeeded')
         else:
-            logging.warn('Oauth failed')
+            self.logger.warn('Oauth failed')
 
         now = time.strftime("%c")
 
         # get data from ruby script
-        response = muterun_rb('script')
+        response = True
         if response:
-            logging.info('Data collected')
+            self.logger.info('Data collected')
         else:
-            logging.warn('Could not collect data')
+            self.logger.warn('Could not collect data')
 
         csv = response.stdout
         csv = re.sub('/|"|,[0-9][0-9][0-9]Z|Z', '', csv)
@@ -76,9 +89,9 @@ class ResultParser(object):
         #open the worksheet and create a new sheet
         wks = gc.open(filename)
         if wks:
-            logging.info('%s file opened for writing', filename)
+            self.logger.info('%s file opened for writing', filename)
         else:
-            logging.warn('%s file could not be opened', filename)
+            self.logger.warn('%s file could not be opened', filename)
 
         sheet = wks.add_worksheet(title=now, rows=(row + 2), cols=(column + 2))
         cell_list = sheet.range(cell_range)
@@ -90,12 +103,16 @@ class ResultParser(object):
 
         # Update in batch
         if sheet.update_cells(cell_list):
-            logging.info('upload to %s sheet in %s file done', now, filename)
+            self.logger.info('upload to %s sheet in %s file done', now,
+                             filename)
         else:
-            logging.warn('upload to %s sheet in %s file failed', now, filename)
+            self.logger.warn('upload to %s sheet in %s file failed', now,
+                             filename)
 
 
 if __name__ == '__main__':
+    setup_logging()
+
     parser = ArgumentParser(
         description='Mark SCCs in graphs specified GraphViz DOT format')
     parser.add_argument(
@@ -118,19 +135,9 @@ if __name__ == '__main__':
         dest='suffix',
         default='scc',
         help='output file supplementary suffix')
-    parser.add_argument(
-        '-q',
-        '--quiet',
-        dest='quiet',
-        default=False,
-        action='store_true',
-        help='silence output')
 
     args = parser.parse_args()
 
     #
-
-    if args.quiet:
-        sys.stdout = None
 
     sys.exit(0)
