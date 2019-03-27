@@ -124,6 +124,11 @@ public:
   }
 };
 
+bool HasPayloadOnlyBlocks(const IteratorInfo &Info);
+
+void GetPayloadOnlyBlocks(const IteratorInfo &Info,
+                          llvm::SmallVectorImpl<llvm::BasicBlock *> Blocks);
+
 class IteratorRecognitionInfo {
 public:
   using BaseGraphT = pedigree::PDGraph;

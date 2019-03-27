@@ -137,6 +137,7 @@ set(LIB_SOURCES
   "lib/Passes/RegisterPasses.cpp"
   "lib/Support/Utils/DebugInfo.cpp"
   "lib/Support/Utils/StringConversion.cpp"
+  "lib/Analysis/IteratorRecognition.cpp"
   "lib/Analysis/ValueClassification.cpp"
   "lib/Analysis/Graphs/PDGCondensationGraph.cpp"
   "lib/Exchange/JSONTransfer.cpp"
