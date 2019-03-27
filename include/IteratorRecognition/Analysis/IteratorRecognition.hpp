@@ -127,7 +127,17 @@ public:
 bool HasPayloadOnlyBlocks(const IteratorInfo &Info);
 
 void GetPayloadOnlyBlocks(const IteratorInfo &Info,
-                          llvm::SmallVectorImpl<llvm::BasicBlock *> Blocks);
+                          llvm::SmallVectorImpl<llvm::BasicBlock *> &Blocks);
+
+bool HasMixedBlocks(const IteratorInfo &Info);
+
+void GetMixedBlocks(const IteratorInfo &Info,
+                    llvm::SmallVectorImpl<llvm::BasicBlock *> &Mixed);
+
+bool HasPayloadOnlySubloops(const IteratorInfo &Info);
+
+void GetPayloadOnlySubloops(const IteratorInfo &Info,
+                            llvm::SmallVectorImpl<llvm::Loop *> &SubLoops);
 
 class IteratorRecognitionInfo {
 public:
