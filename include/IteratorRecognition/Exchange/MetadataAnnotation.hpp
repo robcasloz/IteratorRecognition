@@ -113,8 +113,9 @@ public:
               llvm::MDNode *AdditionalData) {
     bool hasChanged = false;
 
-    for (auto &e : Rng) {
-      hasChanged |= append(*e, InstructionKey, AdditionalData);
+    for (const auto &e : Rng) {
+      hasChanged |= append(const_cast<llvm::Instruction &>(*e), InstructionKey,
+                           AdditionalData);
     }
 
     return hasChanged;

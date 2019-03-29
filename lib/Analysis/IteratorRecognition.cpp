@@ -13,7 +13,7 @@
 namespace iteratorrecognition {
 
 bool HasPayloadOnlyBlocks(const IteratorInfo &Info) {
-  llvm::SmallPtrSet<llvm::BasicBlock *, 16> itBlocks;
+  llvm::SmallPtrSet<const llvm::BasicBlock *, 16> itBlocks;
 
   for (auto *e : Info) {
     itBlocks.insert(e->getParent());
@@ -30,7 +30,7 @@ bool HasPayloadOnlyBlocks(const IteratorInfo &Info) {
 
 void GetPayloadOnlyBlocks(const IteratorInfo &Info,
                           llvm::SmallVectorImpl<llvm::BasicBlock *> &Blocks) {
-  llvm::SmallPtrSet<llvm::BasicBlock *, 16> itBlocks;
+  llvm::SmallPtrSet<const llvm::BasicBlock *, 16> itBlocks;
 
   for (auto *e : Info) {
     itBlocks.insert(e->getParent());

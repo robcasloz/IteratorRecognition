@@ -18,6 +18,9 @@
 // using llvm::Loop
 // using llvm::LoopInfo
 
+#include "llvm/IR/ValueHandle.h"
+// using llvm::WeakTrackingVH
+
 #include "llvm/ADT/SCCIterator.h"
 // using llvm::scc_begin
 // using llvm::scc_end
@@ -40,6 +43,9 @@
 
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
+
+#include "llvm/Support/Casting.h"
+// using llvm::cast_or_null
 
 #include "llvm/Support/Debug.h"
 // using LLVM_DEBUG macro
@@ -73,13 +79,31 @@ namespace br = boost::range;
 
 //
 
+namespace {
+
+using IteratorVectorTy = llvm::SmallVector<llvm::WeakTrackingVH, 8>;
+
+llvm::Instruction *DerefFromVH(IteratorVectorTy::value_type &H) {
+  return llvm::cast_or_null<llvm::Instruction>(H);
+}
+
+const llvm::Instruction *
+ConstDerefFromVH(const IteratorVectorTy::value_type &H) {
+  return llvm::cast_or_null<llvm::Instruction>(H);
+}
+
+} // namespace
+
 class IteratorInfo {
   llvm::Loop *CurLoop;
-  llvm::SmallVector<llvm::Instruction *, 8> CurInstructions;
+  IteratorVectorTy CurInstructions;
 
 public:
-  using iterator = decltype(CurInstructions)::iterator;
-  using const_iterator = decltype(CurInstructions)::const_iterator;
+  using iterator = llvm::mapped_iterator<typename IteratorVectorTy::iterator,
+                                         decltype(&DerefFromVH)>;
+  using const_iterator =
+      llvm::mapped_iterator<typename IteratorVectorTy::const_iterator,
+                            decltype(&ConstDerefFromVH)>;
 
   using insts_iterator = iterator;
   using const_insts_iterator = const_iterator;
@@ -91,14 +115,19 @@ public:
   explicit IteratorInfo(llvm::Loop *L) : CurLoop(L) {}
 
   const auto *getLoop() const { return CurLoop; }
-  const auto &getInstructions() const { return CurInstructions; }
   auto getNumInstructions() const { return CurInstructions.size(); }
 
-  decltype(auto) begin() { return CurInstructions.begin(); }
-  decltype(auto) end() { return CurInstructions.end(); }
+  decltype(auto) begin() {
+    return iterator(CurInstructions.begin(), &DerefFromVH);
+  }
+  decltype(auto) end() { return iterator(CurInstructions.end(), &DerefFromVH); }
 
-  decltype(auto) begin() const { return CurInstructions.begin(); }
-  decltype(auto) end() const { return CurInstructions.end(); }
+  decltype(auto) begin() const {
+    return const_iterator(CurInstructions.begin(), &ConstDerefFromVH);
+  }
+  decltype(auto) end() const {
+    return const_iterator(CurInstructions.end(), &ConstDerefFromVH);
+  }
 
   decltype(auto) insts_begin() { return begin(); }
   decltype(auto) insts_end() { return end(); }
@@ -115,8 +144,7 @@ public:
   }
 
   bool isIterator(const llvm::Instruction *Inst) const {
-    return CurInstructions.end() !=
-           std::find(CurInstructions.begin(), CurInstructions.end(), Inst);
+    return end() != std::find(begin(), end(), Inst);
   }
 
   bool isIterator(const llvm::Instruction *Inst) {

@@ -30,7 +30,7 @@ void FindIteratorValues(const IteratorInfo &Info,
       auto *user = llvm::dyn_cast<llvm::Instruction>(u.getUser());
       if (user && !Info.isIterator(user) &&
           loopBlocks.count(user->getParent())) {
-        Values.insert(e);
+        Values.insert(const_cast<llvm::Instruction *>(e));
       }
     }
   }
