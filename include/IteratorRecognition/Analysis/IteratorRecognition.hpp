@@ -252,42 +252,6 @@ private:
       unique_inplace(inst);
       IteratorsInfo.emplace_back(loop, inst.begin(), inst.end());
     }
-
-    /*LoopSet visited;
-    for (const auto &e : Map) {
-      const auto &loops = e.second;
-
-      if (loops.empty()) {
-        continue;
-      }
-
-      const auto &key = e.first;
-      bool workFound = false;
-
-      for (auto &cn : ICGT::children(key)) {
-        auto found = Map.find(cn);
-        if (found != Map.end() && is_subset_of(loops, found->second)) {
-          workFound = true;
-          break;
-        }
-      }
-
-      if (!workFound) {
-        for (auto *loop : loops) {
-          if (visited.count(loop)) {
-            continue;
-          }
-
-          llvm::SmallVector<llvm::Instruction *, 8> instructions;
-          br::transform(*key | ba::filtered(is_not_null_unit),
-                        std::back_inserter(instructions),
-                        [&](const auto &e) { return e->unit(); });
-          IteratorsInfo.emplace_back(loop, instructions.begin(),
-                                     instructions.end());
-          visited.insert(loop);
-        }
-      }
-    }*/
   }
 
 public:
