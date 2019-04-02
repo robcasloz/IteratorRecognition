@@ -10,16 +10,22 @@
 #include "llvm/ADT/SmallPtrSet.h"
 // using llvm::SmallPtrSet
 
+#include <cassert>
+// using assert
+
 namespace iteratorrecognition {
 
-bool HasPayloadOnlyBlocks(const IteratorInfo &Info) {
+bool HasPayloadOnlyBlocks(const IteratorInfo &Info, const llvm::Loop &L) {
+  assert((Info.getLoop() == &L || Info.getLoop()->contains(&L)) &&
+         "Queried loop is not a subloop of this iterator!");
+
   llvm::SmallPtrSet<const llvm::BasicBlock *, 16> itBlocks;
 
   for (auto *e : Info) {
     itBlocks.insert(e->getParent());
   }
 
-  for (auto *e : Info.getLoop()->getBlocks()) {
+  for (auto *e : L.getBlocks()) {
     if (!itBlocks.count(e)) {
       return true;
     }

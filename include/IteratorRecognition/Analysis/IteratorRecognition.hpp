@@ -152,7 +152,7 @@ public:
   }
 };
 
-bool HasPayloadOnlyBlocks(const IteratorInfo &Info);
+bool HasPayloadOnlyBlocks(const IteratorInfo &Info, const llvm::Loop &L);
 
 void GetPayloadOnlyBlocks(const IteratorInfo &Info,
                           llvm::SmallVectorImpl<llvm::BasicBlock *> &Blocks);
