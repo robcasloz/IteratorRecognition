@@ -283,9 +283,10 @@ public:
     }
   }
 
-  llvm::Optional<llvm::iterator_range<IteratorInfo::insts_iterator>>
+  llvm::iterator_range<IteratorInfo::insts_iterator>
   getIteratorsFor(const llvm::Loop *L) const {
     assert(L && "Loop is null!");
+    static IteratorVectorTy empty;
 
     auto found = std::find_if(IteratorsInfo.begin(), IteratorsInfo.end(),
                               [&L](const auto &e) { return e.getLoop() == L; });
@@ -293,11 +294,13 @@ public:
     if (found != IteratorsInfo.end()) {
       return const_cast<IteratorInfo &>(*found).insts();
     } else {
-      return {};
+      return llvm::make_range(
+          IteratorInfo::iterator(empty.begin(), &DerefFromVH),
+          IteratorInfo::iterator(empty.end(), &DerefFromVH));
     }
   }
 
-  llvm::Optional<llvm::iterator_range<IteratorInfo::insts_iterator>>
+  llvm::iterator_range<IteratorInfo::insts_iterator>
   getIteratorsFor(const llvm::Loop *L) {
     return static_cast<const IteratorRecognitionInfo *>(this)->getIteratorsFor(
         L);
