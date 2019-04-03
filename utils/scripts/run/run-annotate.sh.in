@@ -3,7 +3,7 @@
 LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib"
 
 FILENAME=${1}
-OUTPUT_FILENAME=${FILENAME%.*}-itr-annotate.bc
+OUTPUT_FILENAME=${FILENAME%.*}-itr-annotate.ll
 
 opt \
   -load @Pedigree_LOCATION@ \
