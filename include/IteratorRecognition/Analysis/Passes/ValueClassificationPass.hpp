@@ -20,7 +20,7 @@ public:
   static char ID;
 
   void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-  ValueClassificationPass() : llvm::FunctionPass(ID) {}
+  ValueClassificationPass();
 
   bool runOnFunction(llvm::Function &CurFunc) override;
 };

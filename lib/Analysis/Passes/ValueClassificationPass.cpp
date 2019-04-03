@@ -86,7 +86,36 @@ static llvm::RegisterStandardPasses RegisterValueClassificationPass(
     llvm::PassManagerBuilder::EP_EarlyAsPossible,
     registerValueClassificationPass);
 
+//
+
+enum class ViewSelection {
+  Basic,
+  All,
+};
+
+static llvm::cl::bits<ViewSelection> ViewSelectionOption(
+    "itr-view", llvm::cl::desc(""),
+    llvm::cl::values(clEnumValN(ViewSelection::Basic, "basic", "basic"),
+                     clEnumValN(ViewSelection::All, "all", "all")),
+    llvm::cl::CommaSeparated, llvm::cl::cat(IteratorRecognitionCLCategory));
+
+static void checkAndSetCmdLineOptions() {
+  if (!ViewSelectionOption.getBits()) {
+    ViewSelectionOption.addValue(ViewSelection::Basic);
+  }
+
+  if (ViewSelectionOption.isSet(ViewSelection::All)) {
+    ViewSelectionOption.addValue(ViewSelection::Basic);
+  }
+}
+
+//
+
 namespace iteratorrecognition {
+
+ValueClassificationPass::ValueClassificationPass() : llvm::FunctionPass(ID) {
+  checkAndSetCmdLineOptions();
+}
 
 void ValueClassificationPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.addRequired<llvm::DominatorTreeWrapperPass>();
@@ -130,59 +159,67 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
     LLVM_DEBUG(llvm::dbgs()
                    << "loop: " << curLoop->getHeader()->getName() << "\n";);
 
-    FindIteratorValues(e, itVals);
-    FindPayloadValues(e, pdVals);
-    FindVirtRegPayloadLiveValues(e, pdVals, pdVirtRegLiveVals);
-    SplitVirtRegPayloadLiveValues(e, pdVals, pdVirtRegLiveVals, *DT,
-                                  pdVirtRegLiveInVals, pdVirtRegLiveThruVals,
-                                  pdVirtRegLiveOutVals);
-    FindDirectUsesOfIn(itVals, pdVals, directItUsesInPayloadVals);
-    FindMemPayloadLiveValues(pdVals, pdMemLiveInThruVals, pdMemLiveOutVals);
+    if (ViewSelectionOption.isSet(ViewSelection::Basic)) {
+      FindIteratorValues(e, itVals);
+      FindPayloadValues(e, pdVals);
 
-    LLVM_DEBUG({
-      llvm::dbgs() << "iterator: \n";
-      for (const auto &e : itVals) {
-        llvm::dbgs() << *e << '\n';
-      }
+      LLVM_DEBUG({
+        llvm::dbgs() << "iterator: \n";
+        for (const auto &e : itVals) {
+          llvm::dbgs() << *e << '\n';
+        }
 
-      llvm::dbgs() << "payload: \n";
-      for (const auto &e : pdVals) {
-        llvm::dbgs() << *e << '\n';
-      }
+        llvm::dbgs() << "payload: \n";
+        for (const auto &e : pdVals) {
+          llvm::dbgs() << *e << '\n';
+        }
+      });
+    }
 
-      llvm::dbgs() << "payload mem live in or thru: \n";
-      for (auto *e : pdMemLiveInThruVals) {
-        llvm::dbgs() << *e << '\n';
-      }
+    if (ViewSelectionOption.isSet(ViewSelection::All)) {
+      FindVirtRegPayloadLiveValues(e, pdVals, pdVirtRegLiveVals);
+      SplitVirtRegPayloadLiveValues(e, pdVals, pdVirtRegLiveVals, *DT,
+                                    pdVirtRegLiveInVals, pdVirtRegLiveThruVals,
+                                    pdVirtRegLiveOutVals);
+      FindDirectUsesOfIn(itVals, pdVals, directItUsesInPayloadVals);
+      FindMemPayloadLiveValues(pdVals, pdMemLiveInThruVals, pdMemLiveOutVals);
 
-      llvm::dbgs() << "payload mem live out: \n";
-      for (auto *e : pdMemLiveOutVals) {
-        llvm::dbgs() << *e << '\n';
-      }
+      LLVM_DEBUG({
+        llvm::dbgs() << "payload mem live in or thru: \n";
+        for (auto *e : pdMemLiveInThruVals) {
+          llvm::dbgs() << *e << '\n';
+        }
 
-      llvm::dbgs() << "payload virt reg live in: \n";
-      for (const auto &e : pdVirtRegLiveInVals) {
-        llvm::dbgs() << *e << '\n';
-      }
+        llvm::dbgs() << "payload mem live out: \n";
+        for (auto *e : pdMemLiveOutVals) {
+          llvm::dbgs() << *e << '\n';
+        }
 
-      llvm::dbgs() << "payload virt reg live thru: \n";
-      for (const auto &e : pdVirtRegLiveThruVals) {
-        llvm::dbgs() << *e << '\n';
-      }
+        llvm::dbgs() << "payload virt reg live in: \n";
+        for (const auto &e : pdVirtRegLiveInVals) {
+          llvm::dbgs() << *e << '\n';
+        }
 
-      llvm::dbgs() << "payload virt reg live out: \n";
-      for (const auto &e : pdVirtRegLiveOutVals) {
-        llvm::dbgs() << *e << '\n';
-      }
+        llvm::dbgs() << "payload virt reg live thru: \n";
+        for (const auto &e : pdVirtRegLiveThruVals) {
+          llvm::dbgs() << *e << '\n';
+        }
 
-      llvm::dbgs() << "direct uses of iterator in payload: \n";
-      for (const auto &e : directItUsesInPayloadVals) {
-        llvm::dbgs() << *e << '\n';
-      }
-    });
+        llvm::dbgs() << "payload virt reg live out: \n";
+        for (const auto &e : pdVirtRegLiveOutVals) {
+          llvm::dbgs() << *e << '\n';
+        }
+
+        llvm::dbgs() << "direct uses of iterator in payload: \n";
+        for (const auto &e : directItUsesInPayloadVals) {
+          llvm::dbgs() << *e << '\n';
+        }
+      });
+    }
   }
 
   return false;
 }
 
 } // namespace iteratorrecognition
+
