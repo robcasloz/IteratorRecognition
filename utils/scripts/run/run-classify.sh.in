@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib"
+
+FILENAME=${1}
+
+opt \
+  -load @Pedigree_LOCATION@ \
+  -load ${LIB_DIR}/@PASS_SO_NAME@ \
+  -basicaa \
+  -globals-aa \
+  -scev-aa \
+  -tbaa \
+  -itr-classify \
+  -debug-only=itrclassify \
+  -disable-output \
+  ${FILENAME}
+
