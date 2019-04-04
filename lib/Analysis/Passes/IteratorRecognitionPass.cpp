@@ -56,6 +56,8 @@
 // using llvm::cl::location
 // using llvm::cl::cat
 // using llvm::cl::OptionCategory
+// using llvm::cl::ResetAllOptionOccurrences
+// using llvm::cl::ParseEnvironmentOptions
 
 #include "llvm/Support/Debug.h"
 // using LLVM_DEBUG macro
@@ -114,12 +116,15 @@ namespace iteratorrecognition {
 
 // new passmanager pass
 
+IteratorRecognitionAnalysis::IteratorRecognitionAnalysis() {
+  llvm::cl::ResetAllOptionOccurrences();
+  llvm::cl::ParseEnvironmentOptions(ITR_RECOGNIZE_PASS_NAME,
+                                    PASS_CMDLINE_OPTIONS_ENVVAR);
+}
+
 IteratorRecognitionAnalysis::Result
 IteratorRecognitionAnalysis::run(llvm::Function &F,
                                  llvm::FunctionAnalysisManager &FAM) {
-  llvm::cl::ParseEnvironmentOptions(ITR_RECOGNIZE_PASS_NAME,
-                                    PASS_CMDLINE_OPTIONS_ENVVAR);
-
   const auto &LI{FAM.getResult<llvm::LoopAnalysis>(F)};
   pedigree::PDGraph &Graph{*FAM.getResult<pedigree::PDGraphAnalysis>(F)};
   Graph.connectRootNode();

@@ -41,6 +41,7 @@ class IteratorRecognitionAnalysis
 public:
   using Result = IteratorRecognitionInfo;
 
+  IteratorRecognitionAnalysis();
   Result run(llvm::Function &F, llvm::FunctionAnalysisManager &FAM);
 };
 
