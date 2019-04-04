@@ -222,6 +222,10 @@ public:
     return static_cast<const IteratorRecognitionInfo *>(this)->getIteratorsFor(
         L);
   }
+
+  void print(llvm::raw_ostream &OS) const;
+
+  void dump() const;
 };
 
 } // namespace iteratorrecognition

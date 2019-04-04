@@ -141,18 +141,6 @@ bool IteratorRecognitionWrapperPass::runOnFunction(llvm::Function &CurFunc) {
 
   Info = std::make_unique<IteratorRecognitionInfo>(LI, Graph);
 
-  LLVM_DEBUG({
-    for (const auto &ii : Info.get()->getIteratorsInfo()) {
-      auto *hdr = ii.getLoop()->getHeader();
-      llvm::dbgs() << "loop with header: " << hdr << ' ' << hdr->getName()
-                   << '\n';
-      llvm::dbgs() << "\titerator instructions:\n";
-      for (auto *i : ii) {
-        llvm::dbgs() << '\t' << *i << '\n';
-      }
-    }
-  });
-
   return false;
 }
 

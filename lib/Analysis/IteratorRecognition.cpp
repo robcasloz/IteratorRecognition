@@ -6,11 +6,17 @@
 
 #include "IteratorRecognition/Support/Utils/InstTraversal.hpp"
 
+#include "llvm/Config/llvm-config.h"
+// using LLVM_ENABLE_DUMP
+
 #include "llvm/IR/BasicBlock.h"
 // using llvm::BasicBlock
 
 #include "llvm/ADT/SmallPtrSet.h"
 // using llvm::SmallPtrSet
+
+#include "llvm/Support/Compiler.h"
+// using LLVM_DUMP_METHOD
 
 #include "llvm/Support/Debug.h"
 // using LLVM_DEBUG macro
@@ -195,6 +201,8 @@ IteratorRecognitionInfo::IteratorRecognitionInfo(const llvm::LoopInfo &CurLI,
     }
   }
 #endif // LLVM_ENABLE_STATS || !defined(NDEBUG)
+
+  LLVM_DEBUG(dump(););
 }
 
 void IteratorRecognitionInfo::MapCondensationToLoops() {
@@ -262,4 +270,21 @@ void IteratorRecognitionInfo::RecognizeIterator() {
   }
 }
 
+void IteratorRecognitionInfo::print(llvm::raw_ostream &OS) const {
+  for (const auto &ii : getIteratorsInfo()) {
+    auto *hdr = ii.getLoop()->getHeader();
+    OS << "loop with header: " << hdr << ' ' << hdr->getName() << '\n';
+    OS << "\titerator instructions:\n";
+    for (auto *i : ii) {
+      OS << '\t' << *i << '\n';
+    }
+  }
+}
+
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+LLVM_DUMP_METHOD void IteratorRecognitionInfo::dump() const {
+  print(llvm::dbgs());
+  llvm::dbgs() << '\n';
+}
+#endif
 } // namespace iteratorrecognition
