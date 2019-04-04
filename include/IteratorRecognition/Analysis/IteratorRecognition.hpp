@@ -6,11 +6,11 @@
 
 #include "IteratorRecognition/Config.hpp"
 
+#include "Pedigree/Analysis/Graphs/PDGraph.hpp"
+
 #include "IteratorRecognition/Support/Utils/Extras.hpp"
 
 #include "IteratorRecognition/Debug.hpp"
-
-#include "Pedigree/Analysis/Graphs/PDGraph.hpp"
 
 #include "IteratorRecognition/Analysis/Graphs/PDGCondensationGraph.hpp"
 

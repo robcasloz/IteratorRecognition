@@ -14,8 +14,6 @@
 
 #include "IteratorRecognition/Exchange/JSONTransfer.hpp"
 
-#include "IteratorRecognition/Support/Utils/InstTraversal.hpp"
-
 #include "Pedigree/Analysis/Passes/PDGraphPass.hpp"
 
 #include "private/PassCommandLineOptions.hpp"
@@ -47,9 +45,6 @@
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
 
-#include "llvm/ADT/Statistic.h"
-// using STATISTIC macro
-
 #include "llvm/Support/CommandLine.h"
 // using llvm::cl::opt
 // using llvm::cl::desc
@@ -76,10 +71,6 @@
 // namespace aliases
 
 namespace itr = iteratorrecognition;
-
-STATISTIC(NumTopLevelProcessed, "Number of top-level loops processed");
-STATISTIC(NumProcessed, "Number of loops processed");
-STATISTIC(NumInseparable, "Number of inseparable top-level loops found");
 
 // plugin registration for opt
 
@@ -129,41 +120,6 @@ IteratorRecognitionAnalysis::run(llvm::Function &F,
   pedigree::PDGraph &Graph{*FAM.getResult<pedigree::PDGraphAnalysis>(F)};
   Graph.connectRootNode();
 
-#ifdef LLVM_ENABLE_STATS
-  // TODO const_cast is required due to LLVM API inconsistency with constness
-  const auto &preorderLoopForest =
-      const_cast<llvm::LoopInfo &>(LI).getLoopsInPreorder();
-  NumProcessed += preorderLoopForest.size();
-  NumTopLevelProcessed += std::distance(LI.begin(), LI.end());
-#endif // LLVM_ENABLE_STATS
-
-  // Info = std::make_unique<IteratorRecognitionInfo>(LI, Graph);
-
-  // TODO these stats need to run in the ctor
-  //#ifdef LLVM_ENABLE_STATS
-  // for (const auto &ii : Info.get()->getIteratorsInfo()) {
-  // auto numItInst = ii.getNumInstructions();
-  // auto loopInsts = make_loop_inst_range(ii.getLoop());
-  // auto numLoopInst = std::distance(loopInsts.begin(), loopInsts.end());
-
-  // if (numLoopInst == numItInst) {
-  // NumInseparable++;
-  //}
-  //}
-  //#endif // LLVM_ENABLE_STATS
-
-  // LLVM_DEBUG({
-  // for (const auto &ii : Info.get()->getIteratorsInfo()) {
-  // auto *hdr = ii.getLoop()->getHeader();
-  // llvm::dbgs() << "loop with header: " << hdr << ' ' << hdr->getName()
-  //<< '\n';
-  // llvm::dbgs() << "\titerator instructions:\n";
-  // for (auto *i : ii) {
-  // llvm::dbgs() << '\t' << *i << '\n';
-  //}
-  //}
-  //});
-
   return {LI, Graph};
 }
 
@@ -183,27 +139,7 @@ bool IteratorRecognitionWrapperPass::runOnFunction(llvm::Function &CurFunc) {
       getAnalysis<pedigree::PDGraphWrapperPass>().getGraph()};
   Graph.connectRootNode();
 
-#ifdef LLVM_ENABLE_STATS
-  // TODO const_cast is required due to LLVM API inconsistency with constness
-  const auto &preorderLoopForest =
-      const_cast<llvm::LoopInfo &>(LI).getLoopsInPreorder();
-  NumProcessed += preorderLoopForest.size();
-  NumTopLevelProcessed += std::distance(LI.begin(), LI.end());
-#endif // LLVM_ENABLE_STATS
-
   Info = std::make_unique<IteratorRecognitionInfo>(LI, Graph);
-
-#ifdef LLVM_ENABLE_STATS
-  for (const auto &ii : Info.get()->getIteratorsInfo()) {
-    auto numItInst = ii.getNumInstructions();
-    auto loopInsts = make_loop_inst_range(ii.getLoop());
-    auto numLoopInst = std::distance(loopInsts.begin(), loopInsts.end());
-
-    if (numLoopInst == numItInst) {
-      NumInseparable++;
-    }
-  }
-#endif // LLVM_ENABLE_STATS
 
   LLVM_DEBUG({
     for (const auto &ii : Info.get()->getIteratorsInfo()) {

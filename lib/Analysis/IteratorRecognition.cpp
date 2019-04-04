@@ -4,6 +4,8 @@
 
 #include "IteratorRecognition/Analysis/IteratorRecognition.hpp"
 
+#include "IteratorRecognition/Support/Utils/InstTraversal.hpp"
+
 #include "llvm/IR/BasicBlock.h"
 // using llvm::BasicBlock
 
@@ -25,6 +27,10 @@
 // using assert
 
 #define DEBUG_TYPE "itr"
+
+STATISTIC(NumTopLevelProcessed, "Number of top-level loops processed");
+STATISTIC(NumProcessed, "Number of loops processed");
+STATISTIC(NumInseparable, "Number of inseparable top-level loops found");
 
 // namespace aliases
 
@@ -167,6 +173,28 @@ IteratorRecognitionInfo::IteratorRecognitionInfo(const llvm::LoopInfo &CurLI,
     : LI(CurLI), PDG(CurPDG), CG{llvm::scc_begin(&PDG), llvm::scc_end(&PDG)} {
   MapCondensationToLoops();
   RecognizeIterator();
+
+  (void)NumTopLevelProcessed;
+  (void)NumProcessed;
+  (void)NumInseparable;
+
+#ifdef LLVM_ENABLE_STATS || !defined(NDEBUG)
+  // TODO const_cast is required due to LLVM API inconsistency with constness
+  const auto &preorderLoopForest =
+      const_cast<llvm::LoopInfo &>(LI).getLoopsInPreorder();
+  NumProcessed += preorderLoopForest.size();
+  NumTopLevelProcessed += std::distance(LI.begin(), LI.end());
+
+  for (const auto &ii : getIteratorsInfo()) {
+    auto numItInst = ii.getNumInstructions();
+    auto loopInsts = make_loop_inst_range(ii.getLoop());
+    auto numLoopInst = std::distance(loopInsts.begin(), loopInsts.end());
+
+    if (numLoopInst == numItInst) {
+      NumInseparable++;
+    }
+  }
+#endif // LLVM_ENABLE_STATS || !defined(NDEBUG)
 }
 
 void IteratorRecognitionInfo::MapCondensationToLoops() {
