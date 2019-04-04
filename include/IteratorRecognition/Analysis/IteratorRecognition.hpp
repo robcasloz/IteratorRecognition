@@ -44,19 +44,11 @@
 #include "llvm/ADT/GraphTraits.h"
 // using llvm::GraphTraits
 
+#include "llvm/ADT/Statistic.h"
+// using STATISTIC macro
+
 #include "llvm/Support/Casting.h"
 // using llvm::cast_or_null
-
-#include "llvm/Support/Debug.h"
-// using LLVM_DEBUG macro
-// using llvm::dbgs
-// using llvm::errs
-
-#include "boost/range/adaptors.hpp"
-// using boost::adaptors::filtered
-
-#include "boost/range/algorithm.hpp"
-// using boost::range::transform
 
 #include <vector>
 // using std::vector
@@ -68,16 +60,7 @@
 #include <cassert>
 // using assert
 
-#define DEBUG_TYPE "itr"
-
 namespace iteratorrecognition {
-
-// namespace aliases
-
-namespace ba = boost::adaptors;
-namespace br = boost::range;
-
-//
 
 namespace {
 
@@ -189,77 +172,11 @@ private:
   CondensationToLoopsMapT Map;
   std::vector<IteratorInfo> IteratorsInfo;
 
-  void MapCondensationToLoops() {
-    for (const auto &cn : CGT::nodes(CG)) {
-      CondensationToLoopsMapT::mapped_type loops;
-
-      LLVM_DEBUG(llvm::dbgs() << "condensation: " << cn
-                              << " maps to loops with headers: \n";);
-
-      for (const auto &n : *cn | ba::filtered(is_not_null_unit)) {
-        auto *loop = LI.getLoopFor(n->unit()->getParent());
-
-        while (loop) {
-          loops.insert(loop);
-          loop = loop->getParentLoop();
-        }
-      }
-
-      loops.erase(nullptr);
-
-      LLVM_DEBUG({
-        for (const auto *loop : loops) {
-          auto *hdr = loop->getHeader();
-          llvm::dbgs() << '\t' << hdr << ' ' << hdr->getName() << '\n';
-        }
-      });
-
-      Map.try_emplace(cn, loops);
-    }
-  }
-
-  void RecognizeIterator() {
-    const auto &loops = const_cast<llvm::LoopInfo &>(LI).getLoopsInPreorder();
-
-    for (const auto *loop : loops) {
-      llvm::SmallPtrSet<CGT::NodeRef, 8> loopCondensations;
-
-      for (auto &e : Map) {
-        if (e.second.count(loop)) {
-          loopCondensations.insert(e.first);
-        }
-      }
-
-      llvm::SmallVector<llvm::Instruction *, 8> inst;
-
-      for (auto *cn : loopCondensations) {
-        bool workFound = false;
-
-        for (auto &ccn : ICGT::children(cn)) {
-          if (loopCondensations.count(ccn)) {
-            workFound = true;
-            break;
-          }
-        }
-
-        if (!workFound) {
-          br::transform(*cn | ba::filtered(is_not_null_unit),
-                        std::back_inserter(inst),
-                        [&](const auto &e) { return e->unit(); });
-        }
-      }
-
-      unique_inplace(inst);
-      IteratorsInfo.emplace_back(loop, inst.begin(), inst.end());
-    }
-  }
+  void MapCondensationToLoops();
+  void RecognizeIterator();
 
 public:
-  IteratorRecognitionInfo(const llvm::LoopInfo &CurLI, BaseGraphT &CurPDG)
-      : LI(CurLI), PDG(CurPDG), CG{llvm::scc_begin(&PDG), llvm::scc_end(&PDG)} {
-    MapCondensationToLoops();
-    RecognizeIterator();
-  }
+  IteratorRecognitionInfo(const llvm::LoopInfo &CurLI, BaseGraphT &CurPDG);
 
   const auto &getLoopInfo() { return LI; }
   auto &getGraph() { return PDG; }
