@@ -47,6 +47,8 @@ namespace br = boost::range;
 
 namespace iteratorrecognition {
 
+// TODO remove code duplication in these functions
+
 bool HasPayloadOnlyBlocks(const IteratorInfo &Info, const llvm::Loop &L) {
   assert((Info.getLoop() == &L || Info.getLoop()->contains(&L)) &&
          "Queried loop is not a subloop of this iterator!");
@@ -66,27 +68,33 @@ bool HasPayloadOnlyBlocks(const IteratorInfo &Info, const llvm::Loop &L) {
   return false;
 }
 
-void GetPayloadOnlyBlocks(const IteratorInfo &Info,
+void GetPayloadOnlyBlocks(const IteratorInfo &Info, const llvm::Loop &L,
                           llvm::SmallVectorImpl<llvm::BasicBlock *> &Blocks) {
+  assert((Info.getLoop() == &L || Info.getLoop()->contains(&L)) &&
+         "Queried loop is not a subloop of this iterator!");
+
   llvm::SmallPtrSet<const llvm::BasicBlock *, 16> itBlocks;
 
   for (auto *e : Info) {
     itBlocks.insert(e->getParent());
   }
 
-  for (auto *e : Info.getLoop()->getBlocks()) {
+  for (auto *e : L.getBlocks()) {
     if (!itBlocks.count(e)) {
       Blocks.push_back(e);
     }
   }
 }
 
-bool HasMixedBlocks(const IteratorInfo &Info) {
+bool HasMixedBlocks(const IteratorInfo &Info, const llvm::Loop &L) {
+  assert((Info.getLoop() == &L || Info.getLoop()->contains(&L)) &&
+         "Queried loop is not a subloop of this iterator!");
+
   llvm::SmallVector<llvm::BasicBlock *, 32> blocks;
 
-  GetPayloadOnlyBlocks(Info, blocks);
+  GetPayloadOnlyBlocks(Info, L, blocks);
 
-  for (auto *e : Info.getLoop()->getBlocks()) {
+  for (auto *e : L.getBlocks()) {
     auto found = std::find(blocks.begin(), blocks.end(), e);
     if (found == blocks.end()) {
       continue;
@@ -102,13 +110,16 @@ bool HasMixedBlocks(const IteratorInfo &Info) {
   return false;
 }
 
-void GetMixedBlocks(const IteratorInfo &Info,
+void GetMixedBlocks(const IteratorInfo &Info, const llvm::Loop &L,
                     llvm::SmallVectorImpl<llvm::BasicBlock *> &Mixed) {
+  assert((Info.getLoop() == &L || Info.getLoop()->contains(&L)) &&
+         "Queried loop is not a subloop of this iterator!");
+
   llvm::SmallVector<llvm::BasicBlock *, 32> blocks;
 
-  GetPayloadOnlyBlocks(Info, blocks);
+  GetPayloadOnlyBlocks(Info, L, blocks);
 
-  for (auto *e : Info.getLoop()->getBlocks()) {
+  for (auto *e : L.getBlocks()) {
     auto found = std::find(blocks.begin(), blocks.end(), e);
     if (found == blocks.end()) {
       continue;
@@ -123,10 +134,13 @@ void GetMixedBlocks(const IteratorInfo &Info,
   }
 }
 
-bool HasPayloadOnlySubloops(const IteratorInfo &Info) {
+bool HasPayloadOnlySubloops(const IteratorInfo &Info, const llvm::Loop &L) {
+  assert((Info.getLoop() == &L || Info.getLoop()->contains(&L)) &&
+         "Queried loop is not a subloop of this iterator!");
+
   llvm::SmallVector<llvm::BasicBlock *, 32> blocks;
 
-  GetPayloadOnlyBlocks(Info, blocks);
+  GetPayloadOnlyBlocks(Info, L, blocks);
 
   for (auto *e : Info.getLoop()->getSubLoops()) {
     unsigned blockCount = 0;
@@ -148,11 +162,14 @@ bool HasPayloadOnlySubloops(const IteratorInfo &Info) {
   return false;
 }
 
-void GetPayloadOnlySubloops(const IteratorInfo &Info,
+void GetPayloadOnlySubloops(const IteratorInfo &Info, const llvm::Loop &L,
                             llvm::SmallVectorImpl<llvm::Loop *> &SubLoops) {
+  assert((Info.getLoop() == &L || Info.getLoop()->contains(&L)) &&
+         "Queried loop is not a subloop of this iterator!");
+
   llvm::SmallVector<llvm::BasicBlock *, 32> blocks;
 
-  GetPayloadOnlyBlocks(Info, blocks);
+  GetPayloadOnlyBlocks(Info, L, blocks);
 
   for (auto *e : Info.getLoop()->getSubLoops()) {
     unsigned blockCount = 0;

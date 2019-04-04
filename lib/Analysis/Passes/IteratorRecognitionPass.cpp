@@ -76,8 +76,7 @@ namespace itr = iteratorrecognition;
 
 char itr::IteratorRecognitionWrapperPass::ID = 0;
 static llvm::RegisterPass<itr::IteratorRecognitionWrapperPass>
-    X(ITR_RECOGNIZE_PASS_NAME, PRJ_CMDLINE_DESC("iterator recognition pass"),
-      false, false);
+    X(DEBUG_TYPE, PRJ_CMDLINE_DESC("iterator recognition pass"), false, false);
 
 // plugin registration for clang
 
@@ -109,8 +108,7 @@ namespace iteratorrecognition {
 
 IteratorRecognitionAnalysis::IteratorRecognitionAnalysis() {
   llvm::cl::ResetAllOptionOccurrences();
-  llvm::cl::ParseEnvironmentOptions(ITR_RECOGNIZE_PASS_NAME,
-                                    PASS_CMDLINE_OPTIONS_ENVVAR);
+  llvm::cl::ParseEnvironmentOptions(DEBUG_TYPE, PASS_CMDLINE_OPTIONS_ENVVAR);
 }
 
 IteratorRecognitionAnalysis::Result

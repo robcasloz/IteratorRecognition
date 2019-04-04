@@ -135,20 +135,24 @@ public:
   }
 };
 
+//
+
 bool HasPayloadOnlyBlocks(const IteratorInfo &Info, const llvm::Loop &L);
 
-void GetPayloadOnlyBlocks(const IteratorInfo &Info,
+void GetPayloadOnlyBlocks(const IteratorInfo &Info, const llvm::Loop &L,
                           llvm::SmallVectorImpl<llvm::BasicBlock *> &Blocks);
 
-bool HasMixedBlocks(const IteratorInfo &Info);
+bool HasMixedBlocks(const IteratorInfo &Info, const llvm::Loop &L);
 
-void GetMixedBlocks(const IteratorInfo &Info,
+void GetMixedBlocks(const IteratorInfo &Info, const llvm::Loop &L,
                     llvm::SmallVectorImpl<llvm::BasicBlock *> &Mixed);
 
-bool HasPayloadOnlySubloops(const IteratorInfo &Info);
+bool HasPayloadOnlySubloops(const IteratorInfo &Info, const llvm::Loop &L);
 
-void GetPayloadOnlySubloops(const IteratorInfo &Info,
+void GetPayloadOnlySubloops(const IteratorInfo &Info, const llvm::Loop &L,
                             llvm::SmallVectorImpl<llvm::Loop *> &SubLoops);
+
+//
 
 class IteratorRecognitionInfo {
 public:
