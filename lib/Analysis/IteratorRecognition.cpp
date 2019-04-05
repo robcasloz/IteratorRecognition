@@ -60,6 +60,10 @@ bool HasPayloadOnlyBlocks(const IteratorInfo &Info, const llvm::Loop &L) {
   }
 
   for (auto *e : L.getBlocks()) {
+    if ((e == L.getHeader()) || L.isLoopLatch(e)) {
+      continue;
+    }
+
     if (!itBlocks.count(e)) {
       return true;
     }
@@ -80,6 +84,10 @@ void GetPayloadOnlyBlocks(const IteratorInfo &Info, const llvm::Loop &L,
   }
 
   for (auto *e : L.getBlocks()) {
+    if ((e == L.getHeader()) || L.isLoopLatch(e)) {
+      continue;
+    }
+
     if (!itBlocks.count(e)) {
       Blocks.push_back(e);
     }
