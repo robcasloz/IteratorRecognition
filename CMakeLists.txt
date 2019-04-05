@@ -148,6 +148,7 @@ set(LIB_SOURCES
   "lib/Analysis/Passes/ValueClassificationPass.cpp"
   "lib/Analysis/Passes/PayloadDependenceGraphPass.cpp"
   "lib/Exchange/Passes/JSONExporterPass.cpp"
+  "lib/Transforms/Utils/DemotePayloadPhis.cpp"
   "lib/Transforms/Passes/AnnotatorPass.cpp")
 
 set(LIB_NAME "LLVM${PRJ_NAME}Pass")
