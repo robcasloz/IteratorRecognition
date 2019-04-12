@@ -99,11 +99,11 @@ enum class ViewSelection {
 
 static llvm::cl::bits<ViewSelection> ViewSelectionOption(
     "itr-view", llvm::cl::desc(""),
-    llvm::cl::values(
-        clEnumValN(ViewSelection::Basic, "basic", "basic"),
-        clEnumValN(ViewSelection::Standard, "standard", "standard"),
-        clEnumValN(ViewSelection::More, "more", "more"),
-        clEnumValN(ViewSelection::All, "all", "all")),
+    llvm::cl::values(clEnumValN(ViewSelection::Basic, "basic", "basic"),
+                     clEnumValN(ViewSelection::Standard, "standard",
+                                "standard"),
+                     clEnumValN(ViewSelection::More, "more", "more"),
+                     clEnumValN(ViewSelection::All, "all", "all")),
     llvm::cl::CommaSeparated, llvm::cl::cat(IteratorRecognitionCLCategory));
 
 static void checkAndSetCmdLineOptions() {
@@ -111,7 +111,12 @@ static void checkAndSetCmdLineOptions() {
     ViewSelectionOption.addValue(ViewSelection::Basic);
   }
 
-  if (ViewSelectionOption.isSet(ViewSelection::All)) {
+  if (ViewSelectionOption.isSet(ViewSelection::Standard)) {
+    ViewSelectionOption.addValue(ViewSelection::Basic);
+  } else if (ViewSelectionOption.isSet(ViewSelection::More)) {
+    ViewSelectionOption.addValue(ViewSelection::Basic);
+    ViewSelectionOption.addValue(ViewSelection::Standard);
+  } else {
     ViewSelectionOption.addValue(ViewSelection::Basic);
     ViewSelectionOption.addValue(ViewSelection::Standard);
     ViewSelectionOption.addValue(ViewSelection::More);
@@ -144,7 +149,7 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
 
   LLVM_DEBUG({
     llvm::dbgs() << "iterator var classification for function: "
-                 << CurFunc.getName() << "\n";
+                 << CurFunc.getName() << '\n';
   });
 
   auto *DT = &getAnalysis<llvm::DominatorTreeWrapperPass>().getDomTree();
@@ -166,7 +171,7 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
         pdVirtRegLiveOutVals;
 
     LLVM_DEBUG(llvm::dbgs()
-                   << "loop: " << curLoop->getHeader()->getName() << "\n";);
+                   << "loop: " << curLoop->getHeader()->getName() << '\n';);
 
     if (ViewSelectionOption.isSet(ViewSelection::Basic)) {
       FindIteratorValues(e, itVals);
@@ -186,11 +191,9 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
     }
 
     if (ViewSelectionOption.isSet(ViewSelection::Standard)) {
-      IteratorVarianceAnalyzer iva{e};
+      LLVM_DEBUG(llvm::dbgs() << "iterator variance:\n";);
 
-      if(pdVals.empty()) {
-        FindPayloadValues(e, pdVals);
-      }
+      IteratorVarianceAnalyzer iva{e};
 
       LLVM_DEBUG({
         for (const auto *p : pdVals) {
