@@ -12,6 +12,7 @@ opt \
   -scev-aa \
   -tbaa \
   -itr-classify \
+  -itr-view=verbose1 \
   -debug-only=itrclassify \
   -disable-output \
   ${FILENAME}
