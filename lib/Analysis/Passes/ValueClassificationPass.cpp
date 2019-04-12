@@ -188,6 +188,10 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
     if (ViewSelectionOption.isSet(ViewSelection::Standard)) {
       IteratorVarianceAnalyzer iva{e};
 
+      if(pdVals.empty()) {
+        FindPayloadValues(e, pdVals);
+      }
+
       LLVM_DEBUG({
         for (const auto *p : pdVals) {
           llvm::dbgs() << *p << " iterator varies as: "
