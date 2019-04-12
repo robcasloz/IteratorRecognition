@@ -34,7 +34,11 @@
 #include "llvm/ADT/DenseMap.h"
 // using llvm::DenseMap
 
+#include "llvm/Support/Compiler.h"
+// using LLVM_DUMP_METHOD
+
 #include "llvm/Support/raw_ostream.h"
+// using llvm::raw_ostream
 
 #include "llvm/Support/Debug.h"
 // using LLVM_DEBUG macro
@@ -90,6 +94,17 @@ public:
 
     return hasChanged;
   }
+
+  void print(llvm::raw_ostream &OS) const {
+    OS << "variance: " << static_cast<int>(Val) << '\n';
+  }
+
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+  LLVM_DUMP_METHOD void dump() const {
+    print(llvm::dbgs());
+    llvm::dbgs() << '\n';
+  }
+#endif
 };
 
 //
@@ -198,6 +213,12 @@ public:
   }
 };
 
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
+                              const IteratorVariance &e) {
+  e.print(OS);
+}
+
 } // namespace iteratorrecognition
 
 #undef DEBUG_TYPE
+

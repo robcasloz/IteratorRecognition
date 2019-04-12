@@ -18,6 +18,9 @@
 #include "llvm/Support/Compiler.h"
 // using LLVM_DUMP_METHOD
 
+#include "llvm/Support/raw_ostream.h"
+// using llvm::raw_ostream
+
 #include "llvm/Support/Debug.h"
 // using LLVM_DEBUG macro
 // using llvm::dbgs
@@ -312,4 +315,6 @@ LLVM_DUMP_METHOD void IteratorRecognitionInfo::dump() const {
   llvm::dbgs() << '\n';
 }
 #endif
+
 } // namespace iteratorrecognition
+
