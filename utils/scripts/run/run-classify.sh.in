@@ -12,7 +12,7 @@ opt \
   -scev-aa \
   -tbaa \
   -itr-classify \
-  -itr-view=verbose1 \
+  -itr-view=standard \
   -debug-only=itrclassify \
   -disable-output \
   ${FILENAME}
