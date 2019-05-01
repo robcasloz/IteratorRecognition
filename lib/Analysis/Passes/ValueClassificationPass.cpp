@@ -191,14 +191,14 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
     }
 
     if (ViewSelectionOption.isSet(ViewSelection::Standard)) {
-      LLVM_DEBUG(llvm::dbgs() << "iterator variance:\n";);
+      LLVM_DEBUG(llvm::dbgs() << "iterator disposition:\n";);
 
-      IteratorVarianceAnalyzer iva{e};
+      IteratorDispositionAnalyzer ida{e};
 
       LLVM_DEBUG({
         for (const auto *p : pdVals) {
           llvm::dbgs() << *p << " iterator varies as: "
-                       << static_cast<int>(iva.getOrInsertVariance(p)) << '\n';
+                       << static_cast<int>(ida.getDisposition(p)) << '\n';
         }
       });
     }

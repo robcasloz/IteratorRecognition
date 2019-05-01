@@ -40,6 +40,9 @@
 #include "llvm/Support/raw_ostream.h"
 // using llvm::raw_ostream
 
+#include "llvm/Support/ErrorHandling.h"
+// using llvm_unreachable macro
+
 #include "llvm/Support/Debug.h"
 // using LLVM_DEBUG macro
 // using llvm::dbgs
@@ -214,9 +217,73 @@ public:
 };
 
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                              const IteratorVariance &e) {
+                                     const IteratorVariance &e) {
   e.print(OS);
 }
+
+//
+
+class IteratorDispositionAnalyzer {
+  IteratorInfo &Info;
+  llvm::DenseMap<llvm::Value *, IteratorVarianceValue> VarianceCache;
+
+public:
+  IteratorDispositionAnalyzer() = delete;
+
+  explicit IteratorDispositionAnalyzer(const IteratorInfo &Info)
+      : Info(const_cast<IteratorInfo &>(Info)) {}
+
+  void reset() { VarianceCache.clear(); }
+
+  const IteratorInfo &getInfo() const { return Info; }
+
+  IteratorVarianceValue getDisposition(const llvm::Value *Query) {
+    auto found = VarianceCache.find(Query);
+
+    if (found == VarianceCache.end()) {
+      auto v = calculateDisposition(Query);
+
+      found = VarianceCache
+                  .insert(std::make_pair(const_cast<llvm::Value *>(Query), v))
+                  .first;
+    }
+
+    return (*found).getSecond();
+  }
+
+  IteratorVarianceValue calculateDisposition(const llvm::Value *Query) {
+    IteratorVariance status{};
+
+    if (llvm::isa<llvm::Constant>(Query) || llvm::isa<llvm::Argument>(Query) ||
+        llvm::isa<llvm::GlobalValue>(Query)) {
+      return IteratorVarianceValue::Invariant;
+    }
+
+    auto *curInst = llvm::dyn_cast<llvm::Instruction>(Query);
+    if (!curInst) {
+      LLVM_DEBUG(llvm::dbgs() << "Unhandled value: "
+                              << strconv::to_string(*Query) << '\n';);
+      llvm_unreachable("unhandled value!");
+    }
+
+    if (Info.isIterator(curInst)) {
+      return IteratorVarianceValue::Variant;
+    }
+
+    if (auto *gep = llvm::dyn_cast<llvm::GetElementPtrInst>(curInst)) {
+      for (auto &op : gep->operands()) {
+        auto d = calculateDisposition(op.get());
+        if (d == IteratorVarianceValue::Variant) {
+          return d;
+        }
+      }
+    } else {
+      return IteratorVarianceValue::Invariant;
+    }
+
+    return IteratorVarianceValue::Unknown;
+  }
+};
 
 } // namespace iteratorrecognition
 
