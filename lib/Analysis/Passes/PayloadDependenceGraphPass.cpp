@@ -123,26 +123,6 @@ static llvm::RegisterPass<itr::PayloadDependenceGraphLegacyPass>
       PRJ_CMDLINE_DESC("payload analysis (based on iterator recognition) pass"),
       false, false);
 
-// plugin registration for clang
-
-// the solution was at the bottom of the header file
-// 'llvm/Transforms/IPO/PassManagerBuilder.h'
-// create a static free-floating callback that uses the legacy pass manager to
-// add an instance of this pass and a static instance of the
-// RegisterStandardPasses class
-
-static void registerPayloadDependenceGraphLegacyPass(
-    const llvm::PassManagerBuilder &Builder,
-    llvm::legacy::PassManagerBase &PM) {
-  PM.add(new itr::PayloadDependenceGraphLegacyPass());
-
-  return;
-}
-
-static llvm::RegisterStandardPasses RegisterPayloadDependenceGraphLegacyPass(
-    llvm::PassManagerBuilder::EP_EarlyAsPossible,
-    registerPayloadDependenceGraphLegacyPass);
-
 static llvm::cl::opt<bool>
     ExportGraphUpdates("itr-export-updates",
                        llvm::cl::desc("export graph updates"));

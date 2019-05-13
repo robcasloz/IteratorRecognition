@@ -85,25 +85,6 @@ static llvm::cl::opt<unsigned> AnnotateLoopLevel(
     "itr-annotate-loop-level", llvm::cl::init(1), llvm::cl::Hidden,
     llvm::cl::desc("annotate loops of this depth or greater"));
 
-// plugin registration for clang
-
-// the solution was at the bottom of the header file
-// 'llvm/Transforms/IPO/PassManagerBuilder.h'
-// create a static free-floating callback that uses the legacy pass manager to
-// add an instance of this pass and a static instance of the
-// RegisterStandardPasses class
-
-static void registerAnnotatorLegacyPass(const llvm::PassManagerBuilder &Builder,
-                                        llvm::legacy::PassManagerBase &PM) {
-  PM.add(new itr::AnnotatorLegacyPass());
-
-  return;
-}
-
-static llvm::RegisterStandardPasses
-    RegisterAnnotatorLegacyPass(llvm::PassManagerBuilder::EP_EarlyAsPossible,
-                                registerAnnotatorLegacyPass);
-
 //
 
 namespace iteratorrecognition {
