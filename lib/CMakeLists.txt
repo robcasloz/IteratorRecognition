@@ -1,5 +1,6 @@
 # IteratorRecognition
 add_llvm_library(LLVMIteratorRecognition
+  IteratorRecognition.cpp
   Analysis/Graphs/PDGCondensationGraph.cpp
   Analysis/IteratorRecognition.cpp
   Analysis/Passes/ValueClassificationPass.cpp

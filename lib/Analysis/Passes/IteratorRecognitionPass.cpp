@@ -2,6 +2,8 @@
 //
 //
 
+#include "IteratorRecognition/IteratorRecognition.h"
+
 #include "IteratorRecognition/Config.hpp"
 
 #include "IteratorRecognition/Util.hpp"
@@ -75,8 +77,20 @@ namespace itr = iteratorrecognition;
 // plugin registration for opt
 
 char itr::IteratorRecognitionWrapperPass::ID = 0;
-static llvm::RegisterPass<itr::IteratorRecognitionWrapperPass>
-    X(DEBUG_TYPE, PRJ_CMDLINE_DESC("iterator recognition pass"), false, false);
+
+using namespace llvm;
+using namespace iteratorrecognition;
+using namespace pedigree;
+INITIALIZE_PASS_BEGIN(IteratorRecognitionWrapperPass, ITR_RECOGNIZE_PASS_NAME, PRJ_CMDLINE_DESC("iterator recognition pass"), false, false)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(PDGraphWrapperPass)
+INITIALIZE_PASS_END(IteratorRecognitionWrapperPass, ITR_RECOGNIZE_PASS_NAME, PRJ_CMDLINE_DESC("iterator recognition pass"), false, false)
+
+namespace llvm {
+  FunctionPass *llvm::createIteratorRecognitionWrapperPass() {
+    return new iteratorrecognition::IteratorRecognitionWrapperPass();
+  }
+}
 
 //
 
@@ -102,6 +116,10 @@ IteratorRecognitionAnalysis::run(llvm::Function &F,
 }
 
 // legacy passmanager pass
+
+IteratorRecognitionWrapperPass::IteratorRecognitionWrapperPass() : llvm::FunctionPass(ID) {
+  initializeIteratorRecognitionWrapperPassPass(*PassRegistry::getPassRegistry());
+}
 
 void IteratorRecognitionWrapperPass::getAnalysisUsage(
     llvm::AnalysisUsage &AU) const {
