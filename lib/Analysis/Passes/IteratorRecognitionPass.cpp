@@ -2,7 +2,7 @@
 //
 //
 
-#include "IteratorRecognition/IteratorRecognition.h"
+#include "llvm/Transforms/Utils.h"
 
 #include "IteratorRecognition/Config.hpp"
 
@@ -77,14 +77,15 @@ namespace itr = iteratorrecognition;
 // plugin registration for opt
 
 char itr::IteratorRecognitionWrapperPass::ID = 0;
+char &llvm::IteratorRecognitionID = itr::IteratorRecognitionWrapperPass::ID;
 
 using namespace llvm;
 using namespace iteratorrecognition;
 using namespace pedigree;
-INITIALIZE_PASS_BEGIN(IteratorRecognitionWrapperPass, ITR_RECOGNIZE_PASS_NAME, PRJ_CMDLINE_DESC("iterator recognition pass"), false, false)
+INITIALIZE_PASS_BEGIN(IteratorRecognitionWrapperPass, ITR_RECOGNIZE_PASS_NAME, PRJ_CMDLINE_DESC("iterator recognition pass"), false, true)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(PDGraphWrapperPass)
-INITIALIZE_PASS_END(IteratorRecognitionWrapperPass, ITR_RECOGNIZE_PASS_NAME, PRJ_CMDLINE_DESC("iterator recognition pass"), false, false)
+INITIALIZE_PASS_END(IteratorRecognitionWrapperPass, ITR_RECOGNIZE_PASS_NAME, PRJ_CMDLINE_DESC("iterator recognition pass"), false, true)
 
 namespace llvm {
   FunctionPass *llvm::createIteratorRecognitionWrapperPass() {
