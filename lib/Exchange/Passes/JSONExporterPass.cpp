@@ -12,6 +12,8 @@
 
 #include "IteratorRecognition/Analysis/Passes/IteratorRecognitionPass.hpp"
 
+#include "IteratorRecognition/Exchange/JSONFileIO.hpp"
+
 #include "IteratorRecognition/Exchange/JSONTransfer.hpp"
 
 #include "IteratorRecognition/Support/FileSystem.hpp"

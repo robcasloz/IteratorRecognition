@@ -141,6 +141,7 @@ set(LIB_SOURCES
   "lib/Analysis/IteratorRecognition.cpp"
   "lib/Analysis/ValueClassification.cpp"
   "lib/Analysis/Graphs/PDGCondensationGraph.cpp"
+  "lib/Exchange/JSONFileIO.cpp"
   "lib/Exchange/JSONTransfer.cpp"
   "lib/Passes/PassCommandLineOptions.cpp"
   "lib/Support/FileSystem.cpp"

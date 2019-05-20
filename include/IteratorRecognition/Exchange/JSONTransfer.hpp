@@ -66,15 +66,6 @@ namespace br = boost::range;
 
 //
 
-namespace iteratorrecognition {
-
-void WriteJSONToFile(const llvm::json::Value &V,
-                     const llvm::Twine &FilenamePrefix, const llvm::Twine &Dir);
-
-} // namespace iteratorrecognition
-
-//
-
 namespace llvm {
 
 class Instruction;
