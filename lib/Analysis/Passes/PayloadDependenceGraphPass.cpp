@@ -361,7 +361,7 @@ PayloadDependenceGraphAnalysis::run(llvm::Function &F, llvm::DominatorTree &DT,
   }
 
   if (ExportResults) {
-    WriteJSONToFile(llvm::json::toJSON(result), "sca." + F.getName(),
+    WriteJSONToFile(json::toJSON(result), "sca." + F.getName(),
                     ReportsDir);
   }
 

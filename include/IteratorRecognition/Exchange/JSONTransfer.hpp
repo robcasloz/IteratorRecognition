@@ -59,8 +59,6 @@
 
 // namespace aliases
 
-namespace itr = iteratorrecognition;
-
 namespace ba = boost::adaptors;
 namespace br = boost::range;
 
@@ -71,19 +69,22 @@ namespace llvm {
 class Instruction;
 class Loop;
 
+} // namespace llvm
+
+namespace iteratorrecognition {
 namespace json {
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT *>>
-std::enable_if_t<itr::has_unit_t<typename GT::NodeRef>::value, Value>
-toJSON(const itr::CondensationGraphNode<GraphT *> &CGN) {
-  Object root;
+std::enable_if_t<has_unit_t<typename GT::NodeRef>::value, llvm::json::Value>
+toJSON(const CondensationGraphNode<GraphT *> &CGN) {
+  llvm::json::Object root;
 
-  Object mapping;
+  llvm::json::Object mapping;
   std::string outs;
-  raw_string_ostream ss(outs);
+  llvm::raw_string_ostream ss(outs);
 
-  Array condensationsArray;
-  br::transform(CGN | ba::filtered(itr::is_not_null_unit),
+  llvm::json::Array condensationsArray;
+  br::transform(CGN | ba::filtered(is_not_null_unit),
                 std::back_inserter(condensationsArray), [&](const auto &e) {
                   outs.clear();
                   ss << *e->unit();
@@ -96,15 +97,15 @@ toJSON(const itr::CondensationGraphNode<GraphT *> &CGN) {
 }
 
 template <typename GraphT, typename GT = llvm::GraphTraits<GraphT *>>
-std::enable_if_t<!itr::has_unit_t<typename GT::NodeRef>::value, Value>
-toJSON(const itr::CondensationGraphNode<GraphT *> &CGN) {
-  Object root;
+std::enable_if_t<!has_unit_t<typename GT::NodeRef>::value, llvm::json::Value>
+toJSON(const CondensationGraphNode<GraphT *> &CGN) {
+  llvm::json::Object root;
 
-  Object mapping;
+  llvm::json::Object mapping;
   std::string outs;
-  raw_string_ostream ss(outs);
+  llvm::raw_string_ostream ss(outs);
 
-  Array condensationsArray;
+  llvm::json::Array condensationsArray;
   br::transform(CGN, std::back_inserter(condensationsArray),
                 [&](const auto &e) { return toJSON(*e); });
   mapping["condensation"] = std::move(condensationsArray);
@@ -114,9 +115,9 @@ toJSON(const itr::CondensationGraphNode<GraphT *> &CGN) {
 }
 
 template <typename GraphT>
-Value toJSON(const itr::CondensationGraph<GraphT *> &G) {
-  Object root;
-  Array condensations;
+llvm::json::Value toJSON(const CondensationGraph<GraphT *> &G) {
+  llvm::json::Object root;
+  llvm::json::Array condensations;
 
   for (const auto &cn : G) {
     condensations.push_back(toJSON(*cn));
@@ -127,22 +128,23 @@ Value toJSON(const itr::CondensationGraph<GraphT *> &G) {
   return std::move(root);
 }
 
-Value toJSON(const Instruction &Instruction);
+llvm::json::Value toJSON(const llvm::Instruction &Instruction);
 
-Value toJSON(const Loop &CurLoop);
+llvm::json::Value toJSON(const llvm::Loop &CurLoop);
 
-Value toJSON(const itr::dbg::LoopDebugInfoT &Info);
+llvm::json::Value toJSON(const dbg::LoopDebugInfoT &Info);
 
-Value toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map);
+llvm::json::Value
+toJSON(const IteratorRecognitionInfo::CondensationToLoopsMapT &Map);
 
-Value toJSON(const itr::UpdateAction &UA);
+llvm::json::Value toJSON(const UpdateAction &UA);
 
-Value toJSON(const itr::StaticCommutativityProperty &SCP);
+llvm::json::Value toJSON(const StaticCommutativityProperty &SCP);
 
-Value toJSON(const itr::StaticCommutativityResult &SCR);
+llvm::json::Value toJSON(const StaticCommutativityResult &SCR);
 
 } // namespace json
-} // namespace llvm
+} // namespace iteratorrecognition
 
 namespace iteratorrecognition {
 
@@ -153,13 +155,13 @@ ConvertToJSON(llvm::StringRef PreambleText, llvm::StringRef SequenceText,
   llvm::json::Object mapping;
   llvm::json::Array updates;
 
-  mapping[PreambleText] = llvm::json::toJSON(Preamble);
+  mapping[PreambleText] = json::toJSON(Preamble);
   // TODO maybe detect if the pointee is a pointer itself with SFINAE in order
   // to decide on the use of indirect_iterator or not
   std::transform(boost::make_indirect_iterator(Begin),
                  boost::make_indirect_iterator(End),
                  std::back_inserter(updates),
-                 [](const auto &e) { return llvm::json::toJSON(e); });
+                 [](const auto &e) { return json::toJSON(e); });
   mapping[SequenceText] = std::move(updates);
 
   return std::move(mapping);

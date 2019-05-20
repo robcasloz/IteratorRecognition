@@ -34,42 +34,38 @@
 #include <algorithm>
 // using std::transform
 
-// namespace aliases
-
-namespace itr = iteratorrecognition;
-
 //
 
-namespace llvm {
+namespace iteratorrecognition {
 namespace json {
 
-Value toJSON(const Instruction &I) {
+llvm::json::Value toJSON(const llvm::Instruction &I) {
   std::string outs;
-  raw_string_ostream ss(outs);
+  llvm::raw_string_ostream ss(outs);
 
   ss << I;
-  Value info{ss.str()};
+  llvm::json::Value info{ss.str()};
 
   return std::move(info);
 }
 
-Value toJSON(const Loop &CurLoop) {
-  Object infoMapping;
+llvm::json::Value toJSON(const llvm::Loop &CurLoop) {
+  llvm::json::Object infoMapping;
 
   std::string outs;
-  raw_string_ostream ss(outs);
+  llvm::raw_string_ostream ss(outs);
 
   ss << *CurLoop.getLoopLatch()->getTerminator();
   infoMapping["latch"] = ss.str();
 
-  const auto &info = itr::dbg::extract(CurLoop);
+  const auto &info = dbg::extract(CurLoop);
   infoMapping["di"] = toJSON(info);
 
   return std::move(infoMapping);
 }
 
-Value toJSON(const itr::dbg::LoopDebugInfoT &Info) {
-  Object infoMapping;
+llvm::json::Value toJSON(const dbg::LoopDebugInfoT &Info) {
+  llvm::json::Object infoMapping;
 
   infoMapping["line"] = std::get<0>(Info);
   infoMapping["column"] = std::get<1>(Info);
@@ -79,9 +75,10 @@ Value toJSON(const itr::dbg::LoopDebugInfoT &Info) {
   return std::move(infoMapping);
 }
 
-Value toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
-  Object root;
-  Array condensations;
+llvm::json::Value
+toJSON(const IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
+  llvm::json::Object root;
+  llvm::json::Array condensations;
 
   for (const auto &e : Map) {
     const auto &cn = *e.getFirst();
@@ -89,7 +86,7 @@ Value toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
 
     auto mapping = std::move(*toJSON(cn).getAsObject());
 
-    Array loopsArray;
+    llvm::json::Array loopsArray;
     std::transform(loops.begin(), loops.end(), std::back_inserter(loopsArray),
                    [&](const auto &e) { return std::move(toJSON(*e)); });
     mapping["loops"] = std::move(loopsArray);
@@ -102,10 +99,10 @@ Value toJSON(const itr::IteratorRecognitionInfo::CondensationToLoopsMapT &Map) {
   return std::move(root);
 }
 
-Value toJSON(const itr::UpdateAction &UA) { return UA.toJSON(); }
+llvm::json::Value toJSON(const UpdateAction &UA) { return UA.toJSON(); }
 
-Value toJSON(const itr::StaticCommutativityProperty &SCP) {
-  Object infoMapping;
+llvm::json::Value toJSON(const StaticCommutativityProperty &SCP) {
+  llvm::json::Object infoMapping;
 
   infoMapping["loop"] = toJSON(*SCP.CurLoop);
   infoMapping["commutative"] = SCP.HasProperty;
@@ -114,9 +111,9 @@ Value toJSON(const itr::StaticCommutativityProperty &SCP) {
   return std::move(infoMapping);
 }
 
-Value toJSON(const itr::StaticCommutativityResult &SCR) {
-  Object root;
-  Array loopsArray;
+llvm::json::Value toJSON(const StaticCommutativityResult &SCR) {
+  llvm::json::Object root;
+  llvm::json::Array loopsArray;
 
   std::transform(SCR.begin(), SCR.end(), std::back_inserter(loopsArray),
                  [&](const auto &e) { return std::move(toJSON(e)); });
@@ -127,5 +124,5 @@ Value toJSON(const itr::StaticCommutativityResult &SCR) {
 }
 
 } // namespace json
-} // namespace llvm
+} // namespace iteratorrecognition
 
