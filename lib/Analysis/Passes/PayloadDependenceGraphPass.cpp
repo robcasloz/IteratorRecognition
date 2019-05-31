@@ -8,6 +8,8 @@
 
 #include "IteratorRecognition/Debug.hpp"
 
+#include "IteratorRecognition/Exchange/JSONFileIO.hpp"
+
 #include "IteratorRecognition/Exchange/JSONTransfer.hpp"
 
 #include "IteratorRecognition/Support/ShadowDependenceGraph.hpp"
@@ -339,7 +341,7 @@ PayloadDependenceGraphAnalysis::run(llvm::Function &F, llvm::DominatorTree &DT,
   }
 
   if (ExportResults) {
-    WriteJSONToFile(llvm::json::toJSON(result), "sca." + F.getName(),
+    WriteJSONToFile(json::toJSON(result), "sca." + F.getName(),
                     ReportsDir);
   }
 
