@@ -30,6 +30,7 @@ This is a pass using `LLVM` [`opt`][1].
 
 ### Mandatory
 
+-   [Pedigree][13] pass is a requirement for building and executing this pass.
 -   [cmake-utils][9]
   Used for supporting the `cmake`-based build system. Using `git clone --recursive` should take care of everything.
 -   [sanitizers-cmake][12]
@@ -39,6 +40,12 @@ This is a pass using `LLVM` [`opt`][1].
 ### Optional
 
 None.
+
+### Other
+
+Currently, for this pass to work via `opt` and dynamic loading, the LLVM distribution used is required to have been
+built with `-DBUILD_SHARED_LIBS=On`.
+
 
 ## How to build
 
@@ -63,12 +70,14 @@ For examples on the various options have a look at the build scripts (provided f
 
 ## How to execute
 
-### Using opt
+The basic barebones way to use this plugin are listed below, but for more intricate and up-to-date incantations you
+should have a look and use the scripts under `utils/scripts/run/` which end up under the `bin` subdirectory at the
+installation root.
 
-`opt -load [path to plugin]/libLLVMIteratorRecognitionPass.so -itr foo.bc -o foo.out.bc`
+1. Using opt
+`opt -load [path to plugin]/libLLVMIteratorRecognitionPass.so -itr-recognize foo.bc -o foo.out.bc`
 
-### Using clang
-
+2. Using clang
 `clang -Xclang -load -Xclang [path to plugin]/libLLVMIteratorRecognitionPass.so foo.c -o foo`
 
 ## Notes
@@ -133,3 +142,5 @@ When the build script uses `LLVM` `cmake` [utility][8] functions the `lib` share
   [11]: https://gcc.gnu.org/wiki/Libstdc++
 
   [12]: https://github.com/arsenm/sanitizers-cmake
+
+  [13]: https://github.com/compor/Pedigree
