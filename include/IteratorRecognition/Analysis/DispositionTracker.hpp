@@ -10,6 +10,8 @@
 
 #include "IteratorRecognition/Analysis/IteratorRecognition.hpp"
 
+#include "IteratorRecognition/Analysis/ValueClassification.hpp"
+
 #include "llvm/IR/Instruction.h"
 // using llvm::Instruction
 
@@ -22,6 +24,9 @@
 
 //#include "llvm/ADT/DenseMap.h"
 // using llvm::DenseMap
+
+#include "llvm/ADT/SmallPtrSet.h"
+// using llvm::SmallPtrSet
 
 #include "llvm/Support/Debug.h"
 // using LLVM_DEBUG macro
@@ -73,7 +78,15 @@ public:
       return AccessDisposition::Invariant;
     }
 
+    llvm::SmallPtrSet<llvm::Instruction *, 32> payload;
+    FindPayloadValues(Info, payload);
+
     for (auto *curUser : Query->users()) {
+      auto *userInst = llvm::dyn_cast<llvm::Instruction>(curUser);
+      if (!payload.count(userInst)) {
+        continue;
+      }
+
       if (auto *gep = llvm::dyn_cast<llvm::GetElementPtrInst>(curUser)) {
         for (auto &op : gep->operands()) {
           auto *i = llvm::dyn_cast<llvm::Instruction>(op.get());
