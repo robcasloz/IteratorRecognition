@@ -14,8 +14,7 @@
 
 #include "IteratorRecognition/Analysis/Passes/IteratorRecognitionPass.hpp"
 
-//#include "IteratorRecognition/Analysis/IteratorValueTracking.hpp"
-#include "IteratorRecognition/Analysis/DispositionAccessTracker.hpp"
+#include "IteratorRecognition/Analysis/DispositionTracker.hpp"
 
 #include "IteratorRecognition/Analysis/ValueClassification.hpp"
 
