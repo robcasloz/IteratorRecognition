@@ -14,7 +14,8 @@
 
 #include "IteratorRecognition/Analysis/Passes/IteratorRecognitionPass.hpp"
 
-#include "IteratorRecognition/Analysis/IteratorValueTracking.hpp"
+//#include "IteratorRecognition/Analysis/IteratorValueTracking.hpp"
+#include "IteratorRecognition/Analysis/DispositionAccessTracker.hpp"
 
 #include "IteratorRecognition/Analysis/ValueClassification.hpp"
 
@@ -193,7 +194,8 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
     if (ViewSelectionOption.isSet(ViewSelection::Standard)) {
       LLVM_DEBUG(llvm::dbgs() << "iterator disposition:\n";);
 
-      IteratorDispositionAnalyzer ida{e};
+      //IteratorDispositionAnalyzer ida{e};
+      DispositionTracker ida{e};
 
       LLVM_DEBUG({
         for (const auto *p : pdVals) {
