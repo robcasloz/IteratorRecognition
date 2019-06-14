@@ -38,6 +38,9 @@
 // using llvm::DominatorTreeWrapperPass
 // using llvm::DominatorTree
 
+#include "llvm/IR/ValueSymbolTable.h"
+// using llvm::ValueSymbolTable
+
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 // using llvm::PassManagerBuilder
 // using llvm::RegisterStandardPasses
@@ -106,7 +109,16 @@ static llvm::cl::bits<ViewSelection> ViewSelectionOption(
                      clEnumValN(ViewSelection::All, "all", "all")),
     llvm::cl::CommaSeparated, llvm::cl::cat(IteratorRecognitionCLCategory));
 
+static llvm::cl::opt<std::string> DispositionQuery(
+    "itr-disposition-query",
+    llvm::cl::desc("query specific IR element for its iterator disposition"),
+    llvm::cl::cat(IteratorRecognitionCLCategory));
+
 static void checkAndSetCmdLineOptions() {
+  if (DispositionQuery.getPosition()) {
+    return;
+  }
+
   if (!ViewSelectionOption.getBits()) {
     ViewSelectionOption.addValue(ViewSelection::Basic);
   }
@@ -155,6 +167,54 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
   auto *DT = &getAnalysis<llvm::DominatorTreeWrapperPass>().getDomTree();
   auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
                    .getIteratorRecognitionInfo();
+
+  if (DispositionQuery.getPosition()) {
+    for (auto &e : info.getIteratorsInfo()) {
+      auto *curLoop = e.getLoop();
+
+      if (curLoop->getLoopDepth() > LoopDepthMax ||
+          curLoop->getLoopDepth() < LoopDepthMin) {
+        continue;
+      }
+    }
+
+    auto *symtab = CurFunc.getValueSymbolTable();
+    auto *queryVal = symtab->lookup(DispositionQuery);
+
+    if (auto *queryInst = llvm::dyn_cast<llvm::Instruction>(queryVal)) {
+      auto *bb = queryInst->getParent();
+      auto &li = info.getLoopInfo();
+
+      auto *curLoop = li.getLoopFor(bb);
+
+      while (curLoop) {
+        LLVM_DEBUG(llvm::dbgs()
+                       << "loop: " << curLoop->getHeader()->getName() << '\n';);
+
+        auto itOrError = info.getIteratorInfoFor(curLoop);
+
+        if (!itOrError) {
+          return false;
+        }
+
+        auto &e = *itOrError;
+
+        LLVM_DEBUG(llvm::dbgs() << "iterator disposition:\n";);
+
+        DispositionTracker ida{e};
+
+        LLVM_DEBUG({
+          llvm::dbgs() << *queryInst << " varies as: "
+                       << static_cast<int>(ida.getDisposition(queryInst))
+                       << '\n';
+        });
+
+        curLoop = curLoop->getParentLoop();
+      }
+    }
+
+    return false;
+  }
 
   for (auto &e : info.getIteratorsInfo()) {
     auto *curLoop = e.getLoop();
