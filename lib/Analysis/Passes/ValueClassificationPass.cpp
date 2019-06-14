@@ -98,7 +98,7 @@ enum class ViewSelection {
 };
 
 static llvm::cl::bits<ViewSelection> ViewSelectionOption(
-    "itr-view", llvm::cl::desc(""),
+    "itr-view", llvm::cl::desc("various levels of information"),
     llvm::cl::values(clEnumValN(ViewSelection::Basic, "basic", "basic"),
                      clEnumValN(ViewSelection::Standard, "standard",
                                 "standard"),
@@ -193,12 +193,12 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
     if (ViewSelectionOption.isSet(ViewSelection::Standard)) {
       LLVM_DEBUG(llvm::dbgs() << "iterator disposition:\n";);
 
-      //IteratorDispositionAnalyzer ida{e};
+      // IteratorDispositionAnalyzer ida{e};
       DispositionTracker ida{e};
 
       LLVM_DEBUG({
         for (const auto *p : pdVals) {
-          llvm::dbgs() << *p << " iterator varies as: "
+          llvm::dbgs() << *p << " payload varies as: "
                        << static_cast<int>(ida.getDisposition(p)) << '\n';
         }
       });
