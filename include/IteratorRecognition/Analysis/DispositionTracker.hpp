@@ -22,17 +22,11 @@
 // using llvm::StoreInst
 // using llvm::SelectInst
 
-//#include "llvm/ADT/DenseMap.h"
-// using llvm::DenseMap
+#include "llvm/ADT/SetVector.h"
+// using llvm::SetVector
 
 #include "llvm/ADT/SmallPtrSet.h"
 // using llvm::SmallPtrSet
-
-#include "llvm/Support/Debug.h"
-// using LLVM_DEBUG macro
-// using llvm::dbgs
-
-#define DEBUG_TYPE "itr-access-disposition"
 
 namespace iteratorrecognition {
 
@@ -69,39 +63,8 @@ public:
   // return (*found).getSecond();
   //}
 
-  AccessDisposition getDisposition(const llvm::Value *Query) {
-    LLVM_DEBUG(llvm::dbgs()
-                   << "\nquering : " << strconv::to_string(*Query) << '\n';);
-
-    auto *curInst = llvm::dyn_cast<llvm::Instruction>(Query);
-    if (curInst && Info.isIterator(curInst)) {
-      return AccessDisposition::Invariant;
-    }
-
-    llvm::SmallPtrSet<llvm::Instruction *, 32> payload;
-    FindPayloadValues(Info, payload);
-
-    for (auto *curUser : Query->users()) {
-      auto *userInst = llvm::dyn_cast<llvm::Instruction>(curUser);
-      if (!payload.count(userInst)) {
-        continue;
-      }
-
-      if (auto *gep = llvm::dyn_cast<llvm::GetElementPtrInst>(curUser)) {
-        for (auto &op : gep->operands()) {
-          auto *i = llvm::dyn_cast<llvm::Instruction>(op.get());
-          if (i && Info.isIterator(i)) {
-            return AccessDisposition::Variant;
-          }
-        }
-      }
-    }
-
-    return AccessDisposition::Invariant;
-  }
+  AccessDisposition getDisposition(const llvm::Value *Query);
 };
 
 } // namespace iteratorrecognition
-
-#undef DEBUG_TYPE
 
