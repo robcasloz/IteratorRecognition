@@ -52,7 +52,7 @@ AccessDisposition DispositionTracker::getDisposition(const llvm::Value *Query) {
   for (auto *curUser : query->users()) {
     auto *userInst = llvm::dyn_cast<llvm::Instruction>(curUser);
 
-    if (auto *gep = llvm::dyn_cast<llvm::GetElementPtrInst>(userInst)) {
+    if (auto *gep = llvm::dyn_cast_or_null<llvm::GetElementPtrInst>(userInst)) {
       geps.insert(gep);
       LLVM_DEBUG(llvm::dbgs() << "inserting gep: " << *gep << "\n";);
     }
