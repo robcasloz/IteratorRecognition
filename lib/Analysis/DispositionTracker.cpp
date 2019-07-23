@@ -61,6 +61,9 @@ AccessDisposition DispositionTracker::getDisposition(const llvm::Value *Query) {
   }
 
   if (geps.empty()) {
+    LLVM_DEBUG(llvm::dbgs() << *query
+                            << " found to be iterator invariant since there "
+                               "are no gep uses\n";);
     return AccessDisposition::Invariant;
   }
 
@@ -82,17 +85,24 @@ AccessDisposition DispositionTracker::getDisposition(const llvm::Value *Query) {
       continue;
     }
 
+    LLVM_DEBUG(llvm::dbgs() << "checking gep index: " << *userInst << "\n";);
+
     if (Info.isIterator(userInst)) {
+      LLVM_DEBUG(llvm::dbgs()
+                     << *userInst << " found to be iterator variant\n";);
       return AccessDisposition::Variant;
     }
 
     for (auto &op : userInst->operands()) {
       if (auto *i = llvm::dyn_cast<llvm::Instruction>(op.get())) {
+        LLVM_DEBUG(llvm::dbgs()
+                       << *i << " operand added for further processing\n";);
         workList.push_back(i);
       }
     }
   }
 
+  LLVM_DEBUG(llvm::dbgs() << *query << " found to be iterator invariant\n";);
   return AccessDisposition::Invariant;
 }
 
