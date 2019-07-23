@@ -41,12 +41,12 @@ AccessDisposition DispositionTracker::getDisposition(const llvm::Value *Query) {
                           << '\n';);
 
   auto *curInst = llvm::dyn_cast<llvm::Instruction>(query);
-  if (curInst && Info.isIterator(curInst)) {
+  if (curInst && Info->isIterator(curInst)) {
     return AccessDisposition::Invariant;
   }
 
   llvm::SmallPtrSet<llvm::Instruction *, 32> payload;
-  FindPayloadValues(Info, payload);
+  FindPayloadValues(*Info, payload);
   llvm::SetVector<llvm::GetElementPtrInst *> geps;
 
   for (auto *curUser : query->users()) {
@@ -87,7 +87,7 @@ AccessDisposition DispositionTracker::getDisposition(const llvm::Value *Query) {
 
     LLVM_DEBUG(llvm::dbgs() << "checking gep index: " << *userInst << "\n";);
 
-    if (Info.isIterator(userInst)) {
+    if (Info->isIterator(userInst)) {
       LLVM_DEBUG(llvm::dbgs()
                      << *userInst << " found to be iterator variant\n";);
       return AccessDisposition::Variant;

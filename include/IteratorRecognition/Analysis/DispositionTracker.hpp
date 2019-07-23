@@ -35,33 +35,15 @@ enum class AccessDisposition { Unknown, Invariant, Variant };
 //
 
 class DispositionTracker {
-  IteratorInfo &Info;
-  // llvm::DenseMap<llvm::Value *, AccessDisposition> Cache;
+  IteratorInfo *Info;
 
 public:
   DispositionTracker() = delete;
 
   explicit DispositionTracker(const IteratorInfo &Info)
-      : Info(const_cast<IteratorInfo &>(Info)) {}
+      : Info(&const_cast<IteratorInfo &>(Info)) {}
 
-  void reset() {
-    // Cache.clear();
-  }
-
-  const IteratorInfo &getInfo() const { return Info; }
-
-  // AccessDisposition getDisposition(const llvm::Value *Query) {
-  // auto found = Cache.find(Query);
-
-  // if (found == Cache.end()) {
-  // auto v = calculateDisposition(Query);
-
-  // found = Cache.insert(std::make_pair(const_cast<llvm::Value *>(Query), v))
-  //.first;
-  //}
-
-  // return (*found).getSecond();
-  //}
+  const IteratorInfo &getInfo() const { return *Info; }
 
   AccessDisposition getDisposition(const llvm::Value *Query);
 };
