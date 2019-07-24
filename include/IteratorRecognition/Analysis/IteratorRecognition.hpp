@@ -182,7 +182,8 @@ private:
 public:
   IteratorRecognitionInfo(const llvm::LoopInfo &CurLI, BaseGraphT &CurPDG);
 
-  const auto &getLoopInfo() { return LI; }
+  auto &getLoopInfo() { return LI; }
+  const auto &getLoopInfo() const { return LI; }
   auto &getGraph() { return PDG; }
   const auto &getCondensationGraph() { return CG; }
   const auto &getCondensationGraph() const { return CG; }
