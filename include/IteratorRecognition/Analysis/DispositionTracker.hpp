@@ -42,7 +42,7 @@ enum class AccessDisposition { Unknown, Invariant, Variant };
 
 class DispositionTracker {
   llvm::Loop *TopL;
-  IteratorRecognitionInfo &ITRInfo;
+  IteratorRecognitionInfo *ITRInfo;
   std::vector<IteratorInfo> Infos;
 
   bool isIterator(const llvm::Instruction *I, const llvm::Loop *CurL,
@@ -50,7 +50,7 @@ class DispositionTracker {
 
   bool init(llvm::Loop *CurL) {
     assert(CurL && "Loop is empty!");
-    assert(ITRInfo.getLoopInfo().getLoopFor(CurL->getHeader()) == CurL &&
+    assert(ITRInfo->getLoopInfo().getLoopFor(CurL->getHeader()) == CurL &&
            "Loop does not belong to this loop info object!");
 
     auto *topL = CurL;
@@ -65,10 +65,10 @@ class DispositionTracker {
     reset();
     TopL = topL;
 
-    for (auto *e : const_cast<llvm::LoopInfo &>(ITRInfo.getLoopInfo())
+    for (auto *e : const_cast<llvm::LoopInfo &>(ITRInfo->getLoopInfo())
                        .getLoopsInPreorder()) {
       if (TopL->contains(e->getHeader())) {
-        auto info = ITRInfo.getIteratorInfoFor(e);
+        auto info = ITRInfo->getIteratorInfoFor(e);
         assert(info.hasValue() && "No iterator information found for loop!");
 
         Infos.push_back(*info);
@@ -87,7 +87,38 @@ public:
   DispositionTracker() = delete;
 
   explicit DispositionTracker(IteratorRecognitionInfo &ITRI)
-      : TopL(nullptr), ITRInfo(ITRI) {}
+      : TopL(nullptr), ITRInfo(&ITRI) {}
+
+  DispositionTracker(const DispositionTracker &Other)
+      : TopL(Other.TopL), ITRInfo(Other.ITRInfo), Infos(Other.Infos) {}
+
+  DispositionTracker &operator=(DispositionTracker &Other) {
+    TopL = Other.TopL;
+    ITRInfo = Other.ITRInfo;
+    Infos.clear();
+
+    for (auto &e : Other.Infos) {
+      Infos.push_back(e);
+    }
+
+    return *this;
+  }
+  DispositionTracker(DispositionTracker &&Other)
+      : TopL(Other.TopL), ITRInfo(Other.ITRInfo),
+        Infos(std::move(Other.Infos)) {
+    Other.TopL = nullptr;
+    Other.ITRInfo = nullptr;
+  }
+
+  DispositionTracker &operator=(DispositionTracker &&Other) {
+    TopL = Other.TopL;
+    ITRInfo = Other.ITRInfo;
+    Infos = std::move(Other.Infos);
+    Other.TopL = nullptr;
+    Other.ITRInfo = nullptr;
+
+    return *this;
+  }
 
   AccessDisposition getDisposition(const llvm::Value *Query,
                                    const llvm::Loop *L,
