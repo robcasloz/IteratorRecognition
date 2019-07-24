@@ -30,23 +30,52 @@
 // using LLVM_DEBUG macro
 // using llvm::dbgs
 
+#include <algorithm>
+// using std::any_of
+
 #define DEBUG_TYPE "itr-access-disposition"
 
 namespace iteratorrecognition {
 
-AccessDisposition DispositionTracker::getDisposition(const llvm::Value *Query) {
+bool DispositionTracker::isIterator(const llvm::Instruction *I,
+                                    const llvm::Loop *CurL,
+                                    bool ConsiderSubLoopIterators) const {
+  if (ConsiderSubLoopIterators) {
+    return std::any_of(Infos.begin(), Infos.end(), [I, CurL](const auto &e) {
+      auto *l = e.getLoop();
+      return (CurL == l || CurL->contains(l)) && e.isIterator(I);
+    });
+  }
+
+  return std::any_of(Infos.begin(), Infos.end(), [I, CurL](const auto &e) {
+    return e.getLoop() == CurL && e.isIterator(I);
+  });
+}
+
+AccessDisposition
+DispositionTracker::getDisposition(const llvm::Value *Query,
+                                   const llvm::Loop *L,
+                                   bool ConsiderSubLoopIterators) {
+  init(const_cast<llvm::Loop *>(L));
+
   auto *query = const_cast<llvm::Value *>(Query);
 
   LLVM_DEBUG(llvm::dbgs() << "\nquering : " << strconv::to_string(*query)
                           << '\n';);
 
   auto *curInst = llvm::dyn_cast<llvm::Instruction>(query);
-  if (curInst && Info->isIterator(curInst)) {
+  if (curInst && isIterator(curInst, L, ConsiderSubLoopIterators)) {
     return AccessDisposition::Invariant;
   }
 
+  auto found = std::find_if(Infos.begin(), Infos.end(),
+                            [L](const auto &e) { return e.getLoop() == L; });
+
+  assert(found != Infos.end() && "Missing iterator info!");
+  auto &info = *found;
+
   llvm::SmallPtrSet<llvm::Instruction *, 32> payload;
-  FindPayloadValues(*Info, payload);
+  FindPayloadValues(info, payload);
   llvm::SetVector<llvm::GetElementPtrInst *> geps;
 
   for (auto *curUser : query->users()) {
@@ -87,7 +116,7 @@ AccessDisposition DispositionTracker::getDisposition(const llvm::Value *Query) {
 
     LLVM_DEBUG(llvm::dbgs() << "checking gep index: " << *userInst << "\n";);
 
-    if (Info->isIterator(userInst)) {
+    if (isIterator(userInst, L, ConsiderSubLoopIterators)) {
       LLVM_DEBUG(llvm::dbgs()
                      << *userInst << " found to be iterator variant\n";);
       return AccessDisposition::Variant;

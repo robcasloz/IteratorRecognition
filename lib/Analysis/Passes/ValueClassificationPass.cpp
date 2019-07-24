@@ -184,6 +184,7 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
     if (auto *queryInst = llvm::dyn_cast<llvm::Instruction>(queryVal)) {
       auto *bb = queryInst->getParent();
       auto &li = info.getLoopInfo();
+      DispositionTracker idt{info};
 
       auto *curLoop = li.getLoopFor(bb);
 
@@ -191,21 +192,10 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
         LLVM_DEBUG(llvm::dbgs()
                        << "loop: " << curLoop->getHeader()->getName() << '\n';);
 
-        auto itOrError = info.getIteratorInfoFor(curLoop);
-
-        if (!itOrError) {
-          return false;
-        }
-
-        auto &e = *itOrError;
-
-        LLVM_DEBUG(llvm::dbgs() << "iterator disposition:\n";);
-
-        DispositionTracker ida{e};
-
         LLVM_DEBUG({
           llvm::dbgs() << *queryInst << " varies as: "
-                       << static_cast<int>(ida.getDisposition(queryInst))
+                       << static_cast<int>(
+                              idt.getDisposition(queryInst, curLoop))
                        << '\n';
         });
 
@@ -216,7 +206,7 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
     return false;
   }
 
-  for (auto &e : info.getIteratorsInfo()) {
+  /*for (auto &e : info.getIteratorsInfo()) {
     auto *curLoop = e.getLoop();
 
     if (curLoop->getLoopDepth() > LoopDepthMax ||
@@ -253,7 +243,6 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
     if (ViewSelectionOption.isSet(ViewSelection::Standard)) {
       LLVM_DEBUG(llvm::dbgs() << "iterator disposition:\n";);
 
-      // IteratorDispositionAnalyzer ida{e};
       DispositionTracker ida{e};
 
       LLVM_DEBUG({
@@ -304,7 +293,7 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
         }
       });
     }
-  }
+  }*/
 
   return false;
 }
