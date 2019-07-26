@@ -50,6 +50,20 @@ namespace br = boost::range;
 
 namespace iteratorrecognition {
 
+void IteratorInfo::print(llvm::raw_ostream &OS) const {
+  if (!CurLoop) {
+    return;
+  }
+
+  auto *hdr = CurLoop->getHeader();
+  OS << "loop with header: " << hdr << ' ' << hdr->getName() << '\n'
+     << "\titerator instructions:\n";
+
+  for (const auto &i : CurInstructions) {
+    OS << '\t' << *i << '\n';
+  }
+}
+
 // TODO remove code duplication in these functions
 
 bool HasPayloadOnlyBlocks(const IteratorInfo &Info, const llvm::Loop &L) {

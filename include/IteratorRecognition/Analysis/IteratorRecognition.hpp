@@ -133,6 +133,8 @@ public:
   bool isIterator(const llvm::Instruction *Inst) {
     return static_cast<const IteratorInfo *>(this)->isIterator(Inst);
   }
+
+  void print(llvm::raw_ostream &OS) const;
 };
 
 //
