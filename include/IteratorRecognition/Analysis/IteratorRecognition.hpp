@@ -95,7 +95,19 @@ public:
   IteratorInfo(const llvm::Loop *L, IteratorT Begin, IteratorT End)
       : CurLoop(const_cast<llvm::Loop *>(L)), CurInstructions(Begin, End) {}
 
-  explicit IteratorInfo(llvm::Loop *L) : CurLoop(L) {}
+  explicit IteratorInfo(llvm::Loop *L = nullptr) : CurLoop(L) {}
+
+  IteratorInfo(const IteratorInfo &Other)
+      : CurLoop(Other.CurLoop), CurInstructions(Other.CurInstructions) {}
+
+  IteratorInfo &operator=(const IteratorInfo &Other) {
+    CurLoop = Other.CurLoop;
+    CurInstructions.clear();
+    CurInstructions.assign(Other.CurInstructions.begin(),
+                           Other.CurInstructions.end());
+
+    return *this;
+  }
 
   const auto *getLoop() const { return CurLoop; }
   auto getNumInstructions() const { return CurInstructions.size(); }
