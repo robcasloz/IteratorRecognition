@@ -59,7 +59,7 @@ void IteratorInfo::print(llvm::raw_ostream &OS) const {
   OS << "loop with header: " << hdr << ' ' << hdr->getName() << '\n'
      << "\titerator instructions:\n";
 
-  for (const auto &i : CurInstructions) {
+  for (const auto *i : insts()) {
     OS << '\t' << *i << '\n';
   }
 }
