@@ -109,6 +109,8 @@ public:
     return *this;
   }
 
+  explicit operator bool() const { return CurLoop ? true : false; }
+
   const auto *getLoop() const { return CurLoop; }
   auto getNumInstructions() const { return CurInstructions.size(); }
 
