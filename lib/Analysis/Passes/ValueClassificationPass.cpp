@@ -14,7 +14,7 @@
 
 #include "IteratorRecognition/Analysis/Passes/IteratorRecognitionPass.hpp"
 
-#include "IteratorRecognition/Analysis/IteratorValueTracking.hpp"
+#include "IteratorRecognition/Analysis/DispositionTracker.hpp"
 
 #include "IteratorRecognition/Analysis/ValueClassification.hpp"
 
@@ -37,6 +37,9 @@
 #include "llvm/IR/Dominators.h"
 // using llvm::DominatorTreeWrapperPass
 // using llvm::DominatorTree
+
+#include "llvm/IR/ValueSymbolTable.h"
+// using llvm::ValueSymbolTable
 
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 // using llvm::PassManagerBuilder
@@ -78,7 +81,7 @@ enum class ViewSelection {
 };
 
 static llvm::cl::bits<ViewSelection> ViewSelectionOption(
-    "itr-view", llvm::cl::desc(""),
+    "itr-view", llvm::cl::desc("various levels of information"),
     llvm::cl::values(clEnumValN(ViewSelection::Basic, "basic", "basic"),
                      clEnumValN(ViewSelection::Standard, "standard",
                                 "standard"),
@@ -86,7 +89,16 @@ static llvm::cl::bits<ViewSelection> ViewSelectionOption(
                      clEnumValN(ViewSelection::All, "all", "all")),
     llvm::cl::CommaSeparated, llvm::cl::cat(IteratorRecognitionCLCategory));
 
+static llvm::cl::opt<std::string> DispositionQuery(
+    "itr-disposition-query",
+    llvm::cl::desc("query specific IR element for its iterator disposition"),
+    llvm::cl::cat(IteratorRecognitionCLCategory));
+
 static void checkAndSetCmdLineOptions() {
+  if (DispositionQuery.getPosition()) {
+    return;
+  }
+
   if (!ViewSelectionOption.getBits()) {
     ViewSelectionOption.addValue(ViewSelection::Basic);
   }
@@ -136,7 +148,45 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
   auto &info = getAnalysis<IteratorRecognitionWrapperPass>()
                    .getIteratorRecognitionInfo();
 
-  for (auto &e : info.getIteratorsInfo()) {
+  if (DispositionQuery.getPosition()) {
+    for (auto &e : info.getIteratorsInfo()) {
+      auto *curLoop = e.getLoop();
+
+      if (curLoop->getLoopDepth() > LoopDepthMax ||
+          curLoop->getLoopDepth() < LoopDepthMin) {
+        continue;
+      }
+    }
+
+    auto *symtab = CurFunc.getValueSymbolTable();
+    auto *queryVal = symtab->lookup(DispositionQuery);
+
+    if (auto *queryInst = llvm::dyn_cast<llvm::Instruction>(queryVal)) {
+      auto *bb = queryInst->getParent();
+      auto &li = info.getLoopInfo();
+      DispositionTracker idt{info};
+
+      auto *curLoop = li.getLoopFor(bb);
+
+      while (curLoop) {
+        LLVM_DEBUG(llvm::dbgs()
+                       << "loop: " << curLoop->getHeader()->getName() << '\n';);
+
+        LLVM_DEBUG({
+          llvm::dbgs() << *queryInst << " varies as: "
+                       << static_cast<int>(
+                              idt.getDisposition(queryInst, curLoop))
+                       << '\n';
+        });
+
+        curLoop = curLoop->getParentLoop();
+      }
+    }
+
+    return false;
+  }
+
+  /*for (auto &e : info.getIteratorsInfo()) {
     auto *curLoop = e.getLoop();
 
     if (curLoop->getLoopDepth() > LoopDepthMax ||
@@ -173,11 +223,11 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
     if (ViewSelectionOption.isSet(ViewSelection::Standard)) {
       LLVM_DEBUG(llvm::dbgs() << "iterator disposition:\n";);
 
-      IteratorDispositionAnalyzer ida{e};
+      DispositionTracker ida{e};
 
       LLVM_DEBUG({
         for (const auto *p : pdVals) {
-          llvm::dbgs() << *p << " iterator varies as: "
+          llvm::dbgs() << *p << " payload varies as: "
                        << static_cast<int>(ida.getDisposition(p)) << '\n';
         }
       });
@@ -223,7 +273,7 @@ bool ValueClassificationPass::runOnFunction(llvm::Function &CurFunc) {
         }
       });
     }
-  }
+  }*/
 
   return false;
 }

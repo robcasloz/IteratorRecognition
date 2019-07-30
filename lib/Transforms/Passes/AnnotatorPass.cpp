@@ -81,10 +81,6 @@ static llvm::cl::opt<bool> AnnotatePayload(
     "itr-annotate-payload", llvm::cl::init(false), llvm::cl::Hidden,
     llvm::cl::desc("annotate the payload instructions of loops"));
 
-static llvm::cl::opt<unsigned> AnnotateLoopLevel(
-    "itr-annotate-loop-level", llvm::cl::init(1), llvm::cl::Hidden,
-    llvm::cl::desc("annotate loops of this depth or greater"));
-
 //
 
 namespace iteratorrecognition {
@@ -104,13 +100,16 @@ bool AnnotatorPass::run(llvm::Function &F, IteratorRecognitionInfo &Info) {
   for (auto &e : Info.getIteratorsInfo()) {
     llvm::Loop &curLoop = const_cast<llvm::Loop &>(*e.getLoop());
 
-    if (curLoop.getLoopDepth() >= AnnotateLoopLevel) {
-      LLVM_DEBUG(llvm::dbgs() << "annotating with iterator loop: "
-                              << strconv::to_string(curLoop) << '\n';);
-
-      hasChanged |= annotator.append(e, DefaultIteratorInstructionKey, curLoop,
-                                     DefaultLoopKey);
+    if (curLoop.getLoopDepth() > LoopDepthMax ||
+        curLoop.getLoopDepth() < LoopDepthMin) {
+      continue;
     }
+
+    LLVM_DEBUG(llvm::dbgs() << "annotating with iterator loop: "
+                            << strconv::to_string(curLoop) << '\n';);
+
+    hasChanged |= annotator.append(e, DefaultIteratorInstructionKey, curLoop,
+                                   DefaultLoopKey);
 
     auto is_not_in = [](const auto &Elem, const auto &ForwardRange) -> bool {
       using std::begin;

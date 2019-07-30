@@ -95,7 +95,21 @@ public:
   IteratorInfo(const llvm::Loop *L, IteratorT Begin, IteratorT End)
       : CurLoop(const_cast<llvm::Loop *>(L)), CurInstructions(Begin, End) {}
 
-  explicit IteratorInfo(llvm::Loop *L) : CurLoop(L) {}
+  explicit IteratorInfo(llvm::Loop *L = nullptr) : CurLoop(L) {}
+
+  IteratorInfo(const IteratorInfo &Other)
+      : CurLoop(Other.CurLoop), CurInstructions(Other.CurInstructions) {}
+
+  IteratorInfo &operator=(const IteratorInfo &Other) {
+    CurLoop = Other.CurLoop;
+    CurInstructions.clear();
+    CurInstructions.assign(Other.CurInstructions.begin(),
+                           Other.CurInstructions.end());
+
+    return *this;
+  }
+
+  explicit operator bool() const { return CurLoop ? true : false; }
 
   const auto *getLoop() const { return CurLoop; }
   auto getNumInstructions() const { return CurInstructions.size(); }
@@ -133,6 +147,8 @@ public:
   bool isIterator(const llvm::Instruction *Inst) {
     return static_cast<const IteratorInfo *>(this)->isIterator(Inst);
   }
+
+  void print(llvm::raw_ostream &OS) const;
 };
 
 //
@@ -182,7 +198,8 @@ private:
 public:
   IteratorRecognitionInfo(const llvm::LoopInfo &CurLI, BaseGraphT &CurPDG);
 
-  const auto &getLoopInfo() { return LI; }
+  auto &getLoopInfo() { return LI; }
+  const auto &getLoopInfo() const { return LI; }
   auto &getGraph() { return PDG; }
   const auto &getCondensationGraph() { return CG; }
   const auto &getCondensationGraph() const { return CG; }

@@ -139,6 +139,7 @@ set(LIB_SOURCES
   "lib/Support/Utils/DebugInfo.cpp"
   "lib/Support/Utils/StringConversion.cpp"
   "lib/Analysis/IteratorRecognition.cpp"
+  "lib/Analysis/DispositionTracker.cpp"
   "lib/Analysis/ValueClassification.cpp"
   "lib/Analysis/Graphs/PDGCondensationGraph.cpp"
   "lib/Exchange/JSONFileIO.cpp"
